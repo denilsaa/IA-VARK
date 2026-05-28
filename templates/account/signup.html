@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Registro | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="auth-layout">
+    <div class="auth-copy">
+        <p class="eyebrow">Registro manual</p>
+        <h1>Crear cuenta</h1>
+        <p>Prepara tu perfil para recibir una ruta adaptada a tu estilo de aprendizaje.</p>
+    </div>
+
+    <form class="form-panel" method="post" action="{% url 'account_signup' %}">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <label class="form-label" for="id_username">Nombre de usuario</label>
+        <input class="form-control" id="id_username" type="text" name="username" autocomplete="username" required>
+        {{ form.username.errors }}
+
+        <label class="form-label mt-3" for="id_email">Correo</label>
+        <input class="form-control" id="id_email" type="email" name="email" autocomplete="email" required>
+        {{ form.email.errors }}
+
+        <label class="form-label mt-3" for="id_password1">Contrase&ntilde;a</label>
+        <input class="form-control" id="id_password1" type="password" name="password1" autocomplete="new-password" required>
+        {{ form.password1.errors }}
+
+        <label class="form-label mt-3" for="id_password2">Confirmar contrase&ntilde;a</label>
+        <input class="form-control" id="id_password2" type="password" name="password2" autocomplete="new-password" required>
+        {{ form.password2.errors }}
+
+        {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+        {% endif %}
+
+        <button class="btn btn-primary w-100 mt-4 icon-btn justify-content-center" type="submit">
+            <i data-lucide="user-plus"></i>
+            <span>Registrarse</span>
+        </button>
+
+        <p class="form-footer">
+            &iquest;Ya tienes cuenta?
+            <a href="{% url 'account_login' %}">Inicia sesi&oacute;n</a>
+        </p>
+    </form>
+</section>
+{% endblock %}

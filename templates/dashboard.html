@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Panel | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Panel principal</p>
+        <h1>Bienvenido, {{ user.username|default:"estudiante" }}</h1>
+        <p>Tu ruta de Anatom&iacute;a I esta lista para continuar desde el ultimo avance.</p>
+    </div>
+    <a href="{% url 'vark:test' %}" class="btn btn-primary icon-btn">
+        <i data-lucide="scan-eye"></i>
+        <span>Test VARK</span>
+    </a>
+</section>
+
+<section class="metrics-grid">
+    <article class="metric-card">
+        <span>Estilo VARK detectado</span>
+        <strong>{{ resumen.estilo_vark }}</strong>
+        <small>Base de personalizacion actual</small>
+    </article>
+    <article class="metric-card">
+        <span>Proximo examen</span>
+        <strong>{{ resumen.proximo_examen }}</strong>
+        <small>{{ resumen.fecha_examen }}</small>
+    </article>
+    <article class="metric-card">
+        <span>Materiales subidos</span>
+        <strong>{{ resumen.materiales }}</strong>
+        <small>PDF, imagenes, Word y texto</small>
+    </article>
+    <article class="metric-card">
+        <span>Ruta activa</span>
+        <strong>{{ resumen.ruta_activa }}</strong>
+        <small>Enfoque visual</small>
+    </article>
+    <article class="metric-card">
+        <span>Ultimo puntaje</span>
+        <strong>{{ resumen.ultimo_puntaje }}</strong>
+        <small>Simulacro reciente</small>
+    </article>
+</section>
+
+<section class="content-grid mt-4">
+    <div class="panel-block">
+        <div class="panel-title">
+            <h2>Accesos rapidos</h2>
+        </div>
+        <div class="quick-grid">
+            {% for acceso in accesos %}
+                <a class="quick-action" href="{{ acceso.url }}">
+                    <i data-lucide="{{ acceso.icon }}"></i>
+                    <span>{{ acceso.label }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel-block">
+        <div class="panel-title">
+            <h2>Estado de estudio</h2>
+        </div>
+        <div class="study-status">
+            <div>
+                <span class="status-dot bg-success"></span>
+                <strong>Ruta de aprendizaje</strong>
+                <p>Dias 1 a 5 configurados para el sistema oseo.</p>
+            </div>
+            <div>
+                <span class="status-dot bg-warning"></span>
+                <strong>Materiales pendientes</strong>
+                <p>1 archivo necesita procesamiento antes de usarse en examenes.</p>
+            </div>
+            <div>
+                <span class="status-dot bg-info"></span>
+                <strong>Recomendacion</strong>
+                <p>Practica preguntas visuales y tablas comparativas de craneo.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

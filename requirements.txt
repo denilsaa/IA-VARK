@@ -1,0 +1,12 @@
+Django>=5.2,<6.0
+psycopg2-binary
+python-dotenv
+django-allauth
+PyJWT
+cryptography
+Pillow
+PyMuPDF
+python-docx
+pytesseract
+openai
+chromadb

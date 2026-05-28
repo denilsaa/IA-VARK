@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Resultado VARK | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="result-hero">
+    <p class="eyebrow">Resultado VARK</p>
+    <h1>Tu estilo principal es {{ estilo_principal }}</h1>
+    <p>Aprendes mejor con esquemas, imagenes, mapas, colores y comparaciones visuales.</p>
+</section>
+
+<section class="content-grid">
+    <div class="panel-block">
+        <div class="panel-title">
+            <h2>Puntaje por estilo</h2>
+        </div>
+        <div class="score-stack">
+            {% for puntaje in puntajes %}
+                <div>
+                    <div class="score-row">
+                        <span>{{ puntaje.estilo }}</span>
+                        <strong>{{ puntaje.valor }}%</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar {{ puntaje.class }}" style="width: {{ puntaje.valor }}%"></div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel-block">
+        <div class="panel-title">
+            <h2>Recomendaciones</h2>
+        </div>
+        <ul class="check-list">
+            {% for recomendacion in recomendaciones %}
+                <li><i data-lucide="check"></i><span>{{ recomendacion }}</span></li>
+            {% endfor %}
+        </ul>
+        <a href="{% url 'usuarios:dashboard' %}" class="btn btn-primary icon-btn mt-3">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Continuar al panel</span>
+        </a>
+    </div>
+</section>
+{% endblock %}

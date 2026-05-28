@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Test VARK | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Diagnostico VARK</p>
+        <h1>Test de estilo de aprendizaje</h1>
+        <p>Responde las 10 preguntas para identificar tu estilo principal.</p>
+    </div>
+</section>
+
+<form method="post" class="question-stack">
+    {% csrf_token %}
+    {% for pregunta in preguntas %}
+        <fieldset class="question-card">
+            <legend>{{ pregunta.numero }}. {{ pregunta.texto }}</legend>
+            <div class="option-grid">
+                {% for valor, etiqueta, descripcion in opciones %}
+                    <label class="option-tile">
+                        <input type="radio" name="q{{ pregunta.numero }}" value="{{ valor }}" required>
+                        <span class="option-title">{{ etiqueta }}</span>
+                        <small>{{ descripcion }}</small>
+                    </label>
+                {% endfor %}
+            </div>
+        </fieldset>
+    {% endfor %}
+
+    <div class="form-actions">
+        <button class="btn btn-primary btn-lg icon-btn" type="submit">
+            <i data-lucide="send"></i>
+            <span>Enviar respuestas</span>
+        </button>
+    </div>
+</form>
+{% endblock %}

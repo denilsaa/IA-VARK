@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Ruta de aprendizaje | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Plan personalizado</p>
+        <h1>Ruta de aprendizaje</h1>
+        <p>{{ tema }} | Examen: {{ fecha_examen }} | Estilo VARK usado: {{ estilo_vark }}</p>
+    </div>
+    <a href="{% url 'examenes:generar' %}" class="btn btn-primary icon-btn">
+        <i data-lucide="file-question"></i>
+        <span>Generar examen</span>
+    </a>
+</section>
+
+<section class="timeline">
+    {% for dia in dias %}
+        <article class="timeline-item">
+            <div class="timeline-marker">{{ dia.dia }}</div>
+            <div class="timeline-content">
+                <h2>Dia {{ dia.dia }}: {{ dia.titulo }}</h2>
+                <ul>
+                    {% for actividad in dia.actividades %}
+                        <li>{{ actividad }}</li>
+                    {% endfor %}
+                </ul>
+                <button class="btn btn-outline-primary icon-btn" type="button">
+                    <i data-lucide="check-circle"></i>
+                    <span>Marcar como completado</span>
+                </button>
+            </div>
+        </article>
+    {% endfor %}
+</section>
+{% endblock %}

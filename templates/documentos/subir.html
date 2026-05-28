@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Subir material | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Documentos de estudio</p>
+        <h1>Subir material</h1>
+        <p>Carga archivos o pega texto para que el sistema los vincule con tu ruta.</p>
+    </div>
+    <a href="{% url 'documentos:lista' %}" class="btn btn-outline-primary icon-btn">
+        <i data-lucide="folder-open"></i>
+        <span>Mis materiales</span>
+    </a>
+</section>
+
+<form method="post" enctype="multipart/form-data" class="form-panel wide-form">
+    {% csrf_token %}
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label" for="archivo">Archivo</label>
+            <input class="form-control" id="archivo" type="file" name="archivo" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+            <small class="field-help">PDF, Word, JPG o PNG.</small>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="tema">Materia o tema</label>
+            <input class="form-control" id="tema" name="tema" placeholder="Ej. Huesos del craneo" required>
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="descripcion">Descripcion opcional</label>
+            <textarea class="form-control" id="descripcion" name="descripcion" rows="3" placeholder="Contexto del documento, docente, unidad o prioridad"></textarea>
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="texto_manual">Texto escrito manualmente</label>
+            <textarea class="form-control" id="texto_manual" name="texto_manual" rows="6" placeholder="Pega aqui apuntes, resumenes o preguntas"></textarea>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button class="btn btn-primary btn-lg icon-btn" type="submit">
+            <i data-lucide="upload-cloud"></i>
+            <span>Subir material</span>
+        </button>
+    </div>
+</form>
+{% endblock %}

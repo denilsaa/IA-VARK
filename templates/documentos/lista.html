@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Mis materiales | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Biblioteca personal</p>
+        <h1>Mis materiales</h1>
+        <p>Documentos cargados y estado de procesamiento.</p>
+    </div>
+    <a href="{% url 'documentos:subir' %}" class="btn btn-primary icon-btn">
+        <i data-lucide="upload-cloud"></i>
+        <span>Subir material</span>
+    </a>
+</section>
+
+<div class="table-panel">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Nombre del archivo</th>
+                    <th>Tipo</th>
+                    <th>Fecha de subida</th>
+                    <th>Tema relacionado</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for material in materiales %}
+                    <tr>
+                        <td>{{ material.nombre }}</td>
+                        <td>{{ material.tipo }}</td>
+                        <td>{{ material.fecha }}</td>
+                        <td>{{ material.tema }}</td>
+                        <td>
+                            <span class="status-pill {% if material.estado == 'Procesado' %}status-ready{% else %}status-pending{% endif %}">
+                                {{ material.estado }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary icon-only" type="button" title="Ver">
+                                <i data-lucide="eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger icon-only" type="button" title="Eliminar">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

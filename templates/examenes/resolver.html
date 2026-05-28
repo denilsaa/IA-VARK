@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Resolver examen | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Examen activo</p>
+        <h1>Resolver examen</h1>
+        <p>Responde cada pregunta y finaliza para ver la correccion completa.</p>
+    </div>
+</section>
+
+<form method="post" class="question-stack">
+    {% csrf_token %}
+    {% for pregunta in preguntas %}
+        <fieldset class="question-card">
+            <legend>{{ pregunta.numero }}. {{ pregunta.texto }}</legend>
+            {% if pregunta.tipo == "abierta" %}
+                <textarea class="form-control" name="respuesta_{{ pregunta.numero }}" rows="4" placeholder="Escribe tu respuesta"></textarea>
+            {% else %}
+                <div class="option-grid compact-options">
+                    {% for opcion in pregunta.opciones %}
+                        <label class="option-tile">
+                            <input type="radio" name="respuesta_{{ pregunta.numero }}" value="{{ opcion }}" required>
+                            <span class="option-title">{{ opcion }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </fieldset>
+    {% endfor %}
+
+    <div class="form-actions">
+        <button class="btn btn-primary btn-lg icon-btn" type="submit">
+            <i data-lucide="flag"></i>
+            <span>Finalizar examen</span>
+        </button>
+    </div>
+</form>
+{% endblock %}

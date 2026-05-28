@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Resultado del examen | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="result-hero exam-result">
+    <p class="eyebrow">Correccion completa</p>
+    <h1>Puntaje final: {{ puntaje }}%</h1>
+    <p>Buen avance. El sistema detecto temas debiles que conviene reforzar antes del siguiente simulacro.</p>
+</section>
+
+<section class="content-grid">
+    <div class="panel-block">
+        <div class="panel-title">
+            <h2>Respuestas</h2>
+        </div>
+        <div class="answer-list">
+            {% for respuesta in respuestas %}
+                <div class="answer-item">
+                    <span class="status-pill {% if respuesta.estado == 'Correcta' %}status-ready{% else %}status-wrong{% endif %}">
+                        {{ respuesta.estado }}
+                    </span>
+                    <strong>{{ respuesta.pregunta }}</strong>
+                    <p>{{ respuesta.detalle }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel-block">
+        <div class="panel-title">
+            <h2>Retroalimentacion</h2>
+        </div>
+        <h3 class="mini-heading">Temas debiles</h3>
+        <ul class="check-list muted-checks">
+            {% for debilidad in debilidades %}
+                <li><i data-lucide="alert-circle"></i><span>{{ debilidad }}</span></li>
+            {% endfor %}
+        </ul>
+        <h3 class="mini-heading mt-3">Recomendacion de estudio</h3>
+        <p>{{ recomendacion }}</p>
+        <a href="{% url 'rutas:ruta_aprendizaje' %}" class="btn btn-primary icon-btn mt-2">
+            <i data-lucide="refresh-cw"></i>
+            <span>Ajustar ruta</span>
+        </a>
+    </div>
+</section>
+{% endblock %}

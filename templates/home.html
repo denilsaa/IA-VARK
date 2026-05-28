@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Tutor IA Anatom&iacute;a VARK | Inicio{% endblock %}
+{% block body_class %}home-shell{% endblock %}
+{% block main_class %}main-home{% endblock %}
+
+{% block content %}
+<section class="home-hero">
+    <div class="hero-backdrop" aria-hidden="true">
+        <div class="anatomy-visual">
+            <div class="visual-toolbar">
+                <span></span><span></span><span></span>
+            </div>
+            <div class="visual-grid">
+                <div class="scan-panel">
+                    <i data-lucide="bone"></i>
+                    <strong>Sistema oseo</strong>
+                    <small>Ruta activa</small>
+                </div>
+                <div class="scan-panel accent-mint">
+                    <i data-lucide="clipboard-check"></i>
+                    <strong>82%</strong>
+                    <small>Ultimo puntaje</small>
+                </div>
+                <div class="study-chart">
+                    <span style="height: 72%"></span>
+                    <span style="height: 48%"></span>
+                    <span style="height: 56%"></span>
+                    <span style="height: 32%"></span>
+                </div>
+                <div class="route-preview">
+                    <div></div><div></div><div></div><div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="hero-content">
+            <p class="eyebrow">Anatom&iacute;a I + aprendizaje personalizado</p>
+            <h1>Tutor IA Anatom&iacute;a VARK</h1>
+            <p class="hero-copy">
+                Un sistema para diagnosticar tu estilo VARK, organizar tus materiales,
+                crear una ruta de estudio y practicar con examenes de Anatom&iacute;a I.
+            </p>
+            <div class="hero-actions">
+                <a href="{% url 'account_login' %}" class="btn btn-primary btn-lg icon-btn">
+                    <i data-lucide="log-in"></i>
+                    <span>Iniciar sesi&oacute;n</span>
+                </a>
+                <a href="{% url 'account_signup' %}" class="btn btn-outline-primary btn-lg icon-btn">
+                    <i data-lucide="user-plus"></i>
+                    <span>Registrarse</span>
+                </a>
+                <button class="btn btn-google btn-lg icon-btn" disabled>
+                    <i data-lucide="chrome"></i>
+                    <span>Continuar con Google</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section-band">
+    <div class="container">
+        <div class="section-heading">
+            <p class="eyebrow">Flujo general</p>
+            <h2>&iquest;C&oacute;mo funciona?</h2>
+        </div>
+        <div class="process-grid">
+            <article class="feature-card">
+                <i data-lucide="user-check"></i>
+                <h3>Registro y acceso</h3>
+                <p>El estudiante entra con cuenta manual y queda listo para continuar el flujo.</p>
+            </article>
+            <article class="feature-card">
+                <i data-lucide="scan-eye"></i>
+                <h3>Test VARK</h3>
+                <p>El sistema identifica si aprende mejor con recursos visuales, auditivos, escritos o practicos.</p>
+            </article>
+            <article class="feature-card">
+                <i data-lucide="calendar-clock"></i>
+                <h3>Datos academicos</h3>
+                <p>Se registran tema, fecha de examen, horas disponibles y dificultad esperada.</p>
+            </article>
+            <article class="feature-card">
+                <i data-lucide="route"></i>
+                <h3>Ruta y examen</h3>
+                <p>La app presenta un plan por dias, practica guiada, simulacros y retroalimentacion.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="section-band subtle-band">
+    <div class="container">
+        <div class="section-heading">
+            <p class="eyebrow">Beneficios</p>
+            <h2>Estudio mas claro para Anatom&iacute;a I</h2>
+        </div>
+        <div class="benefit-list">
+            <div class="benefit-item">
+                <i data-lucide="layers-3"></i>
+                <span>Organiza apuntes, imagenes, PDFs y textos en un solo lugar.</span>
+            </div>
+            <div class="benefit-item">
+                <i data-lucide="target"></i>
+                <span>Prioriza temas debiles antes del examen.</span>
+            </div>
+            <div class="benefit-item">
+                <i data-lucide="line-chart"></i>
+                <span>Muestra avance, puntajes y recomendaciones de mejora.</span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Login | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="auth-layout">
+    <div class="auth-copy">
+        <p class="eyebrow">Acceso del estudiante</p>
+        <h1>Iniciar sesi&oacute;n</h1>
+        <p>Continua tu ruta, revisa materiales y genera nuevos simulacros de Anatom&iacute;a I.</p>
+    </div>
+
+    <form class="form-panel" method="post" action="{% url 'account_login' %}">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <label class="form-label" for="id_login">Usuario o correo</label>
+        <input class="form-control" id="id_login" type="text" name="login" autocomplete="username" required>
+        {{ form.login.errors }}
+
+        <label class="form-label mt-3" for="id_password">Contrase&ntilde;a</label>
+        <input class="form-control" id="id_password" type="password" name="password" autocomplete="current-password" required>
+        {{ form.password.errors }}
+
+        {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+        {% endif %}
+
+        <button class="btn btn-primary w-100 mt-4 icon-btn justify-content-center" type="submit">
+            <i data-lucide="log-in"></i>
+            <span>Iniciar sesi&oacute;n</span>
+        </button>
+
+        <button class="btn btn-google w-100 mt-2 icon-btn justify-content-center" type="button" disabled>
+            <i data-lucide="chrome"></i>
+            <span>Continuar con Google</span>
+        </button>
+
+        <p class="form-footer">
+            &iquest;No tienes cuenta?
+            <a href="{% url 'account_signup' %}">Registrate</a>
+        </p>
+    </form>
+</section>
+{% endblock %}

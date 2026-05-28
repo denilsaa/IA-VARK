@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Progreso academico | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Evolucion del estudiante</p>
+        <h1>Progreso academico</h1>
+        <p>Resumen de simulacros, temas fuertes, temas debiles y recomendacion actual.</p>
+    </div>
+    <a href="{% url 'examenes:generar' %}" class="btn btn-primary icon-btn">
+        <i data-lucide="file-question"></i>
+        <span>Nuevo simulacro</span>
+    </a>
+</section>
+
+<section class="metrics-grid">
+    <article class="metric-card">
+        <span>Simulacros realizados</span>
+        <strong>{{ simulacros|length }}</strong>
+        <small>Ultimas evaluaciones</small>
+    </article>
+    <article class="metric-card">
+        <span>Estilo VARK actual</span>
+        <strong>{{ estilo_vark }}</strong>
+        <small>Usado para adaptar la ruta</small>
+    </article>
+    <article class="metric-card">
+        <span>Mejor puntaje</span>
+        <strong>88%</strong>
+        <small>Articulaciones</small>
+    </article>
+</section>
+
+<section class="content-grid mt-4">
+    <div class="panel-block">
+        <div class="panel-title">
+            <h2>Puntajes</h2>
+        </div>
+        <div class="score-stack">
+            {% for simulacro in simulacros %}
+                <div>
+                    <div class="score-row">
+                        <span>{{ simulacro.nombre }} | {{ simulacro.fecha }}</span>
+                        <strong>{{ simulacro.puntaje }}%</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" style="width: {{ simulacro.puntaje }}%"></div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel-block">
+        <div class="panel-title">
+            <h2>Analisis</h2>
+        </div>
+        <h3 class="mini-heading">Temas fuertes</h3>
+        <ul class="check-list">
+            {% for fuerte in fuertes %}
+                <li><i data-lucide="check"></i><span>{{ fuerte }}</span></li>
+            {% endfor %}
+        </ul>
+        <h3 class="mini-heading mt-3">Temas debiles</h3>
+        <ul class="check-list muted-checks">
+            {% for debil in debiles %}
+                <li><i data-lucide="alert-circle"></i><span>{{ debil }}</span></li>
+            {% endfor %}
+        </ul>
+        <h3 class="mini-heading mt-3">Recomendacion de mejora</h3>
+        <p>{{ recomendacion }}</p>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Generar examen | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Simulacro personalizado</p>
+        <h1>Generar examen</h1>
+        <p>Configura el tipo de preguntas y dificultad antes de resolver.</p>
+    </div>
+</section>
+
+<form method="post" class="form-panel wide-form">
+    {% csrf_token %}
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label" for="tema">Tema</label>
+            <input class="form-control" id="tema" name="tema" placeholder="Ej. Columna vertebral" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="cantidad">Numero de preguntas</label>
+            <input class="form-control" id="cantidad" type="number" name="cantidad" min="5" max="80" value="20" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="tipo">Tipo de preguntas</label>
+            <select class="form-select" id="tipo" name="tipo" required>
+                {% for tipo in tipos %}
+                    <option>{{ tipo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="nivel">Nivel de dificultad</label>
+            <select class="form-select" id="nivel" name="nivel" required>
+                {% for nivel in niveles %}
+                    <option>{{ nivel }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button class="btn btn-primary btn-lg icon-btn" type="submit">
+            <i data-lucide="wand-sparkles"></i>
+            <span>Generar examen</span>
+        </button>
+    </div>
+</form>
+{% endblock %}
