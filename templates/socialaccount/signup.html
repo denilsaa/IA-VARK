@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Completar registro | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="auth-layout">
+    <div class="auth-copy">
+        <p class="eyebrow">Registro con Google</p>
+        <h1>Completar registro</h1>
+        <p>
+            Tu cuenta de Google ya fue validada. Solo falta confirmar estos datos
+            para crear tu usuario dentro del Tutor IA de Anatom&iacute;a.
+        </p>
+    </div>
+
+    <form class="form-panel" method="post" action="{% url 'socialaccount_signup' %}">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <label class="form-label" for="id_username">Nombre de usuario</label>
+        <input
+            class="form-control"
+            id="id_username"
+            type="text"
+            name="username"
+            autocomplete="username"
+            value="{{ form.username.value|default:'' }}"
+            required
+        >
+        {{ form.username.errors }}
+
+        <label class="form-label mt-3" for="id_email">Correo electr&oacute;nico</label>
+        <input
+            class="form-control"
+            id="id_email"
+            type="email"
+            name="email"
+            autocomplete="email"
+            value="{{ form.email.value|default:'' }}"
+            required
+        >
+        {{ form.email.errors }}
+
+        {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+        {% endif %}
+
+        <button class="btn btn-primary w-100 mt-4 icon-btn justify-content-center" type="submit">
+            <i data-lucide="user-check"></i>
+            <span>Completar registro</span>
+        </button>
+
+        <p class="form-footer">
+            &iquest;Quieres usar otra cuenta?
+            <a href="{% url 'account_login' %}">Volver al login</a>
+        </p>
+    </form>
+</section>
+{% endblock %}

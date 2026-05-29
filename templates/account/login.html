@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load socialaccount %}
 
 {% block title %}Login | Tutor IA Anatom&iacute;a VARK{% endblock %}
 
@@ -12,16 +13,34 @@
 
     <form class="form-panel" method="post" action="{% url 'account_login' %}">
         {% csrf_token %}
+
         {% if form.non_field_errors %}
-            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
         {% endif %}
 
         <label class="form-label" for="id_login">Usuario o correo</label>
-        <input class="form-control" id="id_login" type="text" name="login" autocomplete="username" required>
+        <input
+            class="form-control"
+            id="id_login"
+            type="text"
+            name="login"
+            autocomplete="username"
+            value="{{ form.login.value|default:'' }}"
+            required
+        >
         {{ form.login.errors }}
 
         <label class="form-label mt-3" for="id_password">Contrase&ntilde;a</label>
-        <input class="form-control" id="id_password" type="password" name="password" autocomplete="current-password" required>
+        <input
+            class="form-control"
+            id="id_password"
+            type="password"
+            name="password"
+            autocomplete="current-password"
+            required
+        >
         {{ form.password.errors }}
 
         {% if redirect_field_value %}
@@ -33,10 +52,20 @@
             <span>Iniciar sesi&oacute;n</span>
         </button>
 
-        <button class="btn btn-google w-100 mt-2 icon-btn justify-content-center" type="button" disabled>
-            <i data-lucide="chrome"></i>
-            <span>Continuar con Google</span>
-        </button>
+        {% if GOOGLE_AUTH_ENABLED %}
+            <a
+                class="btn btn-google w-100 mt-2 icon-btn justify-content-center"
+                href="{% provider_login_url 'google' process='login' %}"
+            >
+                <i data-lucide="chrome"></i>
+                <span>Continuar con Google</span>
+            </a>
+        {% else %}
+            <button class="btn btn-google w-100 mt-2 icon-btn justify-content-center" type="button" disabled>
+                <i data-lucide="chrome"></i>
+                <span>Google pendiente de configurar</span>
+            </button>
+        {% endif %}
 
         <p class="form-footer">
             &iquest;No tienes cuenta?
