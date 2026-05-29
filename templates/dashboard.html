@@ -1,83 +1,147 @@
 {% extends "base.html" %}
 
-{% block title %}Panel | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Dashboard | Tutor IA Anatom&iacute;a VARK{% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-hero">
     <div>
-        <p class="eyebrow">Panel principal</p>
-        <h1>Bienvenido, {{ user.username|default:"estudiante" }}</h1>
-        <p>Tu ruta de Anatom&iacute;a I esta lista para continuar desde el ultimo avance.</p>
+        <p class="eyebrow">Panel del estudiante</p>
+        <h1>Hola, {{ request.user.username }}</h1>
+        <p>
+            Este es tu centro de control para estudiar Anatom&iacute;a I con apoyo de IA,
+            VARK y seguimiento acad&eacute;mico.
+        </p>
     </div>
-    <a href="{% url 'vark:test' %}" class="btn btn-primary icon-btn">
-        <i data-lucide="scan-eye"></i>
-        <span>Test VARK</span>
-    </a>
 </section>
 
-<section class="metrics-grid">
-    <article class="metric-card">
-        <span>Estilo VARK detectado</span>
-        <strong>{{ resumen.estilo_vark }}</strong>
-        <small>Base de personalizacion actual</small>
-    </article>
-    <article class="metric-card">
-        <span>Proximo examen</span>
-        <strong>{{ resumen.proximo_examen }}</strong>
-        <small>{{ resumen.fecha_examen }}</small>
-    </article>
-    <article class="metric-card">
-        <span>Materiales subidos</span>
-        <strong>{{ resumen.materiales }}</strong>
-        <small>PDF, imagenes, Word y texto</small>
-    </article>
-    <article class="metric-card">
-        <span>Ruta activa</span>
-        <strong>{{ resumen.ruta_activa }}</strong>
-        <small>Enfoque visual</small>
-    </article>
-    <article class="metric-card">
-        <span>Ultimo puntaje</span>
-        <strong>{{ resumen.ultimo_puntaje }}</strong>
-        <small>Simulacro reciente</small>
-    </article>
-</section>
+<section class="section-band">
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
 
-<section class="content-grid mt-4">
-    <div class="panel-block">
-        <div class="panel-title">
-            <h2>Accesos rapidos</h2>
+        <div class="dashboard-grid">
+            <article class="feature-card dashboard-card">
+                <i data-lucide="scan-eye"></i>
+                <h3>Estilo VARK</h3>
+                <strong>{{ resumen.estilo_vark }}</strong>
+                {% if perfil_vark %}
+                    <p>Perfil completado y guardado.</p>
+                {% else %}
+                    <p>Pendiente de completar.</p>
+                {% endif %}
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="book-open"></i>
+                <h3>Tema actual</h3>
+                <strong>{{ resumen.tema_actual }}</strong>
+                <p>Contenido principal registrado.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="calendar-days"></i>
+                <h3>Fecha de examen</h3>
+                <strong>{{ resumen.fecha_examen }}</strong>
+                <p>D&iacute;as restantes: {{ resumen.dias_restantes }}</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="clock"></i>
+                <h3>Tiempo por d&iacute;a</h3>
+                <strong>{{ resumen.tiempo_estudio }}</strong>
+                <p>Tiempo diario disponible.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="clipboard-check"></i>
+                <h3>Tipo de examen</h3>
+                <strong>{{ resumen.proximo_examen }}</strong>
+                <p>Formato del pr&oacute;ximo examen.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="file-stack"></i>
+                <h3>Materiales</h3>
+                <strong>{{ resumen.materiales }}</strong>
+                <p>Archivos subidos al sistema.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="route"></i>
+                <h3>Ruta activa</h3>
+                <strong>{{ resumen.ruta_activa }}</strong>
+                <p>Plan de estudio personalizado.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="trending-up"></i>
+                <h3>&Uacute;ltimo puntaje</h3>
+                <strong>{{ resumen.ultimo_puntaje }}</strong>
+                <p>Resultado de simulacros.</p>
+            </article>
         </div>
-        <div class="quick-grid">
+
+        {% if datos_academicos %}
+            <div class="form-panel wide-panel mt-4">
+                <p class="eyebrow">Resumen acad&eacute;mico</p>
+                <h2>{{ datos_academicos.materia }}</h2>
+
+                <div class="detail-grid">
+                    <div>
+                        <strong>Tema actual</strong>
+                        <p>{{ datos_academicos.tema_actual }}</p>
+                    </div>
+
+                    <div>
+                        <strong>Dificultad percibida</strong>
+                        <p>{{ datos_academicos.get_nivel_dificultad_display }}</p>
+                    </div>
+
+                    <div>
+                        <strong>Tipo de examen</strong>
+                        <p>{{ datos_academicos.get_tipo_examen_display }}</p>
+                    </div>
+
+                    <div>
+                        <strong>Fecha de examen</strong>
+                        <p>{{ datos_academicos.fecha_examen_formateada }}</p>
+                    </div>
+                </div>
+
+                {% if datos_academicos.temas_dificiles %}
+                    <div class="mt-4">
+                        <strong>Temas dif&iacute;ciles</strong>
+                        <p>{{ datos_academicos.temas_dificiles }}</p>
+                    </div>
+                {% endif %}
+
+                {% if datos_academicos.objetivo_estudio %}
+                    <div class="mt-4">
+                        <strong>Objetivo de estudio</strong>
+                        <p>{{ datos_academicos.objetivo_estudio }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <div class="section-heading mt-4">
+            <p class="eyebrow">Accesos r&aacute;pidos</p>
+            <h2>Continuar trabajando</h2>
+        </div>
+
+        <div class="process-grid">
             {% for acceso in accesos %}
-                <a class="quick-action" href="{{ acceso.url }}">
+                <a class="feature-card access-card" href="{{ acceso.url }}">
                     <i data-lucide="{{ acceso.icon }}"></i>
-                    <span>{{ acceso.label }}</span>
+                    <h3>{{ acceso.label }}</h3>
+                    <p>Entrar al m&oacute;dulo.</p>
                 </a>
             {% endfor %}
-        </div>
-    </div>
-
-    <div class="panel-block">
-        <div class="panel-title">
-            <h2>Estado de estudio</h2>
-        </div>
-        <div class="study-status">
-            <div>
-                <span class="status-dot bg-success"></span>
-                <strong>Ruta de aprendizaje</strong>
-                <p>Dias 1 a 5 configurados para el sistema oseo.</p>
-            </div>
-            <div>
-                <span class="status-dot bg-warning"></span>
-                <strong>Materiales pendientes</strong>
-                <p>1 archivo necesita procesamiento antes de usarse en examenes.</p>
-            </div>
-            <div>
-                <span class="status-dot bg-info"></span>
-                <strong>Recomendacion</strong>
-                <p>Practica preguntas visuales y tablas comparativas de craneo.</p>
-            </div>
         </div>
     </div>
 </section>

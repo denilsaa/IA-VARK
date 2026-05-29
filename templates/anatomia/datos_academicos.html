@@ -1,62 +1,135 @@
 {% extends "base.html" %}
 
-{% block title %}Datos academicos | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Datos acad&eacute;micos | Tutor IA Anatom&iacute;a VARK{% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-hero">
     <div>
-        <p class="eyebrow">Obtencion de datos previa</p>
-        <h1>Datos academicos</h1>
-        <p>Esta informacion ayuda a construir una ruta realista antes de generar actividades.</p>
+        <p class="eyebrow">Perfil acad&eacute;mico</p>
+        <h1>Datos acad&eacute;micos</h1>
+        <p>
+            Registra tu tema actual, fecha de examen y tiempo disponible en minutos.
+            Estos datos servir&aacute;n para generar una ruta de aprendizaje personalizada.
+        </p>
     </div>
 </section>
 
-<form method="post" class="form-panel wide-form">
-    {% csrf_token %}
-    <div class="row g-3">
-        <div class="col-md-6">
-            <label class="form-label" for="materia">Materia</label>
-            <input class="form-control" id="materia" name="materia" value="Anatomia I" required>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label" for="tema">Tema actual</label>
-            <input class="form-control" id="tema" name="tema" placeholder="Ej. Sistema oseo" required>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label" for="fecha_inicio">Fecha de inicio</label>
-            <input class="form-control" id="fecha_inicio" type="date" name="fecha_inicio" required>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label" for="fecha_examen">Fecha de examen</label>
-            <input class="form-control" id="fecha_examen" type="date" name="fecha_examen" required>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label" for="horas">Horas disponibles por dia</label>
-            <input class="form-control" id="horas" type="number" min="1" max="12" name="horas" value="2" required>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label" for="tipo">Tipo de examen</label>
-            <select class="form-select" id="tipo" name="tipo" required>
-                {% for tipo in tipos_examen %}
-                    <option>{{ tipo }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label" for="nivel">Nivel de dificultad</label>
-            <select class="form-select" id="nivel" name="nivel" required>
-                {% for nivel in niveles %}
-                    <option>{{ nivel }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
+<section class="section-band">
+    <div class="container">
+        <form method="post" class="form-panel wide-panel">
+            {% csrf_token %}
 
-    <div class="form-actions">
-        <button class="btn btn-primary btn-lg icon-btn" type="submit">
-            <i data-lucide="save"></i>
-            <span>Guardar datos</span>
-        </button>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.materia.id_for_label }}">
+                        {{ form.materia.label }}
+                    </label>
+                    {{ form.materia }}
+                    {{ form.materia.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.tema_actual.id_for_label }}">
+                        {{ form.tema_actual.label }}
+                    </label>
+                    {{ form.tema_actual }}
+                    {{ form.tema_actual.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.fecha_inicio.id_for_label }}">
+                        {{ form.fecha_inicio.label }}
+                    </label>
+                    {{ form.fecha_inicio }}
+                    {{ form.fecha_inicio.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.fecha_examen.id_for_label }}">
+                        {{ form.fecha_examen.label }}
+                    </label>
+                    {{ form.fecha_examen }}
+                    {{ form.fecha_examen.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.minutos_por_dia.id_for_label }}">
+                        {{ form.minutos_por_dia.label }}
+                    </label>
+                    {{ form.minutos_por_dia }}
+                    <small class="form-hint">Ejemplo: 30, 60, 90, 120 minutos.</small>
+                    {{ form.minutos_por_dia.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.tipo_examen.id_for_label }}">
+                        {{ form.tipo_examen.label }}
+                    </label>
+                    {{ form.tipo_examen }}
+                    {{ form.tipo_examen.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.nivel_dificultad.id_for_label }}">
+                        {{ form.nivel_dificultad.label }}
+                    </label>
+                    {{ form.nivel_dificultad }}
+                    {{ form.nivel_dificultad.errors }}
+                </div>
+            </div>
+
+            <div class="form-group mt-4">
+                <label class="form-label" for="{{ form.temas_dificiles.id_for_label }}">
+                    {{ form.temas_dificiles.label }}
+                </label>
+                {{ form.temas_dificiles }}
+                {{ form.temas_dificiles.errors }}
+            </div>
+
+            <div class="form-group mt-4">
+                <label class="form-label" for="{{ form.objetivo_estudio.id_for_label }}">
+                    {{ form.objetivo_estudio.label }}
+                </label>
+                {{ form.objetivo_estudio }}
+                {{ form.objetivo_estudio.errors }}
+            </div>
+
+            <div class="info-box mt-4">
+                <div class="ai-box-title">
+                    <i data-lucide="info"></i>
+                    <strong>Uso de estos datos</strong>
+                </div>
+                <p>
+                    M&aacute;s adelante, Gemini usar&aacute; esta informaci&oacute;n junto con tu estilo VARK
+                    para generar una ruta de estudio adaptada a tu examen.
+                </p>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
+                    Volver
+                </a>
+
+                <button type="submit" class="btn btn-primary icon-btn">
+                    <i data-lucide="save"></i>
+                    <span>Guardar datos</span>
+                </button>
+            </div>
+        </form>
     </div>
-</form>
+</section>
 {% endblock %}

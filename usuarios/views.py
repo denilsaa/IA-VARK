@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
+from anatomia.models import DatosAcademicos
 from vark.models import PerfilVARK
 
 
@@ -15,16 +16,33 @@ def home(request):
 @login_required
 def dashboard(request):
     perfil_vark = PerfilVARK.objects.filter(user=request.user).first()
+    datos_academicos = DatosAcademicos.objects.filter(user=request.user).first()
 
     if perfil_vark:
         estilo_vark = perfil_vark.estilo_display
     else:
         estilo_vark = "Pendiente"
 
+    if datos_academicos:
+        proximo_examen = datos_academicos.get_tipo_examen_display()
+        fecha_examen = datos_academicos.fecha_examen_formateada
+        tema_actual = datos_academicos.tema_actual
+        dias_restantes = datos_academicos.dias_restantes
+        tiempo_estudio = datos_academicos.tiempo_estudio_display
+    else:
+        proximo_examen = "Pendiente"
+        fecha_examen = "Sin registrar"
+        tema_actual = "Sin registrar"
+        dias_restantes = "Sin registrar"
+        tiempo_estudio = "Sin registrar"
+
     resumen = {
         "estilo_vark": estilo_vark,
-        "proximo_examen": "Pendiente",
-        "fecha_examen": "Sin registrar",
+        "tema_actual": tema_actual,
+        "proximo_examen": proximo_examen,
+        "fecha_examen": fecha_examen,
+        "dias_restantes": dias_restantes,
+        "tiempo_estudio": tiempo_estudio,
         "materiales": 0,
         "ruta_activa": "Sin ruta activa",
         "ultimo_puntaje": "Sin simulacros",
@@ -70,6 +88,7 @@ def dashboard(request):
             "resumen": resumen,
             "accesos": accesos,
             "perfil_vark": perfil_vark,
+            "datos_academicos": datos_academicos,
         },
     )
 
@@ -80,6 +99,11 @@ def redireccion_post_login(request):
 
     if not tiene_vark:
         return redirect("vark:test")
+
+    tiene_datos_academicos = DatosAcademicos.objects.filter(user=request.user).exists()
+
+    if not tiene_datos_academicos:
+        return redirect("anatomia:datos_academicos")
 
     return redirect("usuarios:dashboard")
 

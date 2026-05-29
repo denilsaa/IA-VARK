@@ -1077,3 +1077,95 @@ textarea.form-control {
     margin: 0;
     line-height: 1.55;
 }
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.form-group {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.form-group ul,
+.errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0.25rem 0 0;
+    color: #b42318;
+    font-size: 0.9rem;
+}
+
+.info-box {
+    padding: 1rem 1.1rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(19, 138, 126, 0.18);
+    background: #eefaf8;
+    color: #244747;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.dashboard-card strong {
+    display: block;
+    font-size: 1.3rem;
+    color: #123333;
+    margin: 0.5rem 0;
+}
+
+.access-card {
+    text-decoration: none;
+    color: inherit;
+}
+
+.access-card:hover {
+    transform: translateY(-2px);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.detail-grid div {
+    padding: 1rem;
+    border-radius: 1rem;
+    background: #f8fbfb;
+    border: 1px solid rgba(15, 77, 78, 0.08);
+}
+
+.detail-grid strong {
+    display: block;
+    color: #123333;
+    margin-bottom: 0.35rem;
+}
+
+.detail-grid p {
+    margin: 0;
+    color: #456060;
+}
+
+@media (max-width: 1000px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .form-grid,
+    .dashboard-grid,
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.form-hint {
+    color: #6b7c7c;
+    font-size: 0.85rem;
+}
