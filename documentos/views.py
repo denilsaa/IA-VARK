@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import MaterialEstudioForm
 from .models import MaterialEstudio
+from .services import procesar_material
 
 
 @login_required
@@ -21,17 +22,14 @@ def subir_material(request):
             if material.archivo:
                 material.tipo = detectar_tipo_archivo(material.archivo.name)
 
-            if material.texto_manual.strip():
-                material.texto_extraido = material.texto_manual.strip()
-                material.estado = MaterialEstudio.ESTADO_PROCESADO
-            else:
-                material.estado = MaterialEstudio.ESTADO_PENDIENTE
-
+            material.estado = MaterialEstudio.ESTADO_PENDIENTE
             material.save()
+
+            procesar_material(material)
 
             messages.success(
                 request,
-                "Material guardado correctamente.",
+                "Material guardado y procesado correctamente.",
             )
 
             return redirect("documentos:detalle", pk=material.pk)
@@ -75,6 +73,27 @@ def detalle_material(request, pk):
             "material": material,
         },
     )
+
+
+@login_required
+def reprocesar_material(request, pk):
+    material = get_object_or_404(
+        MaterialEstudio,
+        pk=pk,
+        user=request.user,
+    )
+
+    if request.method != "POST":
+        raise Http404()
+
+    procesar_material(material)
+
+    messages.success(
+        request,
+        "Material reprocesado correctamente.",
+    )
+
+    return redirect("documentos:detalle", pk=material.pk)
 
 
 @login_required

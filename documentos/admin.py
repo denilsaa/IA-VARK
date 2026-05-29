@@ -16,6 +16,7 @@ class MaterialEstudioAdmin(admin.ModelAdmin):
     search_fields = (
         "titulo",
         "tema",
+        "temario_examen",
         "descripcion",
         "user__username",
         "user__email",

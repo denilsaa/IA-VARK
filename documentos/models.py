@@ -1,4 +1,5 @@
 import os
+
 from django.conf import settings
 from django.db import models
 
@@ -25,11 +26,13 @@ class MaterialEstudio(models.Model):
     ]
 
     ESTADO_PENDIENTE = "pendiente"
+    ESTADO_PROCESANDO = "procesando"
     ESTADO_PROCESADO = "procesado"
     ESTADO_ERROR = "error"
 
     ESTADO_CHOICES = [
         (ESTADO_PENDIENTE, "Pendiente"),
+        (ESTADO_PROCESANDO, "Procesando"),
         (ESTADO_PROCESADO, "Procesado"),
         (ESTADO_ERROR, "Error"),
     ]
@@ -41,10 +44,17 @@ class MaterialEstudio(models.Model):
     )
 
     titulo = models.CharField(max_length=180)
+
     tema = models.CharField(
         max_length=180,
         blank=True,
-        help_text="Tema relacionado con el material.",
+        help_text="Tema general relacionado con el material.",
+    )
+
+    temario_examen = models.TextField(
+        blank=True,
+        default="",
+        help_text="Temas específicos que entrarán al examen.",
     )
 
     descripcion = models.TextField(blank=True)
@@ -63,12 +73,37 @@ class MaterialEstudio(models.Model):
 
     texto_manual = models.TextField(
         blank=True,
-        help_text="Texto escrito directamente por el estudiante.",
+        help_text="Campo conservado para materiales antiguos.",
     )
 
     texto_extraido = models.TextField(
         blank=True,
-        help_text="Texto extraído del archivo o copiado desde el texto manual.",
+        help_text="Texto extraído del archivo.",
+    )
+
+    resumen_ia = models.TextField(
+        blank=True,
+        help_text="Resumen generado por Gemini.",
+    )
+
+    temas_clave_ia = models.TextField(
+        blank=True,
+        help_text="Temas clave detectados por Gemini.",
+    )
+
+    preguntas_sugeridas_ia = models.TextField(
+        blank=True,
+        help_text="Preguntas sugeridas por Gemini.",
+    )
+
+    recomendacion_ia = models.TextField(
+        blank=True,
+        help_text="Recomendación generada por Gemini.",
+    )
+
+    error_procesamiento = models.TextField(
+        blank=True,
+        help_text="Mensaje de error si el procesamiento falla.",
     )
 
     estado = models.CharField(
@@ -98,6 +133,15 @@ class MaterialEstudio(models.Model):
     @property
     def tiene_contenido(self):
         return bool(self.archivo or self.texto_manual)
+
+    @property
+    def tiene_analisis_ia(self):
+        return bool(
+            self.resumen_ia
+            or self.temas_clave_ia
+            or self.preguntas_sugeridas_ia
+            or self.recomendacion_ia
+        )
 
     @property
     def tipo_icono(self):

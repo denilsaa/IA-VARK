@@ -8,13 +8,21 @@
         <p class="eyebrow">Detalle del material</p>
         <h1>{{ material.titulo }}</h1>
         <p>
-            Revisa la informaci&oacute;n guardada para este material de estudio.
+            Revisa el texto extra&iacute;do y el an&aacute;lisis generado por Gemini.
         </p>
     </div>
 </section>
 
 <section class="section-band">
     <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <div class="form-panel wide-panel">
             <div class="material-detail-header">
                 <div class="material-icon large">
@@ -28,9 +36,15 @@
                 </div>
             </div>
 
+            {% if material.estado == "error" %}
+                <div class="alert alert-danger mt-4">
+                    {{ material.error_procesamiento }}
+                </div>
+            {% endif %}
+
             <div class="detail-grid mt-4">
                 <div>
-                    <strong>Tema</strong>
+                    <strong>Tema general</strong>
                     <p>{{ material.tema|default:"Sin tema registrado" }}</p>
                 </div>
 
@@ -50,6 +64,13 @@
                 </div>
             </div>
 
+            {% if material.temario_examen %}
+                <div class="text-preview mt-4">
+                    <strong>Temas que entran al examen</strong>
+                    <p>{{ material.temario_examen|linebreaks }}</p>
+                </div>
+            {% endif %}
+
             {% if material.descripcion %}
                 <div class="mt-4">
                     <strong>Descripci&oacute;n</strong>
@@ -64,8 +85,7 @@
                         <strong>Archivo guardado</strong>
                     </div>
                     <p>
-                        El archivo est&aacute; guardado en el sistema. En la siguiente etapa
-                        extraeremos su texto para analizarlo con Gemini.
+                        El archivo est&aacute; guardado en el sistema.
                     </p>
                     <a href="{{ material.archivo.url }}" target="_blank" class="btn btn-outline-primary mt-3">
                         Abrir archivo
@@ -73,24 +93,62 @@
                 </div>
             {% endif %}
 
-            {% if material.texto_manual %}
-                <div class="text-preview mt-4">
-                    <strong>Texto manual</strong>
-                    <p>{{ material.texto_manual|linebreaks }}</p>
+            {% if material.tiene_analisis_ia %}
+                <div class="ai-analysis mt-4">
+                    <div class="ai-box-title">
+                        <i data-lucide="sparkles"></i>
+                        <strong>An&aacute;lisis generado por Gemini</strong>
+                    </div>
+
+                    {% if material.resumen_ia %}
+                        <div class="text-preview mt-4">
+                            <strong>Resumen</strong>
+                            <p>{{ material.resumen_ia|linebreaks }}</p>
+                        </div>
+                    {% endif %}
+
+                    {% if material.temas_clave_ia %}
+                        <div class="text-preview mt-4">
+                            <strong>Temas clave</strong>
+                            <p>{{ material.temas_clave_ia|linebreaks }}</p>
+                        </div>
+                    {% endif %}
+
+                    {% if material.preguntas_sugeridas_ia %}
+                        <div class="text-preview mt-4">
+                            <strong>Preguntas sugeridas</strong>
+                            <p>{{ material.preguntas_sugeridas_ia|linebreaks }}</p>
+                        </div>
+                    {% endif %}
+
+                    {% if material.recomendacion_ia %}
+                        <div class="text-preview mt-4">
+                            <strong>Recomendaci&oacute;n</strong>
+                            <p>{{ material.recomendacion_ia|linebreaks }}</p>
+                        </div>
+                    {% endif %}
                 </div>
             {% endif %}
 
             {% if material.texto_extraido %}
-                <div class="text-preview mt-4">
-                    <strong>Texto disponible para an&aacute;lisis</strong>
-                    <p>{{ material.texto_extraido|linebreaks }}</p>
-                </div>
+                <details class="text-preview mt-4">
+                    <summary><strong>Ver texto extra&iacute;do</strong></summary>
+                    <p class="mt-4">{{ material.texto_extraido|linebreaks }}</p>
+                </details>
             {% endif %}
 
             <div class="form-actions">
                 <a href="{% url 'documentos:lista' %}" class="btn btn-outline-primary">
                     Volver a materiales
                 </a>
+
+                <form method="post" action="{% url 'documentos:reprocesar' material.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-primary icon-btn">
+                        <i data-lucide="refresh-cw"></i>
+                        <span>Reprocesar</span>
+                    </button>
+                </form>
 
                 <form method="post" action="{% url 'documentos:eliminar' material.pk %}">
                     {% csrf_token %}

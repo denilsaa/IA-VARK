@@ -8,9 +8,8 @@
         <p class="eyebrow">Materiales de estudio</p>
         <h1>Subir material</h1>
         <p>
-            Guarda tus apuntes, PDFs, documentos, im&aacute;genes o texto manual.
-            M&aacute;s adelante Gemini podr&aacute; analizarlos para generar res&uacute;menes,
-            rutas y preguntas.
+            Sube tu libro, PDF, documento o imagen. Luego indica qu&eacute; temas entrar&aacute;n
+            al examen para que Gemini analice el contenido correcto.
         </p>
     </div>
 </section>
@@ -75,6 +74,17 @@
             </div>
 
             <div class="form-group mt-4">
+                <label class="form-label" for="{{ form.temario_examen.id_for_label }}">
+                    {{ form.temario_examen.label }}
+                </label>
+                {{ form.temario_examen }}
+                <small class="form-hint">
+                    Escribe aqu&iacute; los temas que el docente dijo que entrar&aacute;n al examen.
+                </small>
+                {{ form.temario_examen.errors }}
+            </div>
+
+            <div class="form-group mt-4">
                 <label class="form-label" for="{{ form.descripcion.id_for_label }}">
                     {{ form.descripcion.label }}
                 </label>
@@ -82,25 +92,16 @@
                 {{ form.descripcion.errors }}
             </div>
 
-            <div class="form-group mt-4">
-                <label class="form-label" for="{{ form.texto_manual.id_for_label }}">
-                    {{ form.texto_manual.label }}
-                </label>
-                {{ form.texto_manual }}
-                <small class="form-hint">
-                    Puedes usar este campo si no tienes archivo y quieres pegar tus apuntes directamente.
-                </small>
-                {{ form.texto_manual.errors }}
-            </div>
-
             <div class="info-box mt-4">
                 <div class="ai-box-title">
                     <i data-lucide="info"></i>
-                    <strong>Etapa actual</strong>
+                    <strong>Ejemplo de temas del examen</strong>
                 </div>
                 <p>
-                    En esta fase el sistema guarda y organiza tus materiales.
-                    El siguiente paso ser&aacute; extraer texto y analizarlos con Gemini.
+                    &Oacute;rganos del abdomen<br>
+                    &Oacute;rganos de la regi&oacute;n lumbar y pelvis menor<br>
+                    Perin&eacute;<br>
+                    Anatom&iacute;a topogr&aacute;fica del perin&eacute;
                 </p>
             </div>
 
@@ -111,7 +112,7 @@
 
                 <button type="submit" class="btn btn-primary icon-btn">
                     <i data-lucide="upload-cloud"></i>
-                    <span>Guardar material</span>
+                    <span>Guardar y analizar material</span>
                 </button>
             </div>
         </form>

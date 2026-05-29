@@ -24,23 +24,36 @@ class MaterialEstudioForm(forms.ModelForm):
         fields = [
             "titulo",
             "tema",
+            "temario_examen",
             "descripcion",
             "tipo",
             "archivo",
-            "texto_manual",
         ]
 
         widgets = {
             "titulo": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Ejemplo: Apuntes sistema óseo",
+                    "placeholder": "Ejemplo: Libro de Anatomía - Rouvière Tomo 2",
                 }
             ),
             "tema": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Ejemplo: Sistema óseo, cráneo, músculos...",
+                    "placeholder": "Ejemplo: Tronco, abdomen, pelvis",
+                }
+            ),
+            "temario_examen": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 5,
+                    "placeholder": (
+                        "Ejemplo:\n"
+                        "Órganos del abdomen\n"
+                        "Órganos de la región lumbar y pelvis menor\n"
+                        "Periné\n"
+                        "Anatomía topográfica del periné"
+                    ),
                 }
             ),
             "descripcion": forms.Textarea(
@@ -61,22 +74,15 @@ class MaterialEstudioForm(forms.ModelForm):
                     "accept": ".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.txt",
                 }
             ),
-            "texto_manual": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 6,
-                    "placeholder": "También puedes pegar aquí apuntes escritos manualmente.",
-                }
-            ),
         }
 
         labels = {
             "titulo": "Título del material",
-            "tema": "Tema relacionado",
+            "tema": "Tema general",
+            "temario_examen": "Temas que entran al examen",
             "descripcion": "Descripción",
             "tipo": "Tipo de material",
             "archivo": "Archivo",
-            "texto_manual": "Texto manual",
         }
 
     def clean(self):
@@ -84,11 +90,10 @@ class MaterialEstudioForm(forms.ModelForm):
 
         archivo_limpio = cleaned_data.get("archivo")
         archivo_enviado = self.files.get("archivo")
-        texto_manual = cleaned_data.get("texto_manual", "").strip()
 
-        if not archivo_limpio and not archivo_enviado and not texto_manual:
+        if not archivo_limpio and not archivo_enviado:
             raise forms.ValidationError(
-                "Debes subir un archivo o escribir texto manual."
+                "Debes subir un archivo para guardar el material."
             )
 
         return cleaned_data
