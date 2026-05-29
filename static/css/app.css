@@ -941,3 +941,139 @@ textarea.form-control {
         line-height: 1.15;
     }
 }
+.wide-panel {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.question-card {
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(15, 77, 78, 0.12);
+    border-radius: 1.25rem;
+    background: #ffffff;
+}
+
+.question-card h3 {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    color: #123333;
+}
+
+.option-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.option-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(15, 77, 78, 0.12);
+    border-radius: 0.9rem;
+    cursor: pointer;
+    transition: 0.2s ease;
+    background: #f8fbfb;
+}
+
+.option-item:hover {
+    border-color: #138a7e;
+    background: #eefaf8;
+}
+
+.option-item input {
+    margin-top: 0.25rem;
+}
+
+.option-item span {
+    color: #274444;
+    line-height: 1.45;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.result-card strong {
+    display: block;
+    font-size: 1.5rem;
+    color: #123333;
+    margin-top: 0.5rem;
+}
+
+.clean-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.clean-list li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    color: #274444;
+}
+
+.clean-list i {
+    color: #138a7e;
+    flex-shrink: 0;
+}
+
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .result-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .result-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        justify-content: stretch;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+}
+.ai-box {
+    padding: 1rem 1.1rem;
+    margin: 1rem 0 1.25rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(19, 138, 126, 0.18);
+    background: #eefaf8;
+    color: #244747;
+}
+
+.ai-box-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #138a7e;
+    margin-bottom: 0.5rem;
+}
+
+.ai-box p {
+    margin: 0;
+    line-height: 1.55;
+}

@@ -10,3 +10,4 @@ python-docx
 pytesseract
 openai
 chromadb
+google-genai

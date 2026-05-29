@@ -3,45 +3,80 @@
 {% block title %}Resultado VARK | Tutor IA Anatom&iacute;a VARK{% endblock %}
 
 {% block content %}
-<section class="result-hero">
-    <p class="eyebrow">Resultado VARK</p>
-    <h1>Tu estilo principal es {{ estilo_principal }}</h1>
-    <p>Aprendes mejor con esquemas, imagenes, mapas, colores y comparaciones visuales.</p>
+<section class="page-hero">
+    <div>
+        <p class="eyebrow">Resultado del diagn&oacute;stico</p>
+        <h1>Tu estilo principal es {{ perfil.estilo_display }}</h1>
+        <p>{{ recomendacion.descripcion }}</p>
+    </div>
 </section>
 
-<section class="content-grid">
-    <div class="panel-block">
-        <div class="panel-title">
-            <h2>Puntaje por estilo</h2>
-        </div>
-        <div class="score-stack">
-            {% for puntaje in puntajes %}
-                <div>
-                    <div class="score-row">
-                        <span>{{ puntaje.estilo }}</span>
-                        <strong>{{ puntaje.valor }}%</strong>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar {{ puntaje.class }}" style="width: {{ puntaje.valor }}%"></div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
+<section class="section-band">
+    <div class="container">
+        <div class="result-grid">
+            <article class="feature-card result-card">
+                <i data-lucide="eye"></i>
+                <h3>Visual</h3>
+                <strong>{{ perfil.puntaje_visual }} puntos</strong>
+                <p>{{ porcentajes.visual }}%</p>
+            </article>
 
-    <div class="panel-block">
-        <div class="panel-title">
-            <h2>Recomendaciones</h2>
+            <article class="feature-card result-card">
+                <i data-lucide="volume-2"></i>
+                <h3>Auditivo</h3>
+                <strong>{{ perfil.puntaje_auditivo }} puntos</strong>
+                <p>{{ porcentajes.auditivo }}%</p>
+            </article>
+
+            <article class="feature-card result-card">
+                <i data-lucide="book-open"></i>
+                <h3>Lectura/Escritura</h3>
+                <strong>{{ perfil.puntaje_lectura }} puntos</strong>
+                <p>{{ porcentajes.lectura }}%</p>
+            </article>
+
+            <article class="feature-card result-card">
+                <i data-lucide="activity"></i>
+                <h3>Kinest&eacute;sico</h3>
+                <strong>{{ perfil.puntaje_kinestesico }} puntos</strong>
+                <p>{{ porcentajes.kinestesico }}%</p>
+            </article>
         </div>
-        <ul class="check-list">
-            {% for recomendacion in recomendaciones %}
-                <li><i data-lucide="check"></i><span>{{ recomendacion }}</span></li>
-            {% endfor %}
-        </ul>
-        <a href="{% url 'usuarios:dashboard' %}" class="btn btn-primary icon-btn mt-3">
-            <i data-lucide="layout-dashboard"></i>
-            <span>Continuar al panel</span>
-        </a>
+
+        <div class="form-panel wide-panel mt-4">
+            <p class="eyebrow">{{ recomendacion.titulo }}</p>
+            <h2>Recomendaciones para estudiar Anatom&iacute;a</h2>
+
+            {% if recomendacion_llm %}
+                <div class="ai-box">
+                    <div class="ai-box-title">
+                        <i data-lucide="sparkles"></i>
+                        <strong>Recomendaci&oacute;n generada por IA</strong>
+                    </div>
+                    <p>{{ recomendacion_llm }}</p>
+                </div>
+            {% endif %}
+
+            <ul class="clean-list">
+                {% for estrategia in recomendacion.estrategias %}
+                    <li>
+                        <i data-lucide="check"></i>
+                        <span>{{ estrategia }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <div class="form-actions">
+                <a href="{% url 'vark:test' %}" class="btn btn-outline-primary">
+                    Repetir test
+                </a>
+
+                <a href="{% url 'usuarios:dashboard' %}" class="btn btn-primary icon-btn">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Ir al dashboard</span>
+                </a>
+            </div>
+        </div>
     </div>
 </section>
 {% endblock %}

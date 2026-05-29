@@ -2,6 +2,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
+from vark.models import PerfilVARK
+
 
 def home(request):
     if request.user.is_authenticated:
@@ -12,8 +14,15 @@ def home(request):
 
 @login_required
 def dashboard(request):
+    perfil_vark = PerfilVARK.objects.filter(user=request.user).first()
+
+    if perfil_vark:
+        estilo_vark = perfil_vark.estilo_display
+    else:
+        estilo_vark = "Pendiente"
+
     resumen = {
-        "estilo_vark": "Pendiente",
+        "estilo_vark": estilo_vark,
         "proximo_examen": "Pendiente",
         "fecha_examen": "Sin registrar",
         "materiales": 0,
@@ -28,7 +37,7 @@ def dashboard(request):
             "icon": "scan-eye",
         },
         {
-            "label": "Datos academicos",
+            "label": "Datos académicos",
             "url": reverse("anatomia:datos_academicos"),
             "icon": "clipboard-list",
         },
@@ -60,25 +69,30 @@ def dashboard(request):
         {
             "resumen": resumen,
             "accesos": accesos,
+            "perfil_vark": perfil_vark,
         },
     )
 
 
 @login_required
 def redireccion_post_login(request):
-    """
-    Luego aqui conectaremos la logica real:
+    tiene_vark = PerfilVARK.objects.filter(user=request.user).exists()
 
-    1. Si no hizo el test VARK -> enviarlo al test.
-    2. Si no registro datos academicos -> enviarlo a datos academicos.
-    3. Si ya completo lo basico -> enviarlo al dashboard.
-    """
+    if not tiene_vark:
+        return redirect("vark:test")
 
     return redirect("usuarios:dashboard")
 
 
 @login_required
 def progreso(request):
+    perfil_vark = PerfilVARK.objects.filter(user=request.user).first()
+
+    if perfil_vark:
+        estilo_vark = perfil_vark.estilo_display
+    else:
+        estilo_vark = "Pendiente"
+
     simulacros = []
 
     return render(
@@ -88,7 +102,7 @@ def progreso(request):
             "simulacros": simulacros,
             "fuertes": [],
             "debiles": [],
-            "estilo_vark": "Pendiente",
-            "recomendacion": "Todavia no hay resultados guardados. Realiza el test VARK y genera un primer simulacro para ver tu progreso.",
+            "estilo_vark": estilo_vark,
+            "recomendacion": "Todavía no hay resultados de exámenes guardados. Realiza un simulacro para ver tu progreso.",
         },
     )

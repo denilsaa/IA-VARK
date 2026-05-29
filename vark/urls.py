@@ -5,6 +5,7 @@ from . import views
 app_name = "vark"
 
 urlpatterns = [
-    path("test/", views.test, name="test"),
-    path("resultado/", views.resultado, name="resultado"),
+    path("test/", views.test_vark, name="test"),
+    path("desempate/", views.desempate_vark, name="desempate"),
+    path("resultado/", views.resultado_vark, name="resultado"),
 ]

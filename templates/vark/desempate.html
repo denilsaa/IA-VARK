@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Desempate VARK | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div>
+        <p class="eyebrow">Pregunta de desempate</p>
+        <h1>Definir estilo principal</h1>
+        <p>
+            Tus respuestas fueron equilibradas. Esta pregunta final permitir&aacute;
+            guardar un solo estilo principal en tu perfil.
+        </p>
+    </div>
+</section>
+
+<section class="section-band">
+    <div class="container">
+        <form method="post" class="form-panel wide-panel">
+            {% csrf_token %}
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <article class="question-card">
+                <h3>{{ pregunta.texto }}</h3>
+
+                <div class="option-list">
+                    {% for opcion in pregunta.opciones %}
+                        <label class="option-item">
+                            <input
+                                type="radio"
+                                name="estilo_desempate"
+                                value="{{ opcion.valor }}"
+                                required
+                            >
+                            <span>
+                                <strong>{{ opcion.label }}:</strong>
+                                {{ opcion.texto }}
+                            </span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </article>
+
+            <div class="form-actions">
+                <a href="{% url 'vark:test' %}" class="btn btn-outline-primary">
+                    Repetir test
+                </a>
+
+                <button type="submit" class="btn btn-primary icon-btn">
+                    <i data-lucide="check-circle"></i>
+                    <span>Guardar estilo final</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

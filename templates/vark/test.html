@@ -3,36 +3,84 @@
 {% block title %}Test VARK | Tutor IA Anatom&iacute;a VARK{% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-hero">
     <div>
-        <p class="eyebrow">Diagnostico VARK</p>
-        <h1>Test de estilo de aprendizaje</h1>
-        <p>Responde las 10 preguntas para identificar tu estilo principal.</p>
+        <p class="eyebrow">Diagn&oacute;stico generado con IA</p>
+        <h1>Test VARK</h1>
+        <p>
+            Responde estas 10 preguntas cotidianas. El sistema calcular&aacute;
+            tu estilo principal y lo guardar&aacute; en tu perfil.
+        </p>
+
+        {% if origen_preguntas == "gemini" %}
+            <div class="ai-box">
+                <div class="ai-box-title">
+                    <i data-lucide="sparkles"></i>
+                    <strong>Preguntas generadas por Gemini</strong>
+                </div>
+                <p>
+                    Este test fue creado din&aacute;micamente por el LLM usando situaciones cotidianas.
+                </p>
+            </div>
+        {% else %}
+            <div class="ai-box">
+                <div class="ai-box-title">
+                    <i data-lucide="info"></i>
+                    <strong>Preguntas de respaldo local</strong>
+                </div>
+                <p>
+                    El sistema us&oacute; preguntas internas porque el LLM no respondi&oacute;
+                    con el formato esperado.
+                </p>
+            </div>
+        {% endif %}
     </div>
 </section>
 
-<form method="post" class="question-stack">
-    {% csrf_token %}
-    {% for pregunta in preguntas %}
-        <fieldset class="question-card">
-            <legend>{{ pregunta.numero }}. {{ pregunta.texto }}</legend>
-            <div class="option-grid">
-                {% for valor, etiqueta, descripcion in opciones %}
-                    <label class="option-tile">
-                        <input type="radio" name="q{{ pregunta.numero }}" value="{{ valor }}" required>
-                        <span class="option-title">{{ etiqueta }}</span>
-                        <small>{{ descripcion }}</small>
-                    </label>
-                {% endfor %}
-            </div>
-        </fieldset>
-    {% endfor %}
+<section class="section-band">
+    <div class="container">
+        <form method="post" class="form-panel wide-panel">
+            {% csrf_token %}
 
-    <div class="form-actions">
-        <button class="btn btn-primary btn-lg icon-btn" type="submit">
-            <i data-lucide="send"></i>
-            <span>Enviar respuestas</span>
-        </button>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% for pregunta in preguntas %}
+                <article class="question-card">
+                    <h3>{{ forloop.counter }}. {{ pregunta.texto }}</h3>
+
+                    <div class="option-list">
+                        {% for opcion in pregunta.opciones %}
+                            <label class="option-item">
+                                <input
+                                    type="radio"
+                                    name="pregunta_{{ pregunta.id }}"
+                                    value="{{ opcion.valor }}"
+                                    required
+                                >
+                                <span>{{ opcion.texto }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </article>
+            {% endfor %}
+
+            <div class="form-actions">
+                <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
+                    Volver
+                </a>
+
+                <button type="submit" class="btn btn-primary icon-btn">
+                    <i data-lucide="check-circle"></i>
+                    <span>Guardar resultado</span>
+                </button>
+            </div>
+        </form>
     </div>
-</form>
+</section>
 {% endblock %}

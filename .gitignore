@@ -6,3 +6,4 @@ media/
 staticfiles/
 .venv/
 vectorstore/
+.env
