@@ -1,57 +1,85 @@
 {% extends "base.html" %}
 
-{% block title %}Mis materiales | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Materiales | Tutor IA Anatom&iacute;a VARK{% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-hero">
     <div>
         <p class="eyebrow">Biblioteca personal</p>
         <h1>Mis materiales</h1>
-        <p>Documentos cargados y estado de procesamiento.</p>
+        <p>
+            Aqu&iacute; puedes ver los materiales que subiste para estudiar Anatom&iacute;a I.
+        </p>
     </div>
-    <a href="{% url 'documentos:subir' %}" class="btn btn-primary icon-btn">
-        <i data-lucide="upload-cloud"></i>
-        <span>Subir material</span>
-    </a>
 </section>
 
-<div class="table-panel">
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th>Nombre del archivo</th>
-                    <th>Tipo</th>
-                    <th>Fecha de subida</th>
-                    <th>Tema relacionado</th>
-                    <th>Estado</th>
-                    <th class="text-end">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
+<section class="section-band">
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="form-actions mb-4">
+            <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
+                Volver al dashboard
+            </a>
+
+            <a href="{% url 'documentos:subir' %}" class="btn btn-primary icon-btn">
+                <i data-lucide="upload-cloud"></i>
+                <span>Subir nuevo material</span>
+            </a>
+        </div>
+
+        {% if materiales %}
+            <div class="materials-grid">
                 {% for material in materiales %}
-                    <tr>
-                        <td>{{ material.nombre }}</td>
-                        <td>{{ material.tipo }}</td>
-                        <td>{{ material.fecha }}</td>
-                        <td>{{ material.tema }}</td>
-                        <td>
-                            <span class="status-pill {% if material.estado == 'Procesado' %}status-ready{% else %}status-pending{% endif %}">
-                                {{ material.estado }}
-                            </span>
-                        </td>
-                        <td class="text-end">
-                            <button class="btn btn-sm btn-outline-primary icon-only" type="button" title="Ver">
-                                <i data-lucide="eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger icon-only" type="button" title="Eliminar">
-                                <i data-lucide="trash-2"></i>
-                            </button>
-                        </td>
-                    </tr>
+                    <article class="feature-card material-card">
+                        <div class="material-icon">
+                            <i data-lucide="{{ material.tipo_icono }}"></i>
+                        </div>
+
+                        <h3>{{ material.titulo }}</h3>
+
+                        {% if material.tema %}
+                            <p><strong>Tema:</strong> {{ material.tema }}</p>
+                        {% endif %}
+
+                        <p>
+                            <strong>Tipo:</strong> {{ material.get_tipo_display }}
+                        </p>
+
+                        <p>
+                            <strong>Estado:</strong> {{ material.get_estado_display }}
+                        </p>
+
+                        <small>
+                            Subido el {{ material.creado|date:"d/m/Y H:i" }}
+                        </small>
+
+                        <div class="card-actions">
+                            <a href="{% url 'documentos:detalle' material.pk %}" class="btn btn-outline-primary btn-sm">
+                                Ver detalle
+                            </a>
+                        </div>
+                    </article>
                 {% endfor %}
-            </tbody>
-        </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i data-lucide="folder-open"></i>
+                <h2>No tienes materiales todav&iacute;a</h2>
+                <p>Sube tu primer archivo o escribe texto manual para comenzar.</p>
+
+                <a href="{% url 'documentos:subir' %}" class="btn btn-primary icon-btn">
+                    <i data-lucide="upload-cloud"></i>
+                    <span>Subir material</span>
+                </a>
+            </div>
+        {% endif %}
     </div>
-</div>
+</section>
 {% endblock %}

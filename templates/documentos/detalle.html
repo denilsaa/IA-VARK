@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle material | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div>
+        <p class="eyebrow">Detalle del material</p>
+        <h1>{{ material.titulo }}</h1>
+        <p>
+            Revisa la informaci&oacute;n guardada para este material de estudio.
+        </p>
+    </div>
+</section>
+
+<section class="section-band">
+    <div class="container">
+        <div class="form-panel wide-panel">
+            <div class="material-detail-header">
+                <div class="material-icon large">
+                    <i data-lucide="{{ material.tipo_icono }}"></i>
+                </div>
+
+                <div>
+                    <p class="eyebrow">{{ material.get_tipo_display }}</p>
+                    <h2>{{ material.titulo }}</h2>
+                    <p>Estado: {{ material.get_estado_display }}</p>
+                </div>
+            </div>
+
+            <div class="detail-grid mt-4">
+                <div>
+                    <strong>Tema</strong>
+                    <p>{{ material.tema|default:"Sin tema registrado" }}</p>
+                </div>
+
+                <div>
+                    <strong>Archivo</strong>
+                    <p>{{ material.nombre_archivo }}</p>
+                </div>
+
+                <div>
+                    <strong>Subido</strong>
+                    <p>{{ material.creado|date:"d/m/Y H:i" }}</p>
+                </div>
+
+                <div>
+                    <strong>Actualizado</strong>
+                    <p>{{ material.actualizado|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+
+            {% if material.descripcion %}
+                <div class="mt-4">
+                    <strong>Descripci&oacute;n</strong>
+                    <p>{{ material.descripcion }}</p>
+                </div>
+            {% endif %}
+
+            {% if material.archivo %}
+                <div class="info-box mt-4">
+                    <div class="ai-box-title">
+                        <i data-lucide="paperclip"></i>
+                        <strong>Archivo guardado</strong>
+                    </div>
+                    <p>
+                        El archivo est&aacute; guardado en el sistema. En la siguiente etapa
+                        extraeremos su texto para analizarlo con Gemini.
+                    </p>
+                    <a href="{{ material.archivo.url }}" target="_blank" class="btn btn-outline-primary mt-3">
+                        Abrir archivo
+                    </a>
+                </div>
+            {% endif %}
+
+            {% if material.texto_manual %}
+                <div class="text-preview mt-4">
+                    <strong>Texto manual</strong>
+                    <p>{{ material.texto_manual|linebreaks }}</p>
+                </div>
+            {% endif %}
+
+            {% if material.texto_extraido %}
+                <div class="text-preview mt-4">
+                    <strong>Texto disponible para an&aacute;lisis</strong>
+                    <p>{{ material.texto_extraido|linebreaks }}</p>
+                </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <a href="{% url 'documentos:lista' %}" class="btn btn-outline-primary">
+                    Volver a materiales
+                </a>
+
+                <form method="post" action="{% url 'documentos:eliminar' material.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger icon-btn">
+                        <i data-lucide="trash-2"></i>
+                        <span>Eliminar</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

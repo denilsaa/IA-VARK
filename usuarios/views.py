@@ -3,6 +3,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from anatomia.models import DatosAcademicos
+from documentos.models import MaterialEstudio
 from vark.models import PerfilVARK
 
 
@@ -17,6 +18,7 @@ def home(request):
 def dashboard(request):
     perfil_vark = PerfilVARK.objects.filter(user=request.user).first()
     datos_academicos = DatosAcademicos.objects.filter(user=request.user).first()
+    cantidad_materiales = MaterialEstudio.objects.filter(user=request.user).count()
 
     if perfil_vark:
         estilo_vark = perfil_vark.estilo_display
@@ -43,7 +45,7 @@ def dashboard(request):
         "fecha_examen": fecha_examen,
         "dias_restantes": dias_restantes,
         "tiempo_estudio": tiempo_estudio,
-        "materiales": 0,
+        "materiales": cantidad_materiales,
         "ruta_activa": "Sin ruta activa",
         "ultimo_puntaje": "Sin simulacros",
     }
@@ -63,6 +65,11 @@ def dashboard(request):
             "label": "Subir material",
             "url": reverse("documentos:subir"),
             "icon": "upload-cloud",
+        },
+        {
+            "label": "Ver materiales",
+            "url": reverse("documentos:lista"),
+            "icon": "folder-open",
         },
         {
             "label": "Ver ruta",

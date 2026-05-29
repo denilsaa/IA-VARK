@@ -3,45 +3,118 @@
 {% block title %}Subir material | Tutor IA Anatom&iacute;a VARK{% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-hero">
     <div>
-        <p class="eyebrow">Documentos de estudio</p>
+        <p class="eyebrow">Materiales de estudio</p>
         <h1>Subir material</h1>
-        <p>Carga archivos o pega texto para que el sistema los vincule con tu ruta.</p>
+        <p>
+            Guarda tus apuntes, PDFs, documentos, im&aacute;genes o texto manual.
+            M&aacute;s adelante Gemini podr&aacute; analizarlos para generar res&uacute;menes,
+            rutas y preguntas.
+        </p>
     </div>
-    <a href="{% url 'documentos:lista' %}" class="btn btn-outline-primary icon-btn">
-        <i data-lucide="folder-open"></i>
-        <span>Mis materiales</span>
-    </a>
 </section>
 
-<form method="post" enctype="multipart/form-data" class="form-panel wide-form">
-    {% csrf_token %}
-    <div class="row g-3">
-        <div class="col-md-6">
-            <label class="form-label" for="archivo">Archivo</label>
-            <input class="form-control" id="archivo" type="file" name="archivo" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-            <small class="field-help">PDF, Word, JPG o PNG.</small>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label" for="tema">Materia o tema</label>
-            <input class="form-control" id="tema" name="tema" placeholder="Ej. Huesos del craneo" required>
-        </div>
-        <div class="col-12">
-            <label class="form-label" for="descripcion">Descripcion opcional</label>
-            <textarea class="form-control" id="descripcion" name="descripcion" rows="3" placeholder="Contexto del documento, docente, unidad o prioridad"></textarea>
-        </div>
-        <div class="col-12">
-            <label class="form-label" for="texto_manual">Texto escrito manualmente</label>
-            <textarea class="form-control" id="texto_manual" name="texto_manual" rows="6" placeholder="Pega aqui apuntes, resumenes o preguntas"></textarea>
-        </div>
-    </div>
+<section class="section-band">
+    <div class="container">
+        <form method="post" enctype="multipart/form-data" class="form-panel wide-panel">
+            {% csrf_token %}
 
-    <div class="form-actions">
-        <button class="btn btn-primary btn-lg icon-btn" type="submit">
-            <i data-lucide="upload-cloud"></i>
-            <span>Subir material</span>
-        </button>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.titulo.id_for_label }}">
+                        {{ form.titulo.label }}
+                    </label>
+                    {{ form.titulo }}
+                    {{ form.titulo.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.tema.id_for_label }}">
+                        {{ form.tema.label }}
+                    </label>
+                    {{ form.tema }}
+                    {{ form.tema.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.tipo.id_for_label }}">
+                        {{ form.tipo.label }}
+                    </label>
+                    {{ form.tipo }}
+                    <small class="form-hint">
+                        Si subes un archivo, el sistema puede detectar el tipo autom&aacute;ticamente.
+                    </small>
+                    {{ form.tipo.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.archivo.id_for_label }}">
+                        {{ form.archivo.label }}
+                    </label>
+                    {{ form.archivo }}
+                    <small class="form-hint">
+                        Formatos permitidos: PDF, Word, JPG, PNG, WEBP o TXT. M&aacute;ximo 500 MB.
+                    </small>
+                    {{ form.archivo.errors }}
+                </div>
+            </div>
+
+            <div class="form-group mt-4">
+                <label class="form-label" for="{{ form.descripcion.id_for_label }}">
+                    {{ form.descripcion.label }}
+                </label>
+                {{ form.descripcion }}
+                {{ form.descripcion.errors }}
+            </div>
+
+            <div class="form-group mt-4">
+                <label class="form-label" for="{{ form.texto_manual.id_for_label }}">
+                    {{ form.texto_manual.label }}
+                </label>
+                {{ form.texto_manual }}
+                <small class="form-hint">
+                    Puedes usar este campo si no tienes archivo y quieres pegar tus apuntes directamente.
+                </small>
+                {{ form.texto_manual.errors }}
+            </div>
+
+            <div class="info-box mt-4">
+                <div class="ai-box-title">
+                    <i data-lucide="info"></i>
+                    <strong>Etapa actual</strong>
+                </div>
+                <p>
+                    En esta fase el sistema guarda y organiza tus materiales.
+                    El siguiente paso ser&aacute; extraer texto y analizarlos con Gemini.
+                </p>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'documentos:lista' %}" class="btn btn-outline-primary">
+                    Ver materiales
+                </a>
+
+                <button type="submit" class="btn btn-primary icon-btn">
+                    <i data-lucide="upload-cloud"></i>
+                    <span>Guardar material</span>
+                </button>
+            </div>
+        </form>
     </div>
-</form>
+</section>
 {% endblock %}
