@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from anatomia.models import DatosAcademicos
 from documentos.models import MaterialEstudio
+from rutas.models import RutaAprendizaje
 from vark.models import PerfilVARK
 
 
@@ -19,6 +20,7 @@ def dashboard(request):
     perfil_vark = PerfilVARK.objects.filter(user=request.user).first()
     datos_academicos = DatosAcademicos.objects.filter(user=request.user).first()
     cantidad_materiales = MaterialEstudio.objects.filter(user=request.user).count()
+    ruta = RutaAprendizaje.objects.filter(user=request.user).first()
 
     if perfil_vark:
         estilo_vark = perfil_vark.estilo_display
@@ -38,6 +40,11 @@ def dashboard(request):
         dias_restantes = "Sin registrar"
         tiempo_estudio = "Sin registrar"
 
+    if ruta:
+        ruta_activa = f"{ruta.dias_planificados} días planificados"
+    else:
+        ruta_activa = "Sin ruta activa"
+
     resumen = {
         "estilo_vark": estilo_vark,
         "tema_actual": tema_actual,
@@ -46,7 +53,7 @@ def dashboard(request):
         "dias_restantes": dias_restantes,
         "tiempo_estudio": tiempo_estudio,
         "materiales": cantidad_materiales,
-        "ruta_activa": "Sin ruta activa",
+        "ruta_activa": ruta_activa,
         "ultimo_puntaje": "Sin simulacros",
     }
 

@@ -1300,3 +1300,44 @@ details.text-preview summary {
 details.text-preview summary:hover {
     color: #138a7e;
 }
+.route-list {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.route-day-card {
+    border-left: 5px solid #138a7e;
+}
+
+.route-day-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.route-day-number {
+    min-width: 48px;
+    width: 48px;
+    height: 48px;
+    border-radius: 1rem;
+    display: grid;
+    place-items: center;
+    background: #138a7e;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 1.2rem;
+}
+
+.route-day-header h3 {
+    margin: 0.25rem 0;
+}
+
+.route-day-header p {
+    margin: 0;
+}
+
+@media (max-width: 700px) {
+    .route-day-header {
+        flex-direction: column;
+    }
+}

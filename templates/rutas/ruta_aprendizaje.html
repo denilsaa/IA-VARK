@@ -3,35 +3,238 @@
 {% block title %}Ruta de aprendizaje | Tutor IA Anatom&iacute;a VARK{% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-hero">
     <div>
-        <p class="eyebrow">Plan personalizado</p>
+        <p class="eyebrow">Ruta personalizada</p>
         <h1>Ruta de aprendizaje</h1>
-        <p>{{ tema }} | Examen: {{ fecha_examen }} | Estilo VARK usado: {{ estilo_vark }}</p>
+        <p>
+            Genera un plan de estudio usando tu estilo VARK, datos acad&eacute;micos,
+            temario del examen y materiales analizados con Gemini.
+        </p>
     </div>
-    <a href="{% url 'examenes:generar' %}" class="btn btn-primary icon-btn">
-        <i data-lucide="file-question"></i>
-        <span>Generar examen</span>
-    </a>
 </section>
 
-<section class="timeline">
-    {% for dia in dias %}
-        <article class="timeline-item">
-            <div class="timeline-marker">{{ dia.dia }}</div>
-            <div class="timeline-content">
-                <h2>Dia {{ dia.dia }}: {{ dia.titulo }}</h2>
-                <ul>
-                    {% for actividad in dia.actividades %}
-                        <li>{{ actividad }}</li>
-                    {% endfor %}
-                </ul>
-                <button class="btn btn-outline-primary icon-btn" type="button">
-                    <i data-lucide="check-circle"></i>
-                    <span>Marcar como completado</span>
-                </button>
+<section class="section-band">
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="dashboard-grid">
+            <article class="feature-card dashboard-card">
+                <i data-lucide="scan-eye"></i>
+                <h3>Estilo VARK</h3>
+                <strong>{{ perfil_vark.estilo_display }}</strong>
+                <p>Base para adaptar las actividades.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="calendar-days"></i>
+                <h3>D&iacute;as hasta examen</h3>
+                <strong>{{ datos_academicos.dias_restantes }}</strong>
+                <p>Fecha: {{ datos_academicos.fecha_examen_formateada }}</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="clock"></i>
+                <h3>Tiempo diario</h3>
+                <strong>{{ datos_academicos.tiempo_estudio_display }}</strong>
+                <p>Disponible por d&iacute;a.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="folder-open"></i>
+                <h3>Materiales usados</h3>
+                <strong>{{ materiales|length }}</strong>
+                <p>Procesados correctamente.</p>
+            </article>
+        </div>
+
+        {% if not materiales %}
+            <div class="empty-state mt-4">
+                <i data-lucide="folder-open"></i>
+                <h2>No hay materiales procesados</h2>
+                <p>
+                    Para generar una ruta personalizada, primero sube y analiza al menos
+                    un material de estudio.
+                </p>
+
+                <a href="{% url 'documentos:subir' %}" class="btn btn-primary icon-btn">
+                    <i data-lucide="upload-cloud"></i>
+                    <span>Subir material</span>
+                </a>
             </div>
-        </article>
-    {% endfor %}
+        {% endif %}
+
+        {% if ruta %}
+            <div class="form-panel wide-panel mt-4">
+                <p class="eyebrow">Plan generado</p>
+                <h2>{{ ruta.titulo }}</h2>
+                <p>{{ ruta.resumen_general }}</p>
+
+                <div class="detail-grid mt-4">
+                    <div>
+                        <strong>Estilo usado</strong>
+                        <p>{{ ruta.estilo_vark_usado }}</p>
+                    </div>
+
+                    <div>
+                        <strong>D&iacute;as planificados</strong>
+                        <p>{{ ruta.dias_planificados }}</p>
+                    </div>
+
+                    <div>
+                        <strong>Minutos por d&iacute;a</strong>
+                        <p>{{ ruta.minutos_por_dia }} min</p>
+                    </div>
+
+                    <div>
+                        <strong>Actualizado</strong>
+                        <p>{{ ruta.actualizado|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+
+                {% if ruta.temas_priorizados_lista %}
+                    <div class="text-preview mt-4">
+                        <strong>Temas priorizados</strong>
+                        <ul class="clean-list mt-3">
+                            {% for tema in ruta.temas_priorizados_lista %}
+                                <li>
+                                    <i data-lucide="check"></i>
+                                    <span>{{ tema }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="section-heading mt-4">
+                <p class="eyebrow">Plan diario</p>
+                <h2>Actividades recomendadas</h2>
+            </div>
+
+            <div class="route-list">
+                {% for dia in ruta.plan_diario %}
+                    <article class="form-panel route-day-card">
+                        <div class="route-day-header">
+                            <div class="route-day-number">
+                                {{ dia.dia }}
+                            </div>
+
+                            <div>
+                                <p class="eyebrow">D&iacute;a {{ dia.dia }}</p>
+                                <h3>{{ dia.titulo }}</h3>
+                                <p>{{ dia.objetivo }}</p>
+                            </div>
+                        </div>
+
+                        <div class="detail-grid mt-4">
+                            <div>
+                                <strong>Tema principal</strong>
+                                <p>{{ dia.tema_principal }}</p>
+                            </div>
+
+                            <div>
+                                <strong>Tiempo sugerido</strong>
+                                <p>{{ dia.minutos }} min</p>
+                            </div>
+                        </div>
+
+                        {% if dia.actividades %}
+                            <div class="text-preview mt-4">
+                                <strong>Actividades</strong>
+                                <ul class="clean-list mt-3">
+                                    {% for actividad in dia.actividades %}
+                                        <li>
+                                            <i data-lucide="circle-dot"></i>
+                                            <span>{{ actividad }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        {% if dia.autoevaluacion %}
+                            <div class="text-preview mt-4">
+                                <strong>Autoevaluaci&oacute;n</strong>
+                                <ul class="clean-list mt-3">
+                                    {% for pregunta in dia.autoevaluacion %}
+                                        <li>
+                                            <i data-lucide="help-circle"></i>
+                                            <span>{{ pregunta }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        {% if dia.producto_esperado %}
+                            <div class="info-box mt-4">
+                                <div class="ai-box-title">
+                                    <i data-lucide="target"></i>
+                                    <strong>Producto esperado</strong>
+                                </div>
+                                <p>{{ dia.producto_esperado }}</p>
+                            </div>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+
+            {% if ruta.recomendaciones_lista %}
+                <div class="form-panel wide-panel mt-4">
+                    <p class="eyebrow">Cierre</p>
+                    <h2>Recomendaciones finales</h2>
+
+                    <ul class="clean-list mt-3">
+                        {% for recomendacion in ruta.recomendaciones_lista %}
+                            <li>
+                                <i data-lucide="check"></i>
+                                <span>{{ recomendacion }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <div class="form-actions mt-4">
+                <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
+                    Volver al dashboard
+                </a>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary icon-btn">
+                        <i data-lucide="refresh-cw"></i>
+                        <span>Regenerar ruta con Gemini</span>
+                    </button>
+                </form>
+            </div>
+        {% else %}
+            {% if materiales %}
+                <div class="empty-state mt-4">
+                    <i data-lucide="route"></i>
+                    <h2>A&uacute;n no tienes una ruta generada</h2>
+                    <p>
+                        Usa Gemini para crear un plan de estudio personalizado con tus datos
+                        acad&eacute;micos, VARK y materiales procesados.
+                    </p>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary icon-btn">
+                            <i data-lucide="sparkles"></i>
+                            <span>Generar ruta con Gemini</span>
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
 </section>
 {% endblock %}

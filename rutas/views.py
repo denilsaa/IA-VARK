@@ -1,38 +1,73 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+
+from anatomia.models import DatosAcademicos
+from documentos.models import MaterialEstudio
+from vark.models import PerfilVARK
+
+from .models import RutaAprendizaje
+from .services import generar_ruta_aprendizaje
 
 
 @login_required
 def ruta_aprendizaje(request):
-    dias = [
-        {
-            "dia": 1,
-            "titulo": "Introduccion al sistema oseo",
-            "actividades": ["Mapa general del esqueleto", "Lectura guiada", "10 preguntas de repaso"],
-        },
-        {
-            "dia": 2,
-            "titulo": "Huesos del craneo",
-            "actividades": ["Lamina rotulada", "Tabla de foramenes", "Practica visual"],
-        },
-        {
-            "dia": 3,
-            "titulo": "Columna vertebral",
-            "actividades": ["Comparar regiones", "Resumen de accidentes oseos", "Mini quiz"],
-        },
-        {
-            "dia": 4,
-            "titulo": "Preguntas de practica",
-            "actividades": ["Bloque de opcion multiple", "Revision de errores", "Tarjetas de memoria"],
-        },
-        {
-            "dia": 5,
-            "titulo": "Mini simulacro",
-            "actividades": ["Simulacro mixto", "Correccion", "Ajuste de temas debiles"],
-        },
-    ]
+    perfil_vark = PerfilVARK.objects.filter(user=request.user).first()
+
+    if not perfil_vark:
+        messages.warning(
+            request,
+            "Primero debes completar el test VARK.",
+        )
+        return redirect("vark:test")
+
+    datos_academicos = DatosAcademicos.objects.filter(user=request.user).first()
+
+    if not datos_academicos:
+        messages.warning(
+            request,
+            "Primero debes registrar tus datos académicos.",
+        )
+        return redirect("anatomia:datos_academicos")
+
+    materiales = list(
+        MaterialEstudio.objects.filter(
+            user=request.user,
+            estado=MaterialEstudio.ESTADO_PROCESADO,
+        ).order_by("-actualizado")[:5]
+    )
+
+    ruta = RutaAprendizaje.objects.filter(user=request.user).first()
+
+    if request.method == "POST":
+        if not materiales:
+            messages.warning(
+                request,
+                "Primero debes subir y procesar al menos un material de estudio.",
+            )
+            return redirect("documentos:subir")
+
+        ruta = generar_ruta_aprendizaje(
+            user=request.user,
+            perfil_vark=perfil_vark,
+            datos_academicos=datos_academicos,
+            materiales=materiales,
+        )
+
+        messages.success(
+            request,
+            "Ruta de aprendizaje generada correctamente.",
+        )
+
+        return redirect("rutas:ruta_aprendizaje")
+
     return render(
         request,
         "rutas/ruta_aprendizaje.html",
-        {"dias": dias, "tema": "Sistema oseo", "fecha_examen": "2026-06-12", "estilo_vark": "Visual"},
+        {
+            "ruta": ruta,
+            "perfil_vark": perfil_vark,
+            "datos_academicos": datos_academicos,
+            "materiales": materiales,
+        },
     )
