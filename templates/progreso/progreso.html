@@ -1,76 +1,132 @@
 {% extends "base.html" %}
 
-{% block title %}Progreso academico | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Progreso | Tutor IA Anatom&iacute;a VARK{% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-hero">
     <div>
-        <p class="eyebrow">Evolucion del estudiante</p>
-        <h1>Progreso academico</h1>
-        <p>Resumen de simulacros, temas fuertes, temas debiles y recomendacion actual.</p>
+        <p class="eyebrow">Seguimiento</p>
+        <h1>Progreso del estudiante</h1>
+        <p>
+            Revisa tus simulacros, puntajes y temas que necesitas reforzar.
+        </p>
     </div>
-    <a href="{% url 'examenes:generar' %}" class="btn btn-primary icon-btn">
-        <i data-lucide="file-question"></i>
-        <span>Nuevo simulacro</span>
-    </a>
 </section>
 
-<section class="metrics-grid">
-    <article class="metric-card">
-        <span>Simulacros realizados</span>
-        <strong>{{ simulacros|length }}</strong>
-        <small>Ultimas evaluaciones</small>
-    </article>
-    <article class="metric-card">
-        <span>Estilo VARK actual</span>
-        <strong>{{ estilo_vark }}</strong>
-        <small>Usado para adaptar la ruta</small>
-    </article>
-    <article class="metric-card">
-        <span>Mejor puntaje</span>
-        <strong>88%</strong>
-        <small>Articulaciones</small>
-    </article>
-</section>
+<section class="section-band">
+    <div class="container">
+        <div class="dashboard-grid">
+            <article class="feature-card dashboard-card">
+                <i data-lucide="scan-eye"></i>
+                <h3>Estilo VARK</h3>
+                <strong>{{ estilo_vark }}</strong>
+                <p>Perfil de aprendizaje principal.</p>
+            </article>
 
-<section class="content-grid mt-4">
-    <div class="panel-block">
-        <div class="panel-title">
-            <h2>Puntajes</h2>
+            <article class="feature-card dashboard-card">
+                <i data-lucide="file-question"></i>
+                <h3>Simulacros</h3>
+                <strong>{{ simulacros|length }}</strong>
+                <p>Ex&aacute;menes respondidos.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="trending-up"></i>
+                <h3>&Aacute;reas fuertes</h3>
+                <strong>{{ fuertes|length }}</strong>
+                <p>Temas con mejor desempe&ntilde;o.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="alert-circle"></i>
+                <h3>&Aacute;reas d&eacute;biles</h3>
+                <strong>{{ debiles|length }}</strong>
+                <p>Temas para reforzar.</p>
+            </article>
         </div>
-        <div class="score-stack">
-            {% for simulacro in simulacros %}
+
+        <div class="info-box mt-4">
+            <div class="ai-box-title">
+                <i data-lucide="info"></i>
+                <strong>Recomendaci&oacute;n</strong>
+            </div>
+            <p>{{ recomendacion }}</p>
+        </div>
+
+        {% if simulacros %}
+            <div class="section-heading mt-4">
+                <p class="eyebrow">Historial</p>
+                <h2>Simulacros recientes</h2>
+            </div>
+
+            <div class="materials-grid">
+                {% for examen in simulacros %}
+                    <article class="feature-card material-card">
+                        <div class="material-icon">
+                            <i data-lucide="file-question"></i>
+                        </div>
+
+                        <h3>{{ examen.titulo }}</h3>
+                        <p><strong>Puntaje:</strong> {{ examen.puntaje }}/{{ examen.total_preguntas }}</p>
+                        <p><strong>Porcentaje:</strong> {{ examen.porcentaje }}%</p>
+                        <small>{{ examen.actualizado|date:"d/m/Y H:i" }}</small>
+
+                        <div class="card-actions">
+                            <a href="{% url 'examenes:resultado' examen.pk %}" class="btn btn-outline-primary btn-sm">
+                                Ver resultado
+                            </a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state mt-4">
+                <i data-lucide="file-question"></i>
+                <h2>A&uacute;n no hay simulacros</h2>
+                <p>Genera y responde un examen para empezar a medir tu progreso.</p>
+
+                <a href="{% url 'examenes:generar' %}" class="btn btn-primary icon-btn">
+                    <i data-lucide="file-question"></i>
+                    <span>Generar examen</span>
+                </a>
+            </div>
+        {% endif %}
+
+        {% if fuertes or debiles %}
+            <div class="detail-grid mt-4">
                 <div>
-                    <div class="score-row">
-                        <span>{{ simulacro.nombre }} | {{ simulacro.fecha }}</span>
-                        <strong>{{ simulacro.puntaje }}%</strong>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar bg-success" style="width: {{ simulacro.puntaje }}%"></div>
-                    </div>
+                    <strong>Temas fuertes</strong>
+                    {% if fuertes %}
+                        <ul class="clean-list mt-3">
+                            {% for tema in fuertes %}
+                                <li>
+                                    <i data-lucide="check"></i>
+                                    <span>{{ tema }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Sin datos suficientes.</p>
+                    {% endif %}
                 </div>
-            {% endfor %}
-        </div>
-    </div>
 
-    <div class="panel-block">
-        <div class="panel-title">
-            <h2>Analisis</h2>
-        </div>
-        <h3 class="mini-heading">Temas fuertes</h3>
-        <ul class="check-list">
-            {% for fuerte in fuertes %}
-                <li><i data-lucide="check"></i><span>{{ fuerte }}</span></li>
-            {% endfor %}
-        </ul>
-        <h3 class="mini-heading mt-3">Temas debiles</h3>
-        <ul class="check-list muted-checks">
-            {% for debil in debiles %}
-                <li><i data-lucide="alert-circle"></i><span>{{ debil }}</span></li>
-            {% endfor %}
-        </ul>
-        <h3 class="mini-heading mt-3">Recomendacion de mejora</h3>
-        <p>{{ recomendacion }}</p>
+                <div>
+                    <strong>Temas por reforzar</strong>
+                    {% if debiles %}
+                        <ul class="clean-list mt-3">
+                            {% for tema in debiles %}
+                                <li>
+                                    <i data-lucide="alert-circle"></i>
+                                    <span>{{ tema }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Sin debilidades detectadas por ahora.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

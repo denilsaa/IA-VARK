@@ -1,48 +1,125 @@
 {% extends "base.html" %}
 
-{% block title %}Resultado del examen | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Resultado examen | Tutor IA Anatom&iacute;a VARK{% endblock %}
 
 {% block content %}
-<section class="result-hero exam-result">
-    <p class="eyebrow">Correccion completa</p>
-    <h1>Puntaje final: {{ puntaje }}%</h1>
-    <p>Buen avance. El sistema detecto temas debiles que conviene reforzar antes del siguiente simulacro.</p>
+<section class="page-hero">
+    <div>
+        <p class="eyebrow">Resultado del simulacro</p>
+        <h1>{{ examen.titulo }}</h1>
+        <p>
+            Obtuviste {{ examen.puntaje }} de {{ examen.total_preguntas }}
+            preguntas correctas.
+        </p>
+    </div>
 </section>
 
-<section class="content-grid">
-    <div class="panel-block">
-        <div class="panel-title">
-            <h2>Respuestas</h2>
-        </div>
-        <div class="answer-list">
-            {% for respuesta in respuestas %}
-                <div class="answer-item">
-                    <span class="status-pill {% if respuesta.estado == 'Correcta' %}status-ready{% else %}status-wrong{% endif %}">
-                        {{ respuesta.estado }}
-                    </span>
-                    <strong>{{ respuesta.pregunta }}</strong>
-                    <p>{{ respuesta.detalle }}</p>
+<section class="section-band">
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
                 </div>
             {% endfor %}
-        </div>
-    </div>
+        {% endif %}
 
-    <div class="panel-block">
-        <div class="panel-title">
-            <h2>Retroalimentacion</h2>
+        <div class="dashboard-grid">
+            <article class="feature-card dashboard-card">
+                <i data-lucide="target"></i>
+                <h3>Puntaje</h3>
+                <strong>{{ examen.puntaje }}/{{ examen.total_preguntas }}</strong>
+                <p>Respuestas correctas.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="percent"></i>
+                <h3>Porcentaje</h3>
+                <strong>{{ examen.porcentaje }}%</strong>
+                <p>Resultado general.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="gauge"></i>
+                <h3>Dificultad</h3>
+                <strong>{{ examen.get_dificultad_display }}</strong>
+                <p>Nivel configurado.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="calendar-days"></i>
+                <h3>Fecha</h3>
+                <strong>{{ examen.actualizado|date:"d/m/Y" }}</strong>
+                <p>{{ examen.actualizado|date:"H:i" }}</p>
+            </article>
         </div>
-        <h3 class="mini-heading">Temas debiles</h3>
-        <ul class="check-list muted-checks">
-            {% for debilidad in debilidades %}
-                <li><i data-lucide="alert-circle"></i><span>{{ debilidad }}</span></li>
+
+        {% if examen.retroalimentacion_ia %}
+            <div class="ai-analysis mt-4">
+                <div class="ai-box-title">
+                    <i data-lucide="sparkles"></i>
+                    <strong>Retroalimentaci&oacute;n generada por Gemini</strong>
+                </div>
+                <p>{{ examen.retroalimentacion_ia }}</p>
+            </div>
+        {% endif %}
+
+        <div class="section-heading mt-4">
+            <p class="eyebrow">Correcci&oacute;n</p>
+            <h2>Revisi&oacute;n pregunta por pregunta</h2>
+        </div>
+
+        <div class="route-list">
+            {% for resultado in examen.resultados %}
+                <article class="form-panel route-day-card">
+                    <p class="eyebrow">{{ resultado.tema }}</p>
+                    <h3>{{ resultado.id }}. {{ resultado.enunciado }}</h3>
+
+                    {% if resultado.es_correcta %}
+                        <div class="alert alert-success mt-4">
+                            Correcto. Respuesta seleccionada: {{ resultado.respuesta_usuario }}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger mt-4">
+                            Incorrecto. Tu respuesta: {{ resultado.respuesta_usuario }}.
+                            Respuesta correcta: {{ resultado.respuesta_correcta }}.
+                        </div>
+                    {% endif %}
+
+                    <div class="option-list mt-4">
+                        {% for opcion in resultado.opciones %}
+                            <div class="option-item">
+                                <span>
+                                    <strong>{{ opcion.letra }}.</strong>
+                                    {{ opcion.texto }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if resultado.explicacion %}
+                        <div class="info-box mt-4">
+                            <div class="ai-box-title">
+                                <i data-lucide="info"></i>
+                                <strong>Explicaci&oacute;n</strong>
+                            </div>
+                            <p>{{ resultado.explicacion }}</p>
+                        </div>
+                    {% endif %}
+                </article>
             {% endfor %}
-        </ul>
-        <h3 class="mini-heading mt-3">Recomendacion de estudio</h3>
-        <p>{{ recomendacion }}</p>
-        <a href="{% url 'rutas:ruta_aprendizaje' %}" class="btn btn-primary icon-btn mt-2">
-            <i data-lucide="refresh-cw"></i>
-            <span>Ajustar ruta</span>
-        </a>
+        </div>
+
+        <div class="form-actions mt-4">
+            <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
+                Volver al dashboard
+            </a>
+
+            <a href="{% url 'examenes:generar' %}" class="btn btn-primary icon-btn">
+                <i data-lucide="file-question"></i>
+                <span>Generar otro examen</span>
+            </a>
+        </div>
     </div>
 </section>
 {% endblock %}

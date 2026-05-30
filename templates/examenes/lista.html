@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Mis ex&aacute;menes | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div>
+        <p class="eyebrow">Historial</p>
+        <h1>Mis ex&aacute;menes</h1>
+        <p>
+            Revisa tus simulacros generados con IA y sus resultados.
+        </p>
+    </div>
+</section>
+
+<section class="section-band">
+    <div class="container">
+        <div class="form-actions mb-4">
+            <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
+                Volver al dashboard
+            </a>
+
+            <a href="{% url 'examenes:generar' %}" class="btn btn-primary icon-btn">
+                <i data-lucide="file-question"></i>
+                <span>Generar examen</span>
+            </a>
+        </div>
+
+        {% if examenes %}
+            <div class="materials-grid">
+                {% for examen in examenes %}
+                    <article class="feature-card material-card">
+                        <div class="material-icon">
+                            <i data-lucide="file-question"></i>
+                        </div>
+
+                        <h3>{{ examen.titulo }}</h3>
+                        <p><strong>Estado:</strong> {{ examen.get_estado_display }}</p>
+                        <p><strong>Dificultad:</strong> {{ examen.get_dificultad_display }}</p>
+                        <p><strong>Preguntas:</strong> {{ examen.total_preguntas }}</p>
+
+                        {% if examen.esta_respondido %}
+                            <p><strong>Puntaje:</strong> {{ examen.puntaje }}/{{ examen.total_preguntas }} - {{ examen.porcentaje }}%</p>
+                            <a href="{% url 'examenes:resultado' examen.pk %}" class="btn btn-outline-primary btn-sm">
+                                Ver resultado
+                            </a>
+                        {% else %}
+                            <a href="{% url 'examenes:rendir' examen.pk %}" class="btn btn-outline-primary btn-sm">
+                                Rendir examen
+                            </a>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i data-lucide="file-question"></i>
+                <h2>No tienes ex&aacute;menes todav&iacute;a</h2>
+                <p>Genera tu primer simulacro con Gemini.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from anatomia.models import DatosAcademicos
 from documentos.models import MaterialEstudio
+from examenes.models import ExamenGenerado
 from rutas.models import RutaAprendizaje
 from vark.models import PerfilVARK
 
@@ -21,6 +22,10 @@ def dashboard(request):
     datos_academicos = DatosAcademicos.objects.filter(user=request.user).first()
     cantidad_materiales = MaterialEstudio.objects.filter(user=request.user).count()
     ruta = RutaAprendizaje.objects.filter(user=request.user).first()
+    ultimo_examen = ExamenGenerado.objects.filter(
+        user=request.user,
+        estado=ExamenGenerado.ESTADO_RESPONDIDO,
+    ).order_by("-actualizado").first()
 
     if perfil_vark:
         estilo_vark = perfil_vark.estilo_display
@@ -45,6 +50,11 @@ def dashboard(request):
     else:
         ruta_activa = "Sin ruta activa"
 
+    if ultimo_examen:
+        ultimo_puntaje = f"{ultimo_examen.porcentaje}%"
+    else:
+        ultimo_puntaje = "Sin simulacros"
+
     resumen = {
         "estilo_vark": estilo_vark,
         "tema_actual": tema_actual,
@@ -54,7 +64,7 @@ def dashboard(request):
         "tiempo_estudio": tiempo_estudio,
         "materiales": cantidad_materiales,
         "ruta_activa": ruta_activa,
-        "ultimo_puntaje": "Sin simulacros",
+        "ultimo_puntaje": ultimo_puntaje,
     }
 
     accesos = [
@@ -131,16 +141,62 @@ def progreso(request):
     else:
         estilo_vark = "Pendiente"
 
-    simulacros = []
+    simulacros = ExamenGenerado.objects.filter(
+        user=request.user,
+        estado=ExamenGenerado.ESTADO_RESPONDIDO,
+    ).order_by("-actualizado")[:10]
+
+    fuertes, debiles = obtener_temas_fuertes_y_debiles(simulacros)
+
+    if simulacros:
+        recomendacion = (
+            "Revisa los temas con respuestas incorrectas y genera nuevos simulacros "
+            "después de repasar tu ruta de aprendizaje."
+        )
+    else:
+        recomendacion = (
+            "Todavía no hay resultados de exámenes guardados. Realiza un simulacro "
+            "para ver tu progreso."
+        )
 
     return render(
         request,
         "progreso/progreso.html",
         {
             "simulacros": simulacros,
-            "fuertes": [],
-            "debiles": [],
+            "fuertes": fuertes,
+            "debiles": debiles,
             "estilo_vark": estilo_vark,
-            "recomendacion": "Todavía no hay resultados de exámenes guardados. Realiza un simulacro para ver tu progreso.",
+            "recomendacion": recomendacion,
         },
     )
+
+
+def obtener_temas_fuertes_y_debiles(simulacros):
+    conteo = {}
+
+    for examen in simulacros:
+        for resultado in examen.resultados:
+            tema = resultado.get("tema") or "Tema no especificado"
+
+            if tema not in conteo:
+                conteo[tema] = {
+                    "correctas": 0,
+                    "incorrectas": 0,
+                }
+
+            if resultado.get("es_correcta"):
+                conteo[tema]["correctas"] += 1
+            else:
+                conteo[tema]["incorrectas"] += 1
+
+    fuertes = []
+    debiles = []
+
+    for tema, datos in conteo.items():
+        if datos["correctas"] >= datos["incorrectas"]:
+            fuertes.append(tema)
+        else:
+            debiles.append(tema)
+
+    return fuertes[:5], debiles[:5]

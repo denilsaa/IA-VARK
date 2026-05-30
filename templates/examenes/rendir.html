@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Rendir examen | Tutor IA Anatom&iacute;a VARK{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+    <div>
+        <p class="eyebrow">Simulacro</p>
+        <h1>{{ examen.titulo }}</h1>
+        <p>{{ examen.instrucciones }}</p>
+    </div>
+</section>
+
+<section class="section-band">
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" class="form-panel wide-panel">
+            {% csrf_token %}
+
+            {% for pregunta in examen.preguntas %}
+                <article class="question-card">
+                    <p class="eyebrow">{{ pregunta.tema }}</p>
+                    <h3>{{ pregunta.id }}. {{ pregunta.enunciado }}</h3>
+
+                    <div class="option-list">
+                        {% for opcion in pregunta.opciones %}
+                            <label class="option-item">
+                                <input
+                                    type="radio"
+                                    name="pregunta_{{ pregunta.id }}"
+                                    value="{{ opcion.letra }}"
+                                    required
+                                >
+                                <span>
+                                    <strong>{{ opcion.letra }}.</strong>
+                                    {{ opcion.texto }}
+                                </span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </article>
+            {% endfor %}
+
+            <div class="form-actions">
+                <a href="{% url 'examenes:generar' %}" class="btn btn-outline-primary">
+                    Cancelar
+                </a>
+
+                <button type="submit" class="btn btn-primary icon-btn">
+                    <i data-lucide="check-circle"></i>
+                    <span>Finalizar y calificar</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
