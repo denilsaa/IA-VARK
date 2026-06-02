@@ -8,8 +8,9 @@
         <p class="eyebrow">Ruta personalizada</p>
         <h1>Ruta de aprendizaje</h1>
         <p>
-            Genera un plan de estudio usando tu estilo VARK, datos acad&eacute;micos,
-            temario del examen y materiales analizados con Gemini.
+            Genera un plan de estudio usando tu resultado VARK, tus datos acad&eacute;micos
+            y el dataset de Anatom&iacute;a I basado en el libro de Rouvi&egrave;re y Delmas.
+            Los materiales subidos sirven como contexto adicional para mejorar la respuesta del LLM.
         </p>
     </div>
 </section>
@@ -29,7 +30,19 @@
                 <i data-lucide="scan-eye"></i>
                 <h3>Estilo VARK</h3>
                 <strong>{{ perfil_vark.estilo_display }}</strong>
-                <p>Base para adaptar las actividades.</p>
+                <p>
+                    V: {{ perfil_vark.puntaje_visual }} /
+                    A: {{ perfil_vark.puntaje_auditivo }} /
+                    L: {{ perfil_vark.puntaje_lectura }} /
+                    K: {{ perfil_vark.puntaje_kinestesico }}
+                </p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="book-open"></i>
+                <h3>Tema elegido</h3>
+                <strong>{{ datos_academicos.tema_actual }}</strong>
+                <p>{{ datos_academicos.temas_dificiles|default:"Sin punto específico" }}</p>
             </article>
 
             <article class="feature-card dashboard-card">
@@ -45,30 +58,32 @@
                 <strong>{{ datos_academicos.tiempo_estudio_display }}</strong>
                 <p>Disponible por d&iacute;a.</p>
             </article>
-
-            <article class="feature-card dashboard-card">
-                <i data-lucide="folder-open"></i>
-                <h3>Materiales usados</h3>
-                <strong>{{ materiales|length }}</strong>
-                <p>Procesados correctamente.</p>
-            </article>
         </div>
 
-        {% if not materiales %}
-            <div class="empty-state mt-4">
-                <i data-lucide="folder-open"></i>
-                <h2>No hay materiales procesados</h2>
-                <p>
-                    Para generar una ruta personalizada, primero sube y analiza al menos
-                    un material de estudio.
-                </p>
-
-                <a href="{% url 'documentos:subir' %}" class="btn btn-primary icon-btn">
-                    <i data-lucide="upload-cloud"></i>
-                    <span>Subir material</span>
-                </a>
+        <div class="info-box mt-4">
+            <div class="ai-box-title">
+                <i data-lucide="database"></i>
+                <strong>Base de generaci&oacute;n</strong>
             </div>
-        {% endif %}
+            <p>
+                La ruta se puede generar con el <strong>dataset interno de Anatom&iacute;a I</strong>,
+                el tema seleccionado y tu resultado VARK. Si subes materiales, Gemini los usar&aacute;
+                como contexto adicional para enriquecer la ruta, pero ya no son obligatorios.
+            </p>
+
+            {% if materiales %}
+                <p><strong>Materiales procesados disponibles:</strong> {{ materiales|length }}.</p>
+            {% else %}
+                <p>
+                    <strong>Materiales procesados disponibles:</strong> 0. Puedes generar la ruta ahora
+                    y luego subir materiales para regenerarla con m&aacute;s contexto.
+                </p>
+                <a href="{% url 'documentos:subir' %}" class="btn btn-outline-primary icon-btn mt-3">
+                    <i data-lucide="upload-cloud"></i>
+                    <span>Subir material opcional</span>
+                </a>
+            {% endif %}
+        </div>
 
         {% if ruta %}
             <div class="form-panel wide-panel mt-4">
@@ -143,7 +158,31 @@
                                 <strong>Tiempo sugerido</strong>
                                 <p>{{ dia.minutos }} min</p>
                             </div>
+
+                            {% if dia.recurso_vark %}
+                                <div>
+                                    <strong>Recurso VARK</strong>
+                                    <p>{{ dia.recurso_vark }}</p>
+                                </div>
+                            {% endif %}
+
+                            {% if dia.uso_materiales %}
+                                <div>
+                                    <strong>Fuente usada</strong>
+                                    <p>{{ dia.uso_materiales }}</p>
+                                </div>
+                            {% endif %}
                         </div>
+
+                        {% if dia.enfoque_vark %}
+                            <div class="info-box mt-4">
+                                <div class="ai-box-title">
+                                    <i data-lucide="sparkles"></i>
+                                    <strong>Adaptaci&oacute;n VARK</strong>
+                                </div>
+                                <p>{{ dia.enfoque_vark }}</p>
+                            </div>
+                        {% endif %}
 
                         {% if dia.actividades %}
                             <div class="text-preview mt-4">
@@ -216,24 +255,22 @@
                 </form>
             </div>
         {% else %}
-            {% if materiales %}
-                <div class="empty-state mt-4">
-                    <i data-lucide="route"></i>
-                    <h2>A&uacute;n no tienes una ruta generada</h2>
-                    <p>
-                        Usa Gemini para crear un plan de estudio personalizado con tus datos
-                        acad&eacute;micos, VARK y materiales procesados.
-                    </p>
+            <div class="empty-state mt-4">
+                <i data-lucide="route"></i>
+                <h2>A&uacute;n no tienes una ruta generada</h2>
+                <p>
+                    Genera una ruta usando tu resultado VARK, tus datos acad&eacute;micos y el dataset de Anatom&iacute;a I.
+                    Los materiales procesados son opcionales y sirven para mejorar el contexto del LLM.
+                </p>
 
-                    <form method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary icon-btn">
-                            <i data-lucide="sparkles"></i>
-                            <span>Generar ruta con Gemini</span>
-                        </button>
-                    </form>
-                </div>
-            {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary icon-btn">
+                        <i data-lucide="sparkles"></i>
+                        <span>Generar ruta con Gemini</span>
+                    </button>
+                </form>
+            </div>
         {% endif %}
     </div>
 </section>

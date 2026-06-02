@@ -10,14 +10,60 @@ MAX_CARACTERES_CONTEXTO_MATERIAL = 24000
 MAX_DIAS_PLAN = 21
 
 
+MODALIDADES_VARK = {
+    "visual": "Visual",
+    "auditivo": "Auditivo",
+    "lectura": "Lectura/Escritura",
+    "kinestesico": "Kinestésico",
+}
+
+
+REGLAS_VARK = {
+    "visual": [
+        "mapas conceptuales",
+        "esquemas jerárquicos",
+        "tablas comparativas",
+        "diagramas textuales",
+        "relaciones espaciales",
+        "identificación visual de estructuras",
+    ],
+    "auditivo": [
+        "explicaciones conversacionales",
+        "repaso en voz alta",
+        "guiones para audio",
+        "preguntas orales",
+        "explicación tipo tutor",
+        "resúmenes para escuchar",
+    ],
+    "lectura": [
+        "resúmenes detallados",
+        "glosarios",
+        "listas ordenadas",
+        "cuadros conceptuales escritos",
+        "preguntas de desarrollo",
+        "reformulación con palabras propias",
+    ],
+    "kinestesico": [
+        "casos aplicados",
+        "identificación de estructuras",
+        "ejercicios prácticos",
+        "actividades paso a paso",
+        "preguntas de ubicación y función",
+        "simulacros cortos",
+    ],
+}
+
+
 def generar_ruta_aprendizaje(user, perfil_vark, datos_academicos, materiales):
     dias_hasta_examen = datos_academicos.dias_restantes
     dias_planificados = calcular_dias_planificados(dias_hasta_examen)
 
     contexto_materiales = construir_contexto_materiales(materiales)
+    perfil_vark_detalle = construir_detalle_vark(perfil_vark)
 
     respuesta = generar_ruta_con_gemini(
         perfil_vark=perfil_vark,
+        perfil_vark_detalle=perfil_vark_detalle,
         datos_academicos=datos_academicos,
         materiales=materiales,
         contexto_materiales=contexto_materiales,
@@ -28,6 +74,7 @@ def generar_ruta_aprendizaje(user, perfil_vark, datos_academicos, materiales):
     if not respuesta:
         respuesta = generar_ruta_respaldo(
             perfil_vark=perfil_vark,
+            perfil_vark_detalle=perfil_vark_detalle,
             datos_academicos=datos_academicos,
             dias_hasta_examen=dias_hasta_examen,
             dias_planificados=dias_planificados,
@@ -65,6 +112,66 @@ def calcular_dias_planificados(dias_hasta_examen):
     return dias_hasta_examen
 
 
+def construir_detalle_vark(perfil_vark):
+    puntajes = {
+        "visual": perfil_vark.puntaje_visual,
+        "auditivo": perfil_vark.puntaje_auditivo,
+        "lectura": perfil_vark.puntaje_lectura,
+        "kinestesico": perfil_vark.puntaje_kinestesico,
+    }
+    total = sum(puntajes.values()) or 1
+
+    modalidades = []
+    for clave, puntaje in puntajes.items():
+        porcentaje = round((puntaje / total) * 100)
+        modalidades.append(
+            {
+                "clave": clave,
+                "nombre": MODALIDADES_VARK[clave],
+                "puntaje": puntaje,
+                "porcentaje": porcentaje,
+                "reglas": REGLAS_VARK[clave],
+            }
+        )
+
+    modalidades_ordenadas = sorted(
+        modalidades,
+        key=lambda item: item["puntaje"],
+        reverse=True,
+    )
+
+    dominantes = [item for item in modalidades_ordenadas if item["puntaje"] > 0]
+    dominante = MODALIDADES_VARK.get(perfil_vark.estilo_principal, perfil_vark.estilo_display)
+    secundarias = [
+        item for item in dominantes
+        if item["clave"] != perfil_vark.estilo_principal
+    ]
+
+    mezcla = ", ".join(
+        f"{item['nombre']} {item['porcentaje']}%"
+        for item in modalidades_ordenadas
+        if item["puntaje"] > 0
+    )
+
+    if not mezcla:
+        mezcla = f"{dominante} como perfil principal"
+
+    reglas_activas = []
+    for item in dominantes:
+        reglas_activas.append(
+            f"{item['nombre']} ({item['porcentaje']}%): " + ", ".join(item["reglas"][:4])
+        )
+
+    return {
+        "puntajes": puntajes,
+        "modalidades": modalidades_ordenadas,
+        "dominante": dominante,
+        "secundarias": secundarias,
+        "mezcla": mezcla,
+        "reglas_activas": reglas_activas,
+    }
+
+
 def construir_contexto_materiales(materiales):
     partes = []
 
@@ -99,13 +206,14 @@ def construir_contexto_materiales(materiales):
 
         partes.append("\n---\n")
 
-    contexto = "\n".join(partes)
+    contexto = "\n".join(partes).strip()
 
     return Truncator(contexto).chars(MAX_CARACTERES_CONTEXTO_MATERIAL)
 
 
 def generar_ruta_con_gemini(
     perfil_vark,
+    perfil_vark_detalle,
     datos_academicos,
     materiales,
     contexto_materiales,
@@ -134,48 +242,70 @@ def generar_ruta_con_gemini(
                 temarios.append(material.temario_examen)
 
         temario_unificado = "\n".join(temarios).strip()
+        hay_materiales = bool(materiales)
+        origen_contexto = (
+            "dataset interno de Anatomía I + materiales procesados del estudiante"
+            if hay_materiales
+            else "dataset interno de Anatomía I sin materiales adicionales"
+        )
+
+        reglas_vark_texto = "\n".join(
+            f"- {regla}" for regla in perfil_vark_detalle["reglas_activas"]
+        )
 
         prompt = f"""
-Genera una ruta de aprendizaje personalizada para un estudiante de Anatomía I.
+Actúa como tutor académico de Anatomía I y genera una ruta de aprendizaje personalizada.
 
-Libro base y dataset interno:
-- Libro base: Rouvière y Delmas, Anatomía Humana descriptiva, topográfica y funcional. Tomo 2: Tronco.
-- El tema actual y el punto difícil fueron seleccionados desde un dataset interno basado en el índice del libro.
-- Debes centrar la ruta en ese tema y en ese punto específico.
+BASE OBLIGATORIA DEL SISTEMA:
+- Libro base del dataset: Rouvière y Delmas, Anatomía Humana descriptiva, topográfica y funcional. Tomo 2: Tronco.
+- El tema y el punto específico fueron seleccionados desde un dataset interno basado en el índice del libro.
+- La ruta debe generarse aunque el estudiante todavía no haya subido materiales.
+- Los materiales subidos NO son requisito; solo enriquecen el contexto del LLM cuando existen.
+- Origen del contexto disponible ahora: {origen_contexto}.
 
-Datos del estudiante:
+DATOS DEL ESTUDIANTE:
 - Estilo VARK principal: {perfil_vark.estilo_display}
+- Distribución VARK real: {perfil_vark_detalle['mezcla']}
 - Puntaje visual: {perfil_vark.puntaje_visual}
 - Puntaje auditivo: {perfil_vark.puntaje_auditivo}
 - Puntaje lectura/escritura: {perfil_vark.puntaje_lectura}
 - Puntaje kinestésico: {perfil_vark.puntaje_kinestesico}
 
-Datos académicos:
+REGLAS DE ADAPTACIÓN VARK:
+{reglas_vark_texto}
+
+Instrucción importante de VARK:
+- No uses solo el estilo principal si existen otros puntajes positivos.
+- Prioriza el estilo principal, pero combina proporcionalmente las modalidades que también tuvieron puntaje.
+- Si una modalidad tiene 0 puntos, no la priorices.
+- Ejemplo: si Auditivo tiene 50%, Visual 30% y Kinestésico 20%, la ruta debe ser principalmente auditiva, con apoyo visual y actividades prácticas.
+
+DATOS ACADÉMICOS:
 - Materia: {datos_academicos.materia}
-- Tema actual: {datos_academicos.tema_actual}
+- Tema actual seleccionado: {datos_academicos.tema_actual}
+- Punto específico que le cuesta más: {datos_academicos.temas_dificiles or 'No especificado'}
 - Fecha de examen: {datos_academicos.fecha_examen_formateada}
 - Días hasta el examen: {dias_hasta_examen}
 - Días que debes planificar ahora: {dias_planificados}
 - Minutos disponibles por día: {datos_academicos.minutos_por_dia}
 - Tipo de examen: {datos_academicos.get_tipo_examen_display()}
-- Punto específico que le cuesta más: {datos_academicos.temas_dificiles or "No especificado"}
-- Objetivo de estudio: {datos_academicos.objetivo_estudio or "No especificado"}
+- Objetivo de estudio: {datos_academicos.objetivo_estudio or 'No especificado'}
 
-Temario específico del examen:
+TEMARIO ESPECÍFICO DEL EXAMEN EXTRAÍDO DE MATERIALES, SI EXISTE:
 \"\"\"
-{temario_unificado or "No se especificó temario."}
+{temario_unificado or 'No hay temario adicional cargado por materiales.'}
 \"\"\"
 
-Contexto del material subido y analizado:
+CONTEXTO DE MATERIALES SUBIDOS Y ANALIZADOS, SI EXISTE:
 \"\"\"
-{contexto_materiales}
+{contexto_materiales or 'No hay materiales subidos. Genera la ruta con el dataset interno, el tema seleccionado, el punto específico y el resultado VARK.'}
 \"\"\"
 
 Devuelve únicamente JSON válido con esta estructura exacta:
 
 {{
   "titulo": "Título de la ruta",
-  "resumen_general": "Resumen breve de la estrategia general de estudio.",
+  "resumen_general": "Resumen breve de la estrategia general de estudio, indicando que se usa VARK + dataset de Anatomía I + materiales si existen.",
   "temas_priorizados": [
     "Tema 1",
     "Tema 2",
@@ -187,9 +317,12 @@ Devuelve únicamente JSON válido con esta estructura exacta:
       "titulo": "Título del día",
       "tema_principal": "Tema principal del día",
       "objetivo": "Objetivo concreto del día",
-      "minutos": 60,
+      "minutos": 15,
+      "enfoque_vark": "Cómo se adapta este día al resultado VARK del estudiante",
+      "recurso_vark": "Recurso principal recomendado según VARK, por ejemplo guion oral, mapa, glosario, caso práctico",
+      "uso_materiales": "Indica si este día usa dataset base o también material subido",
       "actividades": [
-        "Actividad 1 adaptada al estilo VARK",
+        "Actividad 1 adaptada al estilo VARK y al tema seleccionado",
         "Actividad 2",
         "Actividad 3"
       ],
@@ -207,20 +340,15 @@ Devuelve únicamente JSON válido con esta estructura exacta:
   ]
 }}
 
-Reglas obligatorias:
+REGLAS OBLIGATORIAS:
 - Escribe en español.
 - El arreglo plan_diario debe tener exactamente {dias_planificados} elementos.
 - Cada día debe usar como máximo {datos_academicos.minutos_por_dia} minutos.
-- Enfoca la ruta en el tema actual, el punto específico difícil y el temario del examen.
-- Usa únicamente la información del contexto del material subido y del tema seleccionado.
-- Si un dato no está en el contexto, indica que debe revisarse en el libro base; no inventes información anatómica.
-- Adapta actividades al estilo VARK principal.
-- Si el estudiante es visual, usa mapas, esquemas, dibujos, tablas y colores.
-- Si es auditivo, usa explicación oral, repetición en voz alta, preguntas orales y audios.
-- Si es lectura/escritura, usa resúmenes, glosarios, listas, cuadros y reformulación escrita.
-- Si es kinestésico, usa práctica, casos, identificación, simulacros y actividades aplicadas.
-- Incluye repasos y autoevaluación.
-- No inventes capítulos que no estén relacionados con el material.
+- Enfoca la ruta en el tema actual y el punto específico difícil.
+- La ruta debe reflejar claramente el resultado VARK y sus puntajes, no solo decir el nombre del estilo.
+- Si no hay materiales subidos, no bloquees la ruta: usa el dataset base y recomienda subir material como mejora opcional.
+- Si hay materiales subidos, úsalos como contexto adicional para enriquecer actividades y autoevaluación.
+- No inventes información anatómica específica que no esté en el contexto; si falta contenido, formula actividades de estudio centradas en revisar el libro base.
 - No uses markdown.
 - No agregues texto fuera del JSON.
 """
@@ -230,21 +358,21 @@ Reglas obligatorias:
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                temperature=0.4,
+                temperature=0.35,
             ),
         )
 
         contenido = limpiar_json(response.text)
         data = json.loads(contenido)
 
-        return validar_respuesta_ruta(data, dias_planificados)
+        return validar_respuesta_ruta(data, dias_planificados, datos_academicos.minutos_por_dia)
 
     except Exception as error:
         print("Error generando ruta con Gemini:", error)
         return {}
 
 
-def validar_respuesta_ruta(data, dias_planificados):
+def validar_respuesta_ruta(data, dias_planificados, minutos_maximos):
     if not isinstance(data, dict):
         return {}
 
@@ -259,13 +387,19 @@ def validar_respuesta_ruta(data, dias_planificados):
         if not isinstance(dia, dict):
             continue
 
+        minutos = int(dia.get("minutos") or minutos_maximos)
+        minutos = max(5, min(minutos, minutos_maximos))
+
         plan_limpio.append(
             {
                 "dia": int(dia.get("dia") or index),
                 "titulo": str(dia.get("titulo", f"Día {index}")).strip(),
                 "tema_principal": str(dia.get("tema_principal", "")).strip(),
                 "objetivo": str(dia.get("objetivo", "")).strip(),
-                "minutos": int(dia.get("minutos") or 60),
+                "minutos": minutos,
+                "enfoque_vark": str(dia.get("enfoque_vark", "")).strip(),
+                "recurso_vark": str(dia.get("recurso_vark", "")).strip(),
+                "uso_materiales": str(dia.get("uso_materiales", "")).strip(),
                 "actividades": normalizar_lista(dia.get("actividades", [])),
                 "autoevaluacion": normalizar_lista(dia.get("autoevaluacion", [])),
                 "producto_esperado": str(dia.get("producto_esperado", "")).strip(),
@@ -290,55 +424,55 @@ def validar_respuesta_ruta(data, dias_planificados):
 
 def generar_ruta_respaldo(
     perfil_vark,
+    perfil_vark_detalle,
     datos_academicos,
     dias_hasta_examen,
     dias_planificados,
 ):
     temas_base = []
 
-    if datos_academicos.temas_dificiles:
-        temas_base.extend(
-            [
-                tema.strip()
-                for tema in datos_academicos.temas_dificiles.splitlines()
-                if tema.strip()
-            ]
-        )
+    if datos_academicos.tema_actual:
+        temas_base.append(datos_academicos.tema_actual)
 
-    if not temas_base:
-        temas_base = [
-            datos_academicos.tema_actual,
-            "Repaso teórico",
-            "Autoevaluación",
-        ]
+    if datos_academicos.temas_dificiles:
+        temas_base.append(datos_academicos.temas_dificiles)
+
+    temas_base.extend(["Repaso guiado", "Autoevaluación", "Refuerzo final"])
 
     actividades_por_estilo = {
         "visual": [
-            "Crear un mapa conceptual del tema principal.",
-            "Dibujar un esquema con relaciones anatómicas.",
-            "Usar colores para diferenciar órganos, regiones y relaciones.",
+            "Crea un mapa conceptual del tema seleccionado.",
+            "Dibuja un esquema simple con relaciones anatómicas y usa colores para diferenciar partes.",
+            "Convierte el punto difícil en una tabla visual de ubicación, relación y función.",
         ],
         "auditivo": [
-            "Explicar el tema en voz alta como si estuvieras enseñando.",
-            "Grabar un audio corto con el resumen del tema.",
-            "Responder preguntas oralmente sin mirar apuntes.",
+            "Explica el tema en voz alta como si enseñaras a un compañero.",
+            "Graba un audio de 2 a 3 minutos con tu resumen del tema.",
+            "Responde preguntas oralmente sin mirar apuntes y corrige tus dudas al final.",
         ],
         "lectura": [
-            "Leer el tema y escribir un resumen breve.",
-            "Crear un glosario con términos anatómicos importantes.",
-            "Organizar la información en listas y cuadros comparativos.",
+            "Lee el tema y escribe un resumen breve con subtítulos.",
+            "Crea un glosario con términos anatómicos importantes.",
+            "Reformula con tus palabras el punto específico que te cuesta más.",
         ],
         "kinestesico": [
-            "Resolver preguntas de identificación anatómica.",
-            "Relacionar cada estructura con una función o ubicación.",
-            "Hacer un simulacro corto del tema estudiado.",
+            "Resuelve una actividad de identificación anatómica sobre el tema.",
+            "Relaciona cada estructura con su ubicación, función o relación anatómica.",
+            "Realiza un mini simulacro práctico con preguntas de reconocimiento.",
         ],
     }
 
-    actividades = actividades_por_estilo.get(
-        perfil_vark.estilo_principal,
-        actividades_por_estilo["lectura"],
-    )
+    actividades_mixtas = []
+    for item in perfil_vark_detalle["modalidades"]:
+        if item["puntaje"] <= 0:
+            continue
+        actividades_mixtas.extend(actividades_por_estilo[item["clave"]][:1])
+
+    if not actividades_mixtas:
+        actividades_mixtas = actividades_por_estilo.get(
+            perfil_vark.estilo_principal,
+            actividades_por_estilo["lectura"],
+        )
 
     plan = []
 
@@ -350,30 +484,33 @@ def generar_ruta_respaldo(
                 "dia": dia,
                 "titulo": f"Día {dia}: {tema}",
                 "tema_principal": tema,
-                "objetivo": f"Comprender y repasar el tema: {tema}.",
+                "objetivo": f"Comprender y repasar el tema: {tema} usando tu distribución VARK.",
                 "minutos": datos_academicos.minutos_por_dia,
-                "actividades": actividades,
+                "enfoque_vark": f"Ruta adaptada a {perfil_vark_detalle['mezcla']}.",
+                "recurso_vark": "Actividad combinada según tus puntajes VARK.",
+                "uso_materiales": "Dataset base de Anatomía I. Puedes subir materiales para enriquecer esta ruta.",
+                "actividades": actividades_mixtas[:4],
                 "autoevaluacion": [
-                    "Escribe tres ideas clave del tema.",
-                    "Responde dos preguntas sin mirar el material.",
+                    "Explica qué aprendiste sin mirar el material.",
+                    "Escribe o responde oralmente dos preguntas sobre el punto difícil.",
                     "Marca qué parte necesitas repasar de nuevo.",
                 ],
-                "producto_esperado": "Resumen breve y lista de dudas para repasar.",
+                "producto_esperado": "Evidencia breve de estudio: audio, esquema, glosario o ejercicio según tu VARK.",
             }
         )
 
     return {
-        "titulo": "Ruta de aprendizaje personalizada",
+        "titulo": "Ruta de aprendizaje personalizada con VARK y dataset de Anatomía I",
         "resumen_general": (
-            "Esta ruta organiza tu estudio según tus datos académicos y tu estilo VARK. "
-            "Se prioriza avanzar de forma diaria con actividades breves, repaso y autoevaluación."
+            "Esta ruta se genera con tus datos académicos, tu distribución VARK y el dataset interno de Anatomía I. "
+            "Los materiales subidos son opcionales y sirven para enriquecer el contexto del LLM."
         ),
-        "temas_priorizados": temas_base,
+        "temas_priorizados": temas_base[:5],
         "plan_diario": plan,
         "recomendaciones_finales": [
-            "Estudia en bloques cortos y constantes.",
-            "Realiza autoevaluación al final de cada sesión.",
-            "Refuerza los temas que aparezcan como más difíciles.",
+            "Regenera la ruta después de subir materiales procesados para que Gemini tenga más contexto.",
+            "Respeta el tiempo diario seleccionado y cierra cada sesión con autoevaluación.",
+            "Prioriza el punto específico que marcaste como difícil.",
         ],
     }
 
