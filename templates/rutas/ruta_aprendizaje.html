@@ -102,7 +102,7 @@
                         </p>
                     </div>
                     <div class="progress-bar-wrap">
-                        <div class="progress-bar-fill" style="width: {{ progreso_general.porcentaje }}%;"></div>
+                        <div class="progress-bar-fill" data-progress="{{ progreso_general.porcentaje|default:0 }}"></div>
                     </div>
                 </div>
 
@@ -770,5 +770,20 @@
             });
         });
     });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".progress-bar-fill").forEach(function (bar) {
+            const progress = bar.dataset.progress || "0";
+            bar.style.width = progress + "%";
+        });
+
+        document.querySelectorAll(".marker-pin").forEach(function (pin) {
+            const x = pin.dataset.x || "50";
+            const y = pin.dataset.y || "50";
+            pin.style.left = x + "%";
+            pin.style.top = y + "%";
+        });
+    });
+
 </script>
 {% endblock %}
