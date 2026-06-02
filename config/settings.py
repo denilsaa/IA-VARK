@@ -109,32 +109,27 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Base de datos
 # En Render usa DATABASE_URL. En local puedes usar SQLite con USE_SQLITE=True.
+import dj_database_url
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
     DATABASES = {
-        "default": dj_database_url.config(
-            default=DATABASE_URL,
+        "default": dj_database_url.parse(
+            DATABASE_URL,
             conn_max_age=600,
-            conn_health_checks=True,
+            ssl_require=False,
         )
-    }
-elif env_bool("USE_SQLITE", default=True):
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
     }
 else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("DATABASE_NAME", "tutor_ia_db"),
-            "USER": os.getenv("DATABASE_USER", "tutor_user"),
-            "PASSWORD": os.getenv("DATABASE_PASSWORD", "tutor_password"),
-            "HOST": os.getenv("DATABASE_HOST", "db"),
-            "PORT": os.getenv("DATABASE_PORT", "5432"),
+            "NAME": os.getenv("POSTGRES_DB", "tutor_ia"),
+            "USER": os.getenv("POSTGRES_USER", "postgres"),
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
+            "HOST": os.getenv("POSTGRES_HOST", "db"),
+            "PORT": os.getenv("POSTGRES_PORT", "5432"),
         }
     }
 

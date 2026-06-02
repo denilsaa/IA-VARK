@@ -11,3 +11,6 @@ pytesseract
 openai
 chromadb
 google-genai
+dj-database-url
+gunicorn
+whitenoise
