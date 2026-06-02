@@ -1,6 +1,22 @@
 from django.contrib import admin
 
-from .models import DatosAcademicos
+from .models import DatosAcademicos, TemaAnatomia
+
+
+@admin.register(TemaAnatomia)
+class TemaAnatomiaAdmin(admin.ModelAdmin):
+    list_display = (
+        "nombre",
+        "tema_padre",
+        "orden",
+        "pagina_inicio",
+        "pagina_fin",
+        "activo",
+    )
+    list_filter = ("activo", "tema_padre")
+    search_fields = ("nombre", "codigo", "descripcion")
+    prepopulated_fields = {"codigo": ("nombre",)}
+    ordering = ("tema_padre__orden", "orden", "nombre")
 
 
 @admin.register(DatosAcademicos)
@@ -12,7 +28,6 @@ class DatosAcademicosAdmin(admin.ModelAdmin):
         "fecha_examen",
         "minutos_por_dia",
         "tipo_examen",
-        "nivel_dificultad",
         "actualizado",
     )
     search_fields = (
@@ -20,11 +35,11 @@ class DatosAcademicosAdmin(admin.ModelAdmin):
         "user__email",
         "materia",
         "tema_actual",
+        "temas_dificiles",
     )
     list_filter = (
         "materia",
         "tipo_examen",
-        "nivel_dificultad",
         "fecha_examen",
     )
     readonly_fields = (

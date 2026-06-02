@@ -8,8 +8,8 @@
         <p class="eyebrow">Perfil acad&eacute;mico</p>
         <h1>Datos acad&eacute;micos</h1>
         <p>
-            Registra tu tema actual, fecha de examen y tiempo disponible en minutos.
-            Estos datos servir&aacute;n para generar una ruta de aprendizaje personalizada.
+            Selecciona tu tema de Anatom&iacute;a I desde el dataset basado en el libro de Rouvi&egrave;re y Delmas.
+            Estos datos servir&aacute;n para generar una ruta de aprendizaje personalizada y centrada en el libro base.
         </p>
     </div>
 </section>
@@ -39,6 +39,7 @@
                         {{ form.materia.label }}
                     </label>
                     {{ form.materia }}
+                    <small class="form-hint">Por ahora el sistema trabaja solo con Anatom&iacute;a I.</small>
                     {{ form.materia.errors }}
                 </div>
 
@@ -47,7 +48,17 @@
                         {{ form.tema_actual.label }}
                     </label>
                     {{ form.tema_actual }}
+                    <small class="form-hint">Tema principal tomado del libro base.</small>
                     {{ form.tema_actual.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.temas_dificiles.id_for_label }}">
+                        {{ form.temas_dificiles.label }}
+                    </label>
+                    {{ form.temas_dificiles }}
+                    <small class="form-hint">Este campo depende del tema actual seleccionado.</small>
+                    {{ form.temas_dificiles.errors }}
                 </div>
 
                 <div class="form-group">
@@ -71,7 +82,7 @@
                         {{ form.minutos_por_dia.label }}
                     </label>
                     {{ form.minutos_por_dia }}
-                    <small class="form-hint">Ejemplo: 30, 60, 90, 120 minutos.</small>
+                    <small class="form-hint">M&iacute;nimo 15 minutos y m&aacute;ximo 60 minutos, en intervalos de 5.</small>
                     {{ form.minutos_por_dia.errors }}
                 </div>
 
@@ -82,22 +93,6 @@
                     {{ form.tipo_examen }}
                     {{ form.tipo_examen.errors }}
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="{{ form.nivel_dificultad.id_for_label }}">
-                        {{ form.nivel_dificultad.label }}
-                    </label>
-                    {{ form.nivel_dificultad }}
-                    {{ form.nivel_dificultad.errors }}
-                </div>
-            </div>
-
-            <div class="form-group mt-4">
-                <label class="form-label" for="{{ form.temas_dificiles.id_for_label }}">
-                    {{ form.temas_dificiles.label }}
-                </label>
-                {{ form.temas_dificiles }}
-                {{ form.temas_dificiles.errors }}
             </div>
 
             <div class="form-group mt-4">
@@ -110,12 +105,13 @@
 
             <div class="info-box mt-4">
                 <div class="ai-box-title">
-                    <i data-lucide="info"></i>
-                    <strong>Uso de estos datos</strong>
+                    <i data-lucide="book-open"></i>
+                    <strong>Base del dataset</strong>
                 </div>
                 <p>
-                    M&aacute;s adelante, Gemini usar&aacute; esta informaci&oacute;n junto con tu estilo VARK
-                    para generar una ruta de estudio adaptada a tu examen.
+                    Los temas disponibles se basan en el libro <strong>Anatom&iacute;a Humana, Tomo 2: Tronco</strong>
+                    de Rouvi&egrave;re y Delmas. La ruta de estudio se generar&aacute; usando el tema y punto espec&iacute;fico
+                    que selecciones en esta pantalla.
                 </p>
             </div>
 
@@ -132,4 +128,46 @@
         </form>
     </div>
 </section>
+
+{{ subtemas_por_tema|json_script:"subtemas-data" }}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const temaSelect = document.getElementById("id_tema_actual");
+        const subtemaSelect = document.getElementById("id_temas_dificiles");
+        const dataElement = document.getElementById("subtemas-data");
+
+        if (!temaSelect || !subtemaSelect || !dataElement) {
+            return;
+        }
+
+        const subtemasPorTema = JSON.parse(dataElement.textContent);
+        const subtemaGuardado = subtemaSelect.value;
+
+        function actualizarSubtemas() {
+            const tema = temaSelect.value;
+            const subtemas = subtemasPorTema[tema] || [];
+            const valorAnterior = subtemaSelect.value || subtemaGuardado;
+
+            subtemaSelect.innerHTML = "";
+
+            const opcionVacia = document.createElement("option");
+            opcionVacia.value = "";
+            opcionVacia.textContent = subtemas.length ? "Selecciona un punto específico" : "Selecciona primero un tema";
+            subtemaSelect.appendChild(opcionVacia);
+
+            subtemas.forEach(function (subtema) {
+                const option = document.createElement("option");
+                option.value = subtema;
+                option.textContent = subtema;
+                if (subtema === valorAnterior) {
+                    option.selected = true;
+                }
+                subtemaSelect.appendChild(option);
+            });
+        }
+
+        temaSelect.addEventListener("change", actualizarSubtemas);
+        actualizarSubtemas();
+    });
+</script>
 {% endblock %}

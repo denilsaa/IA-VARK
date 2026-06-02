@@ -3,6 +3,57 @@ from django.db import models
 from django.utils import timezone
 
 
+class TemaAnatomia(models.Model):
+    """
+    Dataset interno de temas de Anatomía I.
+    Los temas principales y subtemas están basados en el índice del libro base
+    Rouvière y Delmas, Anatomía Humana. Tomo 2: Tronco.
+    """
+
+    codigo = models.SlugField(max_length=120, unique=True)
+    nombre = models.CharField(max_length=180)
+    tema_padre = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="subtemas",
+    )
+    descripcion = models.TextField(blank=True)
+    pagina_inicio = models.PositiveIntegerField(null=True, blank=True)
+    pagina_fin = models.PositiveIntegerField(null=True, blank=True)
+    orden = models.PositiveIntegerField(default=0)
+    activo = models.BooleanField(default=True)
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Tema de Anatomía I"
+        verbose_name_plural = "Temas de Anatomía I"
+        ordering = ["tema_padre__orden", "orden", "nombre"]
+
+    def __str__(self):
+        if self.tema_padre:
+            return f"{self.tema_padre.nombre} > {self.nombre}"
+        return self.nombre
+
+    @property
+    def es_tema_principal(self):
+        return self.tema_padre_id is None
+
+    @property
+    def referencia_paginas(self):
+        if self.pagina_inicio and self.pagina_fin:
+            return f"págs. {self.pagina_inicio}-{self.pagina_fin}"
+        if self.pagina_inicio:
+            return f"pág. {self.pagina_inicio}"
+        return "Sin referencia de página"
+
+    @classmethod
+    def temas_principales(cls):
+        return cls.objects.filter(tema_padre__isnull=True, activo=True).order_by("orden", "nombre")
+
+
 class DatosAcademicos(models.Model):
     TIPO_EXAMEN_CHOICES = [
         ("opcion_multiple", "Opción múltiple"),
@@ -12,6 +63,7 @@ class DatosAcademicos(models.Model):
         ("mixto", "Mixto"),
     ]
 
+    # Se mantiene en BD para no romper datos anteriores, pero ya no se muestra ni se usa.
     DIFICULTAD_CHOICES = [
         ("baja", "Baja"),
         ("media", "Media"),
@@ -32,7 +84,7 @@ class DatosAcademicos(models.Model):
 
     tema_actual = models.CharField(
         max_length=180,
-        help_text="Ejemplo: Sistema óseo, cráneo, músculos del miembro superior.",
+        help_text="Tema principal seleccionado desde el dataset de Anatomía I.",
     )
 
     fecha_inicio = models.DateField(
@@ -46,7 +98,7 @@ class DatosAcademicos(models.Model):
     )
 
     minutos_por_dia = models.PositiveIntegerField(
-        default=60,
+        default=30,
         help_text="Minutos disponibles para estudiar por día.",
     )
 
@@ -64,7 +116,7 @@ class DatosAcademicos(models.Model):
 
     temas_dificiles = models.TextField(
         blank=True,
-        help_text="Temas que más le cuestan al estudiante.",
+        help_text="Subtema o punto específico que más le cuesta al estudiante.",
     )
 
     objetivo_estudio = models.TextField(

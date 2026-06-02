@@ -98,11 +98,6 @@
                     </div>
 
                     <div>
-                        <strong>Dificultad percibida</strong>
-                        <p>{{ datos_academicos.get_nivel_dificultad_display }}</p>
-                    </div>
-
-                    <div>
                         <strong>Tipo de examen</strong>
                         <p>{{ datos_academicos.get_tipo_examen_display }}</p>
                     </div>
@@ -115,7 +110,7 @@
 
                 {% if datos_academicos.temas_dificiles %}
                     <div class="mt-4">
-                        <strong>Temas dif&iacute;ciles</strong>
+                        <strong>Punto espec&iacute;fico que te cuesta m&aacute;s</strong>
                         <p>{{ datos_academicos.temas_dificiles }}</p>
                     </div>
                 {% endif %}

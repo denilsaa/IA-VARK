@@ -3,7 +3,20 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
 from .forms import DatosAcademicosForm
-from .models import DatosAcademicos
+from .models import DatosAcademicos, TemaAnatomia
+
+
+def construir_subtemas_por_tema():
+    data = {}
+    temas = TemaAnatomia.temas_principales().prefetch_related("subtemas")
+
+    for tema in temas:
+        data[tema.nombre] = [
+            subtema.nombre
+            for subtema in tema.subtemas.filter(activo=True).order_by("orden", "nombre")
+        ]
+
+    return data
 
 
 @login_required
@@ -16,6 +29,7 @@ def datos_academicos(request):
         if form.is_valid():
             datos_guardados = form.save(commit=False)
             datos_guardados.user = request.user
+            datos_guardados.materia = "Anatomía I"
             datos_guardados.save()
 
             messages.success(
@@ -33,5 +47,6 @@ def datos_academicos(request):
         {
             "form": form,
             "datos": datos,
+            "subtemas_por_tema": construir_subtemas_por_tema(),
         },
     )

@@ -84,13 +84,17 @@ def generar_examen_con_gemini(
         prompt = f"""
 Genera un examen tipo simulacro para Anatomía I.
 
+Libro base y dataset interno:
+- Libro base: Rouvière y Delmas, Anatomía Humana descriptiva, topográfica y funcional. Tomo 2: Tronco.
+- El tema actual y el punto difícil fueron seleccionados desde un dataset interno basado en el índice del libro.
+- El examen debe centrarse en ese tema y en ese punto específico.
+
 Datos del estudiante:
 - Estilo VARK: {perfil_vark.estilo_display}
 - Materia: {datos_academicos.materia}
 - Tema actual: {datos_academicos.tema_actual}
 - Tipo de examen real: {datos_academicos.get_tipo_examen_display()}
-- Nivel de dificultad percibido: {datos_academicos.get_nivel_dificultad_display()}
-- Temas difíciles: {datos_academicos.temas_dificiles or "No especificados"}
+- Punto específico que le cuesta más: {datos_academicos.temas_dificiles or "No especificado"}
 - Objetivo de estudio: {datos_academicos.objetivo_estudio or "No especificado"}
 
 Ruta de aprendizaje:
@@ -100,6 +104,7 @@ Ruta de aprendizaje:
 {ruta.temas_priorizados}
 
 Contexto del material analizado:
+Usa únicamente este contexto y la ruta de aprendizaje. Si falta información, no inventes datos anatómicos.
 \"\"\"
 {contexto}
 \"\"\"

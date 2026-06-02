@@ -138,6 +138,11 @@ def generar_ruta_con_gemini(
         prompt = f"""
 Genera una ruta de aprendizaje personalizada para un estudiante de Anatomía I.
 
+Libro base y dataset interno:
+- Libro base: Rouvière y Delmas, Anatomía Humana descriptiva, topográfica y funcional. Tomo 2: Tronco.
+- El tema actual y el punto difícil fueron seleccionados desde un dataset interno basado en el índice del libro.
+- Debes centrar la ruta en ese tema y en ese punto específico.
+
 Datos del estudiante:
 - Estilo VARK principal: {perfil_vark.estilo_display}
 - Puntaje visual: {perfil_vark.puntaje_visual}
@@ -153,8 +158,7 @@ Datos académicos:
 - Días que debes planificar ahora: {dias_planificados}
 - Minutos disponibles por día: {datos_academicos.minutos_por_dia}
 - Tipo de examen: {datos_academicos.get_tipo_examen_display()}
-- Nivel de dificultad percibido: {datos_academicos.get_nivel_dificultad_display()}
-- Temas difíciles: {datos_academicos.temas_dificiles or "No especificados"}
+- Punto específico que le cuesta más: {datos_academicos.temas_dificiles or "No especificado"}
 - Objetivo de estudio: {datos_academicos.objetivo_estudio or "No especificado"}
 
 Temario específico del examen:
@@ -207,7 +211,9 @@ Reglas obligatorias:
 - Escribe en español.
 - El arreglo plan_diario debe tener exactamente {dias_planificados} elementos.
 - Cada día debe usar como máximo {datos_academicos.minutos_por_dia} minutos.
-- Enfoca la ruta en el temario del examen.
+- Enfoca la ruta en el tema actual, el punto específico difícil y el temario del examen.
+- Usa únicamente la información del contexto del material subido y del tema seleccionado.
+- Si un dato no está en el contexto, indica que debe revisarse en el libro base; no inventes información anatómica.
 - Adapta actividades al estilo VARK principal.
 - Si el estudiante es visual, usa mapas, esquemas, dibujos, tablas y colores.
 - Si es auditivo, usa explicación oral, repetición en voz alta, preguntas orales y audios.
