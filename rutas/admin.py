@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import RutaAprendizaje
+from .models import RutaAprendizaje, RutaDiaProgreso
 
 
 @admin.register(RutaAprendizaje)
@@ -25,3 +25,19 @@ class RutaAprendizajeAdmin(admin.ModelAdmin):
         "creado",
         "actualizado",
     )
+
+
+@admin.register(RutaDiaProgreso)
+class RutaDiaProgresoAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "ruta",
+        "dia",
+        "completado",
+        "quiz_puntaje",
+        "quiz_total",
+        "actualizado",
+    )
+    list_filter = ("completado", "actualizado")
+    search_fields = ("user__username", "user__email", "ruta__titulo", "notas")
+    readonly_fields = ("creado", "actualizado")

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Ruta de aprendizaje | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Ruta de aprendizaje | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
 <section class="page-hero">
@@ -8,9 +8,9 @@
         <p class="eyebrow">Ruta personalizada</p>
         <h1>Ruta de aprendizaje</h1>
         <p>
-            Genera un plan de estudio usando tu resultado VARK, tus datos acad&eacute;micos
-            y el dataset de Anatom&iacute;a I basado en el libro de Rouvi&egrave;re y Delmas.
-            Los materiales subidos sirven como contexto adicional para mejorar la respuesta del LLM.
+            Esta versión de la ruta está pensada para aprender de verdad:
+            combina tu resultado VARK, tu tema de Anatomía I, tu punto difícil y,
+            si existen, los materiales subidos.
         </p>
     </div>
 </section>
@@ -19,70 +19,47 @@
     <div class="container">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
             {% endfor %}
         {% endif %}
 
         <div class="dashboard-grid">
             <article class="feature-card dashboard-card">
                 <i data-lucide="scan-eye"></i>
-                <h3>Estilo VARK</h3>
+                <h3>Perfil VARK</h3>
                 <strong>{{ perfil_vark.estilo_display }}</strong>
-                <p>
-                    V: {{ perfil_vark.puntaje_visual }} /
-                    A: {{ perfil_vark.puntaje_auditivo }} /
-                    L: {{ perfil_vark.puntaje_lectura }} /
-                    K: {{ perfil_vark.puntaje_kinestesico }}
-                </p>
+                <p>V: {{ perfil_vark.puntaje_visual }} / A: {{ perfil_vark.puntaje_auditivo }} / L: {{ perfil_vark.puntaje_lectura }} / K: {{ perfil_vark.puntaje_kinestesico }}</p>
             </article>
-
             <article class="feature-card dashboard-card">
                 <i data-lucide="book-open"></i>
-                <h3>Tema elegido</h3>
+                <h3>Tema actual</h3>
                 <strong>{{ datos_academicos.tema_actual }}</strong>
                 <p>{{ datos_academicos.temas_dificiles|default:"Sin punto específico" }}</p>
             </article>
-
             <article class="feature-card dashboard-card">
                 <i data-lucide="calendar-days"></i>
-                <h3>D&iacute;as hasta examen</h3>
+                <h3>Días hasta examen</h3>
                 <strong>{{ datos_academicos.dias_restantes }}</strong>
-                <p>Fecha: {{ datos_academicos.fecha_examen_formateada }}</p>
+                <p>{{ datos_academicos.fecha_examen_formateada }}</p>
             </article>
-
             <article class="feature-card dashboard-card">
                 <i data-lucide="clock"></i>
                 <h3>Tiempo diario</h3>
                 <strong>{{ datos_academicos.tiempo_estudio_display }}</strong>
-                <p>Disponible por d&iacute;a.</p>
+                <p>Máximo por día</p>
             </article>
         </div>
 
         <div class="info-box mt-4">
             <div class="ai-box-title">
-                <i data-lucide="database"></i>
-                <strong>Base de generaci&oacute;n</strong>
+                <i data-lucide="sparkles"></i>
+                <strong>Qué tiene esta ruta 10/10</strong>
             </div>
             <p>
-                La ruta se puede generar con el <strong>dataset interno de Anatom&iacute;a I</strong>,
-                el tema seleccionado y tu resultado VARK. Si subes materiales, Gemini los usar&aacute;
-                como contexto adicional para enriquecer la ruta, pero ya no son obligatorios.
+                Cada día puede incluir <strong>audio escuchable</strong>, <strong>mapa mental</strong>,
+                <strong>lámina anatómica guiada con marcadores</strong>, <strong>ejercicio práctico</strong>
+                <strong>mini quiz evaluable</strong> y <strong>apoyo de lectura</strong> según tu combinación VARK.
             </p>
-
-            {% if materiales %}
-                <p><strong>Materiales procesados disponibles:</strong> {{ materiales|length }}.</p>
-            {% else %}
-                <p>
-                    <strong>Materiales procesados disponibles:</strong> 0. Puedes generar la ruta ahora
-                    y luego subir materiales para regenerarla con m&aacute;s contexto.
-                </p>
-                <a href="{% url 'documentos:subir' %}" class="btn btn-outline-primary icon-btn mt-3">
-                    <i data-lucide="upload-cloud"></i>
-                    <span>Subir material opcional</span>
-                </a>
-            {% endif %}
         </div>
 
         {% if ruta %}
@@ -96,20 +73,36 @@
                         <strong>Estilo usado</strong>
                         <p>{{ ruta.estilo_vark_usado }}</p>
                     </div>
-
                     <div>
-                        <strong>D&iacute;as planificados</strong>
+                        <strong>Días planificados</strong>
                         <p>{{ ruta.dias_planificados }}</p>
                     </div>
-
                     <div>
-                        <strong>Minutos por d&iacute;a</strong>
+                        <strong>Minutos por día</strong>
                         <p>{{ ruta.minutos_por_dia }} min</p>
                     </div>
-
                     <div>
                         <strong>Actualizado</strong>
                         <p>{{ ruta.actualizado|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+
+                <div class="progress-panel mt-4">
+                    <div>
+                        <p class="eyebrow">Avance real</p>
+                        <h3>{{ progreso_general.porcentaje }}% completado</h3>
+                        <p>
+                            {{ progreso_general.dias_completados }}/{{ progreso_general.total_dias }}
+                            días completados.
+                            {% if progreso_general.promedio_quiz != None %}
+                                Promedio de mini quizzes: {{ progreso_general.promedio_quiz }}%.
+                            {% else %}
+                                Aún no hay mini quizzes guardados.
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill" style="width: {{ progreso_general.porcentaje }}%;"></div>
                     </div>
                 </div>
 
@@ -118,10 +111,7 @@
                         <strong>Temas priorizados</strong>
                         <ul class="clean-list mt-3">
                             {% for tema in ruta.temas_priorizados_lista %}
-                                <li>
-                                    <i data-lucide="check"></i>
-                                    <span>{{ tema }}</span>
-                                </li>
+                                <li><i data-lucide="check"></i><span>{{ tema }}</span></li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -130,22 +120,51 @@
 
             <div class="section-heading mt-4">
                 <p class="eyebrow">Plan diario</p>
-                <h2>Actividades recomendadas</h2>
+                <h2>Recursos concretos para aprender</h2>
             </div>
 
             <div class="route-list">
-                {% for dia in ruta.plan_diario %}
+                {% for dia in dias_ruta %}
                     <article class="form-panel route-day-card">
                         <div class="route-day-header">
-                            <div class="route-day-number">
-                                {{ dia.dia }}
-                            </div>
-
+                            <div class="route-day-number">{{ dia.dia }}</div>
                             <div>
-                                <p class="eyebrow">D&iacute;a {{ dia.dia }}</p>
+                                <p class="eyebrow">Día {{ dia.dia }}</p>
                                 <h3>{{ dia.titulo }}</h3>
                                 <p>{{ dia.objetivo }}</p>
                             </div>
+                        </div>
+
+                        <div class="day-progress-box mt-4 {% if dia.progreso and dia.progreso.completado %}is-complete{% endif %}">
+                            <div>
+                                <strong>
+                                    {% if dia.progreso and dia.progreso.completado %}
+                                        Día completado
+                                    {% else %}
+                                        Día pendiente
+                                    {% endif %}
+                                </strong>
+                                <p>
+                                    {% if dia.progreso and dia.progreso.quiz_total %}
+                                        Mini quiz guardado: {{ dia.progreso.quiz_texto }}
+                                        {% if dia.progreso.quiz_porcentaje != None %}({{ dia.progreso.quiz_porcentaje }}%){% endif %}
+                                    {% else %}
+                                        Mini quiz aún no guardado.
+                                    {% endif %}
+                                </p>
+                            </div>
+
+                            <form method="post" action="{% url 'rutas:actualizar_progreso' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="dia" value="{{ dia.dia }}">
+                                {% if dia.progreso and dia.progreso.completado %}
+                                    <input type="hidden" name="accion" value="pendiente">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">Marcar pendiente</button>
+                                {% else %}
+                                    <input type="hidden" name="accion" value="completar">
+                                    <button type="submit" class="btn btn-primary btn-sm">Marcar completado</button>
+                                {% endif %}
+                            </form>
                         </div>
 
                         <div class="detail-grid mt-4">
@@ -153,35 +172,236 @@
                                 <strong>Tema principal</strong>
                                 <p>{{ dia.tema_principal }}</p>
                             </div>
-
                             <div>
                                 <strong>Tiempo sugerido</strong>
                                 <p>{{ dia.minutos }} min</p>
                             </div>
-
-                            {% if dia.recurso_vark %}
-                                <div>
-                                    <strong>Recurso VARK</strong>
-                                    <p>{{ dia.recurso_vark }}</p>
-                                </div>
-                            {% endif %}
-
-                            {% if dia.uso_materiales %}
-                                <div>
-                                    <strong>Fuente usada</strong>
-                                    <p>{{ dia.uso_materiales }}</p>
-                                </div>
-                            {% endif %}
+                            <div>
+                                <strong>Recurso dominante</strong>
+                                <p>{{ dia.recurso_vark }}</p>
+                            </div>
+                            <div>
+                                <strong>Uso de materiales</strong>
+                                <p>{{ dia.uso_materiales }}</p>
+                            </div>
                         </div>
 
                         {% if dia.enfoque_vark %}
                             <div class="info-box mt-4">
-                                <div class="ai-box-title">
-                                    <i data-lucide="sparkles"></i>
-                                    <strong>Adaptaci&oacute;n VARK</strong>
-                                </div>
+                                <div class="ai-box-title"><i data-lucide="blend"></i><strong>Adaptación VARK</strong></div>
                                 <p>{{ dia.enfoque_vark }}</p>
                             </div>
+                        {% endif %}
+
+                        <div class="resource-grid mt-4">
+                            {% if dia.recursos.audio.habilitado %}
+                                <section class="resource-card">
+                                    <div class="resource-card-header">
+                                        <i data-lucide="volume-2"></i>
+                                        <strong>{{ dia.recursos.audio.titulo }}</strong>
+                                    </div>
+                                    <p>{{ dia.recursos.audio.guion }}</p>
+                                    {% if dia.recursos.audio.pasos_clave %}
+                                        <ul class="clean-list mt-3">
+                                            {% for paso in dia.recursos.audio.pasos_clave %}
+                                                <li><i data-lucide="check"></i><span>{{ paso }}</span></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                    <div class="form-actions mt-3">
+                                        <button type="button" class="btn btn-primary icon-btn" onclick="playStudyAudio('{{ dia.recursos.audio.guion|escapejs }}')">
+                                            <i data-lucide="play"></i>
+                                            <span>Escuchar audio</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary icon-btn" onclick="stopStudyAudio()">
+                                            <i data-lucide="square"></i>
+                                            <span>Detener</span>
+                                        </button>
+                                    </div>
+                                </section>
+                            {% endif %}
+
+                            {% if dia.recursos.visual.habilitado %}
+                                <section class="resource-card">
+                                    <div class="resource-card-header">
+                                        <i data-lucide="map"></i>
+                                        <strong>{{ dia.recursos.visual.titulo }}</strong>
+                                    </div>
+                                    {% if dia.recursos.visual.mermaid %}
+                                        <div class="mermaid route-mermaid">{{ dia.recursos.visual.mermaid }}</div>
+                                    {% endif %}
+                                    {% if dia.recursos.visual.apoyo_visual %}
+                                        <ul class="clean-list mt-3">
+                                            {% for item in dia.recursos.visual.apoyo_visual %}
+                                                <li><i data-lucide="circle-dot"></i><span>{{ item }}</span></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </section>
+                            {% endif %}
+
+                            {% if dia.recursos.kinestesico.habilitado %}
+                                <section class="resource-card">
+                                    <div class="resource-card-header">
+                                        <i data-lucide="activity"></i>
+                                        <strong>{{ dia.recursos.kinestesico.titulo }}</strong>
+                                    </div>
+                                    <p>{{ dia.recursos.kinestesico.instrucciones }}</p>
+                                    {% if dia.recursos.kinestesico.preguntas %}
+                                        <ul class="clean-list mt-3">
+                                            {% for pregunta in dia.recursos.kinestesico.preguntas %}
+                                                <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </section>
+                            {% endif %}
+
+                            {% if dia.recursos.lectura.habilitado %}
+                                <section class="resource-card">
+                                    <div class="resource-card-header">
+                                        <i data-lucide="book-text"></i>
+                                        <strong>{{ dia.recursos.lectura.titulo }}</strong>
+                                    </div>
+                                    <p>{{ dia.recursos.lectura.resumen }}</p>
+                                    {% if dia.recursos.lectura.glosario %}
+                                        <ul class="clean-list mt-3">
+                                            {% for item in dia.recursos.lectura.glosario %}
+                                                <li><i data-lucide="bookmark"></i><span>{{ item }}</span></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </section>
+                            {% endif %}
+                        </div>
+
+                        {% if dia.recursos.imagen_anatomica.habilitado %}
+                            <section class="form-panel wide-panel mt-4 anatomical-panel">
+                                <div class="resource-card-header">
+                                    <i data-lucide="image"></i>
+                                    <strong>{{ dia.recursos.imagen_anatomica.titulo }}</strong>
+                                </div>
+                                <p>{{ dia.recursos.imagen_anatomica.descripcion }}</p>
+
+                                <div class="anatomy-grid mt-4">
+                                    <div>
+                                        <div class="anatomy-board">
+                                            <svg class="torso-svg" viewBox="0 0 220 420" aria-hidden="true">
+                                                <rect x="0" y="0" width="220" height="420" rx="28" fill="#f5fbfa"></rect>
+                                                <circle cx="110" cy="42" r="26" fill="#d9efec"></circle>
+                                                <path d="M75 82 C88 70, 132 70, 145 82 L160 120 C168 142, 170 170, 162 196 L151 232 C146 248, 144 264, 144 280 L144 330 C144 352, 132 374, 118 392 L102 392 C88 374, 76 352, 76 330 L76 280 C76 264, 74 248, 69 232 L58 196 C50 170, 52 142, 60 120 L75 82 Z" fill="#bfe0db"></path>
+                                                <path d="M86 122 L134 122" stroke="#8bbdb5" stroke-width="4" stroke-linecap="round"></path>
+                                                <path d="M82 168 L138 168" stroke="#8bbdb5" stroke-width="4" stroke-linecap="round"></path>
+                                                <path d="M84 226 L136 226" stroke="#8bbdb5" stroke-width="4" stroke-linecap="round"></path>
+                                                <path d="M90 282 L130 282" stroke="#8bbdb5" stroke-width="4" stroke-linecap="round"></path>
+                                            </svg>
+
+                                            {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
+                                                <button type="button"
+                                                        class="marker-pin"
+                                                        data-x="{{ marcador.x }}"
+                                                        data-y="{{ marcador.y }}"
+                                                        data-target="marker-{{ dia.dia }}-{{ marcador.id }}">
+                                                    {{ marcador.id }}
+                                                </button>
+                                            {% endfor %}
+                                        </div>
+                                        <p class="marker-help mt-2"><strong>Modo práctica:</strong> {{ dia.recursos.imagen_anatomica.modo_practica }}</p>
+                                    </div>
+
+                                    <div>
+                                        <div class="marker-list">
+                                            {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
+                                                <div class="marker-item">
+                                                    <div class="marker-item-head">
+                                                        <span class="marker-badge">{{ marcador.id }}</span>
+                                                        <div>
+                                                            <strong>Marcador {{ marcador.id }}</strong>
+                                                            <p class="text-muted">{{ marcador.pista }}</p>
+                                                        </div>
+                                                        <button type="button"
+                                                                class="btn btn-outline-primary btn-sm"
+                                                                data-target="marker-{{ dia.dia }}-{{ marcador.id }}">
+                                                            Revelar
+                                                        </button>
+                                                    </div>
+                                                    <div class="marker-answer" id="marker-{{ dia.dia }}-{{ marcador.id }}">
+                                                        <p><strong>Respuesta:</strong> {{ marcador.nombre }}</p>
+                                                        {% if marcador.detalle %}<p>{{ marcador.detalle }}</p>{% endif %}
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+
+                                        {% if dia.recursos.imagen_anatomica.preguntas %}
+                                            <div class="text-preview mt-3">
+                                                <strong>Preguntas sobre la imagen</strong>
+                                                <ul class="clean-list mt-3">
+                                                    {% for pregunta in dia.recursos.imagen_anatomica.preguntas %}
+                                                        <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </section>
+                        {% endif %}
+
+
+                        {% if dia.mini_quiz %}
+                            <section class="form-panel wide-panel mt-4 quiz-panel" data-quiz-day="{{ dia.dia }}">
+                                <div class="resource-card-header">
+                                    <i data-lucide="clipboard-check"></i>
+                                    <strong>Mini quiz evaluable del día</strong>
+                                </div>
+                                <p>Responde las preguntas y presiona calificar para ver tu resultado.</p>
+
+                                <div class="quiz-list">
+                                    {% for pregunta in dia.mini_quiz %}
+                                        {% with pregunta_num=forloop.counter %}
+                                            <div class="quiz-question" data-question>
+                                                <strong>{{ pregunta_num }}. {{ pregunta.pregunta }}</strong>
+                                                <div class="quiz-options mt-3">
+                                                    {% for opcion in pregunta.opciones %}
+                                                        <label class="quiz-option">
+                                                            <input type="radio"
+                                                                   name="quiz-{{ dia.dia }}-{{ pregunta_num }}"
+                                                                   value="{{ opcion|escape }}"
+                                                                   data-correct="{% if opcion == pregunta.respuesta_correcta %}true{% else %}false{% endif %}">
+                                                            <span>{{ opcion }}</span>
+                                                        </label>
+                                                    {% endfor %}
+                                                </div>
+                                                <div class="quiz-explanation">
+                                                    <strong>Respuesta correcta:</strong> {{ pregunta.respuesta_correcta }}<br>
+                                                    {{ pregunta.explicacion }}
+                                                </div>
+                                            </div>
+                                        {% endwith %}
+                                    {% endfor %}
+                                </div>
+
+                                <div class="form-actions mt-3 quiz-actions">
+                                    <button type="button" class="btn btn-primary icon-btn" onclick="gradeQuiz(this)">
+                                        <i data-lucide="check-circle"></i>
+                                        <span>Calificar mini quiz</span>
+                                    </button>
+                                    <strong class="quiz-score"></strong>
+
+                                    <form method="post" action="{% url 'rutas:actualizar_progreso' %}" class="quiz-save-form">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="dia" value="{{ dia.dia }}">
+                                        <input type="hidden" name="accion" value="guardar_quiz">
+                                        <input type="hidden" name="quiz_puntaje" value="">
+                                        <input type="hidden" name="quiz_total" value="">
+                                        <button type="submit" class="btn btn-outline-primary icon-btn">
+                                            <i data-lucide="save"></i>
+                                            <span>Guardar resultado</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </section>
                         {% endif %}
 
                         {% if dia.actividades %}
@@ -189,10 +409,7 @@
                                 <strong>Actividades</strong>
                                 <ul class="clean-list mt-3">
                                     {% for actividad in dia.actividades %}
-                                        <li>
-                                            <i data-lucide="circle-dot"></i>
-                                            <span>{{ actividad }}</span>
-                                        </li>
+                                        <li><i data-lucide="circle-dot"></i><span>{{ actividad }}</span></li>
                                     {% endfor %}
                                 </ul>
                             </div>
@@ -200,13 +417,10 @@
 
                         {% if dia.autoevaluacion %}
                             <div class="text-preview mt-4">
-                                <strong>Autoevaluaci&oacute;n</strong>
+                                <strong>Autoevaluación</strong>
                                 <ul class="clean-list mt-3">
                                     {% for pregunta in dia.autoevaluacion %}
-                                        <li>
-                                            <i data-lucide="help-circle"></i>
-                                            <span>{{ pregunta }}</span>
-                                        </li>
+                                        <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
                                     {% endfor %}
                                 </ul>
                             </div>
@@ -214,13 +428,21 @@
 
                         {% if dia.producto_esperado %}
                             <div class="info-box mt-4">
-                                <div class="ai-box-title">
-                                    <i data-lucide="target"></i>
-                                    <strong>Producto esperado</strong>
-                                </div>
+                                <div class="ai-box-title"><i data-lucide="target"></i><strong>Producto esperado</strong></div>
                                 <p>{{ dia.producto_esperado }}</p>
                             </div>
                         {% endif %}
+
+                        <form method="post" action="{% url 'rutas:actualizar_progreso' %}" class="notes-form mt-4">
+                            {% csrf_token %}
+                            <input type="hidden" name="dia" value="{{ dia.dia }}">
+                            <input type="hidden" name="accion" value="guardar_notas">
+                            <label><strong>Notas personales del día</strong></label>
+                            <textarea name="notas" rows="3" placeholder="Escribe qué aprendiste, qué te falta repasar o qué duda te quedó...">{% if dia.progreso %}{{ dia.progreso.notas }}{% endif %}</textarea>
+                            <div class="form-actions mt-2">
+                                <button type="submit" class="btn btn-outline-primary btn-sm">Guardar notas</button>
+                            </div>
+                        </form>
                     </article>
                 {% endfor %}
             </div>
@@ -229,23 +451,16 @@
                 <div class="form-panel wide-panel mt-4">
                     <p class="eyebrow">Cierre</p>
                     <h2>Recomendaciones finales</h2>
-
                     <ul class="clean-list mt-3">
                         {% for recomendacion in ruta.recomendaciones_lista %}
-                            <li>
-                                <i data-lucide="check"></i>
-                                <span>{{ recomendacion }}</span>
-                            </li>
+                            <li><i data-lucide="check"></i><span>{{ recomendacion }}</span></li>
                         {% endfor %}
                     </ul>
                 </div>
             {% endif %}
 
             <div class="form-actions mt-4">
-                <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
-                    Volver al dashboard
-                </a>
-
+                <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">Volver al dashboard</a>
                 <form method="post">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-primary icon-btn">
@@ -257,13 +472,11 @@
         {% else %}
             <div class="empty-state mt-4">
                 <i data-lucide="route"></i>
-                <h2>A&uacute;n no tienes una ruta generada</h2>
+                <h2>Aún no tienes una ruta generada</h2>
                 <p>
-                    Genera una ruta usando tu resultado VARK, tus datos acad&eacute;micos y el dataset de Anatom&iacute;a I.
-                    Los materiales procesados son opcionales y sirven para mejorar el contexto del LLM.
+                    Presiona el botón para que Gemini genere la ruta con audio, mapas, láminas anatómicas y ejercicios.
                 </p>
-
-                <form method="post">
+                <form method="post" class="mt-4">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-primary icon-btn">
                         <i data-lucide="sparkles"></i>
@@ -274,4 +487,288 @@
         {% endif %}
     </div>
 </section>
+
+<style>
+.resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+.resource-card,
+.anatomical-panel {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 1rem;
+    padding: 1rem;
+    background: #fff;
+}
+.resource-card-header {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .75rem;
+}
+.route-mermaid {
+    overflow-x: auto;
+    background: #f8fbfb;
+    border-radius: .75rem;
+    padding: .75rem;
+}
+.anatomy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.anatomy-board {
+    position: relative;
+    border-radius: 1rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f4fbfa 100%);
+    border: 1px solid rgba(0,0,0,.08);
+    padding: 1rem;
+    min-height: 460px;
+}
+.torso-svg {
+    width: 100%;
+    height: 420px;
+    display: block;
+}
+.marker-pin {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    border: none;
+    background: #0f8b7d;
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 8px 20px rgba(15, 139, 125, .25);
+    cursor: pointer;
+}
+.marker-pin:hover { background: #0a6e63; }
+.marker-help { color: #4b5563; }
+.marker-list { display: grid; gap: .75rem; }
+.marker-item {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: .85rem;
+    padding: .85rem;
+    background: #fcfefe;
+}
+.marker-item-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: .75rem;
+    align-items: start;
+}
+.marker-badge {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #dff5f1;
+    color: #0f8b7d;
+    font-weight: 700;
+}
+.marker-answer {
+    display: none;
+    margin-top: .75rem;
+    padding-top: .75rem;
+    border-top: 1px dashed rgba(0,0,0,.12);
+}
+.marker-answer.is-visible { display: block; }
+
+.quiz-panel { background: #fff; }
+.quiz-list { display: grid; gap: 1rem; margin-top: 1rem; }
+.quiz-question {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: .85rem;
+    padding: 1rem;
+    background: #fcfefe;
+}
+.quiz-options { display: grid; gap: .5rem; }
+.quiz-option {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    padding: .65rem .75rem;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: .75rem;
+    cursor: pointer;
+}
+.quiz-option.is-correct { border-color: #0f8b7d; background: #e8f8f5; }
+.quiz-option.is-wrong { border-color: #d9534f; background: #fff1f0; }
+.quiz-explanation {
+    display: none;
+    margin-top: .75rem;
+    padding-top: .75rem;
+    border-top: 1px dashed rgba(0,0,0,.12);
+}
+.quiz-explanation.is-visible { display: block; }
+.quiz-score { color: #0f8b7d; }
+
+
+.progress-panel {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 1rem;
+    padding: 1rem;
+    background: #f8fbfb;
+}
+.progress-bar-wrap {
+    width: 100%;
+    height: .85rem;
+    border-radius: 999px;
+    background: #e5eeee;
+    overflow: hidden;
+    margin-top: .75rem;
+}
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: #0f8b7d;
+}
+.day-progress-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 1rem;
+    padding: 1rem;
+    background: #fff8f1;
+}
+.day-progress-box.is-complete {
+    background: #eaf8f5;
+    border-color: rgba(15,139,125,.25);
+}
+.quiz-actions {
+    align-items: center;
+    flex-wrap: wrap;
+}
+.quiz-save-form {
+    display: inline-flex;
+}
+.notes-form textarea {
+    width: 100%;
+    margin-top: .5rem;
+    border: 1px solid rgba(0,0,0,.12);
+    border-radius: .75rem;
+    padding: .8rem;
+    resize: vertical;
+}
+
+@media (max-width: 900px) {
+    .anatomy-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+</script>
+
+<script>
+    let activeUtterance = null;
+
+    window.playStudyAudio = function(text) {
+        if (!('speechSynthesis' in window)) {
+            alert('Tu navegador no soporta audio por voz.');
+            return;
+        }
+        stopStudyAudio();
+        activeUtterance = new SpeechSynthesisUtterance(text);
+        activeUtterance.lang = 'es-ES';
+        activeUtterance.rate = 1;
+        activeUtterance.pitch = 1;
+        window.speechSynthesis.speak(activeUtterance);
+    }
+
+    window.stopStudyAudio = function() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+        activeUtterance = null;
+    }
+
+
+
+    window.gradeQuiz = function(button) {
+        const panel = button.closest('.quiz-panel');
+        if (!panel) return;
+
+        const questions = panel.querySelectorAll('[data-question]');
+        let correct = 0;
+        let answered = 0;
+
+        questions.forEach((question) => {
+            const options = question.querySelectorAll('.quiz-option');
+            const selected = question.querySelector('input[type="radio"]:checked');
+            const explanation = question.querySelector('.quiz-explanation');
+
+            options.forEach((label) => label.classList.remove('is-correct', 'is-wrong'));
+
+            if (selected) {
+                answered += 1;
+                const selectedLabel = selected.closest('.quiz-option');
+                if (selected.dataset.correct === 'true') {
+                    correct += 1;
+                    selectedLabel.classList.add('is-correct');
+                } else {
+                    selectedLabel.classList.add('is-wrong');
+                }
+            }
+
+            options.forEach((label) => {
+                const input = label.querySelector('input');
+                if (input && input.dataset.correct === 'true') {
+                    label.classList.add('is-correct');
+                }
+            });
+
+            if (explanation) explanation.classList.add('is-visible');
+        });
+
+        const score = panel.querySelector('.quiz-score');
+        if (score) {
+            score.textContent = `Resultado: ${correct}/${questions.length} correctas (${answered}/${questions.length} respondidas)`;
+        }
+
+        const puntajeInput = panel.querySelector('input[name="quiz_puntaje"]');
+        const totalInput = panel.querySelector('input[name="quiz_total"]');
+        if (puntajeInput && totalInput) {
+            puntajeInput.value = correct;
+            totalInput.value = questions.length;
+        }
+    }
+
+    window.toggleMarkerDetail = function(id) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.classList.toggle('is-visible');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.marker-pin').forEach(function(button) {
+            const x = button.dataset.x || '50';
+            const y = button.dataset.y || '50';
+            const target = button.dataset.target;
+
+            button.style.left = `${x}%`;
+            button.style.top = `${y}%`;
+
+            button.addEventListener('click', function() {
+                toggleMarkerDetail(target);
+            });
+        });
+
+        document.querySelectorAll('[data-target]').forEach(function(button) {
+            if (button.classList.contains('marker-pin')) return;
+
+            button.addEventListener('click', function() {
+                toggleMarkerDetail(button.dataset.target);
+            });
+        });
+    });
+</script>
 {% endblock %}

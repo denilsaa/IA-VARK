@@ -43,6 +43,54 @@
                 <strong>{{ debiles|length }}</strong>
                 <p>Temas para reforzar.</p>
             </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="route"></i>
+                <h3>Avance de ruta</h3>
+                <strong>{{ progreso_ruta.porcentaje }}%</strong>
+                <p>{{ progreso_ruta.dias_completados }}/{{ progreso_ruta.total_dias }} días completados.</p>
+            </article>
+
+            <article class="feature-card dashboard-card">
+                <i data-lucide="clipboard-check"></i>
+                <h3>Mini quizzes</h3>
+                <strong>{{ progreso_ruta.quizzes_resueltos }}</strong>
+                {% if progreso_ruta.promedio_quiz != None %}
+                    <p>Promedio: {{ progreso_ruta.promedio_quiz }}%.</p>
+                {% else %}
+                    <p>Aún sin resultados guardados.</p>
+                {% endif %}
+            </article>
+        </div>
+
+        <div class="info-box mt-4">
+            <div class="ai-box-title">
+                <i data-lucide="route"></i>
+                <strong>Progreso de la ruta de aprendizaje</strong>
+            </div>
+
+            {% if ruta %}
+                <p>
+                    Has completado <strong>{{ progreso_ruta.dias_completados }}</strong>
+                    de <strong>{{ progreso_ruta.total_dias }}</strong> días planificados.
+                    Avance general: <strong>{{ progreso_ruta.porcentaje }}%</strong>.
+                </p>
+
+                {% if progreso_ruta.promedio_quiz != None %}
+                    <p>Promedio de mini quizzes guardados: <strong>{{ progreso_ruta.promedio_quiz }}%</strong>.</p>
+                {% else %}
+                    <p>Aún no guardaste resultados de mini quizzes.</p>
+                {% endif %}
+
+                <a href="{% url 'rutas:ruta_aprendizaje' %}" class="btn btn-outline-primary btn-sm">
+                    Continuar ruta
+                </a>
+            {% else %}
+                <p>Aún no tienes una ruta generada.</p>
+                <a href="{% url 'rutas:ruta_aprendizaje' %}" class="btn btn-primary btn-sm">
+                    Generar ruta
+                </a>
+            {% endif %}
         </div>
 
         <div class="info-box mt-4">

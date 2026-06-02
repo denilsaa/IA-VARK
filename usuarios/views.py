@@ -5,7 +5,7 @@ from django.urls import reverse
 from anatomia.models import DatosAcademicos
 from documentos.models import MaterialEstudio
 from examenes.models import ExamenGenerado
-from rutas.models import RutaAprendizaje
+from rutas.models import RutaAprendizaje, RutaDiaProgreso
 from vark.models import PerfilVARK
 
 
@@ -45,8 +45,10 @@ def dashboard(request):
         dias_restantes = "Sin registrar"
         tiempo_estudio = "Sin registrar"
 
+    progreso_ruta = calcular_progreso_ruta(request.user, ruta)
+
     if ruta:
-        ruta_activa = f"{ruta.dias_planificados} días planificados"
+        ruta_activa = f"{progreso_ruta['porcentaje']}% completado"
     else:
         ruta_activa = "Sin ruta activa"
 
@@ -64,6 +66,7 @@ def dashboard(request):
         "tiempo_estudio": tiempo_estudio,
         "materiales": cantidad_materiales,
         "ruta_activa": ruta_activa,
+        "ruta_progreso": progreso_ruta,
         "ultimo_puntaje": ultimo_puntaje,
     }
 
@@ -141,6 +144,9 @@ def progreso(request):
     else:
         estilo_vark = "Pendiente"
 
+    ruta = RutaAprendizaje.objects.filter(user=request.user).first()
+    progreso_ruta = calcular_progreso_ruta(request.user, ruta)
+
     simulacros = ExamenGenerado.objects.filter(
         user=request.user,
         estado=ExamenGenerado.ESTADO_RESPONDIDO,
@@ -168,8 +174,50 @@ def progreso(request):
             "debiles": debiles,
             "estilo_vark": estilo_vark,
             "recomendacion": recomendacion,
+            "ruta": ruta,
+            "progreso_ruta": progreso_ruta,
         },
     )
+
+
+
+def calcular_progreso_ruta(user, ruta):
+    if not ruta:
+        return {
+            "total_dias": 0,
+            "dias_completados": 0,
+            "porcentaje": 0,
+            "quizzes_resueltos": 0,
+            "promedio_quiz": None,
+        }
+
+    total_dias = len(ruta.plan_diario)
+    progresos = list(RutaDiaProgreso.objects.filter(user=user, ruta=ruta))
+    dias_completados = sum(1 for progreso in progresos if progreso.completado)
+
+    quizzes = [
+        progreso
+        for progreso in progresos
+        if progreso.quiz_total and progreso.quiz_total > 0
+    ]
+
+    if quizzes:
+        promedio_quiz = round(
+            sum((progreso.quiz_puntaje or 0) * 100 / progreso.quiz_total for progreso in quizzes)
+            / len(quizzes)
+        )
+    else:
+        promedio_quiz = None
+
+    porcentaje = round((dias_completados * 100 / total_dias)) if total_dias else 0
+
+    return {
+        "total_dias": total_dias,
+        "dias_completados": dias_completados,
+        "porcentaje": porcentaje,
+        "quizzes_resueltos": len(quizzes),
+        "promedio_quiz": promedio_quiz,
+    }
 
 
 def obtener_temas_fuertes_y_debiles(simulacros):

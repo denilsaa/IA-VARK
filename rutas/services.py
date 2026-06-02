@@ -98,17 +98,14 @@ def generar_ruta_aprendizaje(user, perfil_vark, datos_academicos, materiales):
     )
 
     ruta.materiales.set(materiales)
-
     return ruta
 
 
 def calcular_dias_planificados(dias_hasta_examen):
     if dias_hasta_examen <= 0:
         return 1
-
     if dias_hasta_examen > MAX_DIAS_PLAN:
         return MAX_DIAS_PLAN
-
     return dias_hasta_examen
 
 
@@ -134,33 +131,19 @@ def construir_detalle_vark(perfil_vark):
             }
         )
 
-    modalidades_ordenadas = sorted(
-        modalidades,
-        key=lambda item: item["puntaje"],
-        reverse=True,
-    )
-
-    dominantes = [item for item in modalidades_ordenadas if item["puntaje"] > 0]
+    modalidades_ordenadas = sorted(modalidades, key=lambda item: item["puntaje"], reverse=True)
     dominante = MODALIDADES_VARK.get(perfil_vark.estilo_principal, perfil_vark.estilo_display)
-    secundarias = [
-        item for item in dominantes
-        if item["clave"] != perfil_vark.estilo_principal
-    ]
+    activas = [item for item in modalidades_ordenadas if item["puntaje"] > 0]
+    secundarias = [item for item in activas if item["clave"] != perfil_vark.estilo_principal]
 
     mezcla = ", ".join(
-        f"{item['nombre']} {item['porcentaje']}%"
-        for item in modalidades_ordenadas
-        if item["puntaje"] > 0
-    )
+        f"{item['nombre']} {item['porcentaje']}%" for item in activas
+    ) or f"{dominante} como perfil principal"
 
-    if not mezcla:
-        mezcla = f"{dominante} como perfil principal"
-
-    reglas_activas = []
-    for item in dominantes:
-        reglas_activas.append(
-            f"{item['nombre']} ({item['porcentaje']}%): " + ", ".join(item["reglas"][:4])
-        )
+    reglas_activas = [
+        f"{item['nombre']} ({item['porcentaje']}%): " + ", ".join(item["reglas"][:4])
+        for item in activas
+    ]
 
     return {
         "puntajes": puntajes,
@@ -174,40 +157,31 @@ def construir_detalle_vark(perfil_vark):
 
 def construir_contexto_materiales(materiales):
     partes = []
-
     for material in materiales:
         partes.append(f"Material: {material.titulo}")
         partes.append(f"Tema general: {material.tema or 'No especificado'}")
-
         if material.temario_examen:
             partes.append("Temario del examen:")
             partes.append(material.temario_examen)
-
         if material.resumen_ia:
             partes.append("Resumen IA:")
             partes.append(material.resumen_ia)
-
         if material.temas_clave_ia:
             partes.append("Temas clave IA:")
             partes.append(material.temas_clave_ia)
-
         if material.preguntas_sugeridas_ia:
             partes.append("Preguntas sugeridas IA:")
             partes.append(material.preguntas_sugeridas_ia)
-
         if material.recomendacion_ia:
             partes.append("Recomendación IA:")
             partes.append(material.recomendacion_ia)
-
         if material.texto_extraido:
             texto_recortado = Truncator(material.texto_extraido).chars(9000)
             partes.append("Texto extraído parcial:")
             partes.append(texto_recortado)
-
         partes.append("\n---\n")
 
     contexto = "\n".join(partes).strip()
-
     return Truncator(contexto).chars(MAX_CARACTERES_CONTEXTO_MATERIAL)
 
 
@@ -221,10 +195,8 @@ def generar_ruta_con_gemini(
     dias_planificados,
 ):
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
-
     if not api_key:
         return {}
-
     if os.getenv("LLM_PROVIDER", "gemini").strip().lower() != "gemini":
         return {}
 
@@ -235,33 +207,27 @@ def generar_ruta_con_gemini(
         client = genai.Client(api_key=api_key)
         model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite").strip()
 
-        temarios = []
-
-        for material in materiales:
-            if material.temario_examen:
-                temarios.append(material.temario_examen)
-
+        temarios = [material.temario_examen for material in materiales if material.temario_examen]
         temario_unificado = "\n".join(temarios).strip()
-        hay_materiales = bool(materiales)
         origen_contexto = (
             "dataset interno de Anatomía I + materiales procesados del estudiante"
-            if hay_materiales
-            else "dataset interno de Anatomía I sin materiales adicionales"
+            if materiales else
+            "dataset interno de Anatomía I sin materiales adicionales"
         )
+        reglas_vark_texto = "\n".join(f"- {regla}" for regla in perfil_vark_detalle["reglas_activas"])
 
-        reglas_vark_texto = "\n".join(
-            f"- {regla}" for regla in perfil_vark_detalle["reglas_activas"]
-        )
+        prompt = f'''
+Actúa como tutor experto de Anatomía I. Debes generar una ruta multirecurso, concreta y muy accionable.
 
-        prompt = f"""
-Actúa como tutor académico de Anatomía I y genera una ruta de aprendizaje personalizada.
+OBJETIVO CENTRAL:
+La ruta debe ayudar a aprender de verdad. No debe ser solo texto. Cada día debe incluir recursos concretos que el estudiante pueda usar directamente: audio, mapa mental, ejercicio práctico e imagen anatómica guiada cuando aplique.
 
-BASE OBLIGATORIA DEL SISTEMA:
+BASE OBLIGATORIA:
 - Libro base del dataset: Rouvière y Delmas, Anatomía Humana descriptiva, topográfica y funcional. Tomo 2: Tronco.
-- El tema y el punto específico fueron seleccionados desde un dataset interno basado en el índice del libro.
-- La ruta debe generarse aunque el estudiante todavía no haya subido materiales.
-- Los materiales subidos NO son requisito; solo enriquecen el contexto del LLM cuando existen.
-- Origen del contexto disponible ahora: {origen_contexto}.
+- El tema y el punto específico fueron seleccionados desde un dataset interno del libro.
+- La ruta debe generarse incluso si no hay materiales subidos.
+- Los materiales subidos son opcionales y solo enriquecen el contexto.
+- Origen del contexto actual: {origen_contexto}.
 
 DATOS DEL ESTUDIANTE:
 - Estilo VARK principal: {perfil_vark.estilo_display}
@@ -274,84 +240,124 @@ DATOS DEL ESTUDIANTE:
 REGLAS DE ADAPTACIÓN VARK:
 {reglas_vark_texto}
 
-Instrucción importante de VARK:
-- No uses solo el estilo principal si existen otros puntajes positivos.
-- Prioriza el estilo principal, pero combina proporcionalmente las modalidades que también tuvieron puntaje.
+INTERPRETACIÓN OBLIGATORIA DEL PERFIL:
+- No basta con nombrar el estilo principal.
+- Convierte la distribución VARK en recursos reales.
+- Si Auditivo tiene el mayor puntaje, cada día debe incluir un bloque de audio o guion escuchable.
+- Si Visual tiene puntaje positivo, cada día debe incluir un recurso visual y una imagen anatómica guiada o señalada.
+- Si Kinestésico tiene puntaje positivo, cada día debe incluir un ejercicio práctico de identificación o aplicación.
+- Si Lectura/Escritura tiene puntaje positivo, incluye un resumen o glosario.
 - Si una modalidad tiene 0 puntos, no la priorices.
-- Ejemplo: si Auditivo tiene 50%, Visual 30% y Kinestésico 20%, la ruta debe ser principalmente auditiva, con apoyo visual y actividades prácticas.
+- Ejemplo: Auditivo 50%, Visual 30%, Kinestésico 20%, Lectura 0% debe producir una ruta principalmente auditiva, con apoyo visual, imagen anatómica guiada y práctica kinestésica.
 
 DATOS ACADÉMICOS:
 - Materia: {datos_academicos.materia}
 - Tema actual seleccionado: {datos_academicos.tema_actual}
-- Punto específico que le cuesta más: {datos_academicos.temas_dificiles or 'No especificado'}
+- Punto específico difícil: {datos_academicos.temas_dificiles or 'No especificado'}
 - Fecha de examen: {datos_academicos.fecha_examen_formateada}
 - Días hasta el examen: {dias_hasta_examen}
-- Días que debes planificar ahora: {dias_planificados}
-- Minutos disponibles por día: {datos_academicos.minutos_por_dia}
+- Días a planificar ahora: {dias_planificados}
+- Minutos por día: {datos_academicos.minutos_por_dia}
 - Tipo de examen: {datos_academicos.get_tipo_examen_display()}
 - Objetivo de estudio: {datos_academicos.objetivo_estudio or 'No especificado'}
 
-TEMARIO ESPECÍFICO DEL EXAMEN EXTRAÍDO DE MATERIALES, SI EXISTE:
-\"\"\"
+TEMARIO EXTRAÍDO DE MATERIALES SI EXISTE:
+"""
 {temario_unificado or 'No hay temario adicional cargado por materiales.'}
-\"\"\"
+"""
 
-CONTEXTO DE MATERIALES SUBIDOS Y ANALIZADOS, SI EXISTE:
-\"\"\"
-{contexto_materiales or 'No hay materiales subidos. Genera la ruta con el dataset interno, el tema seleccionado, el punto específico y el resultado VARK.'}
-\"\"\"
+CONTEXTO DE MATERIALES ANALIZADOS SI EXISTE:
+"""
+{contexto_materiales or 'No hay materiales subidos. Usa el dataset interno y el tema seleccionado para crear la ruta.'}
+"""
 
 Devuelve únicamente JSON válido con esta estructura exacta:
-
 {{
   "titulo": "Título de la ruta",
-  "resumen_general": "Resumen breve de la estrategia general de estudio, indicando que se usa VARK + dataset de Anatomía I + materiales si existen.",
-  "temas_priorizados": [
-    "Tema 1",
-    "Tema 2",
-    "Tema 3"
-  ],
+  "resumen_general": "Resumen breve de la estrategia",
+  "temas_priorizados": ["Tema 1", "Tema 2", "Tema 3"],
   "plan_diario": [
     {{
       "dia": 1,
       "titulo": "Título del día",
-      "tema_principal": "Tema principal del día",
-      "objetivo": "Objetivo concreto del día",
+      "tema_principal": "Tema del día",
+      "objetivo": "Objetivo concreto",
       "minutos": 15,
-      "enfoque_vark": "Cómo se adapta este día al resultado VARK del estudiante",
-      "recurso_vark": "Recurso principal recomendado según VARK, por ejemplo guion oral, mapa, glosario, caso práctico",
-      "uso_materiales": "Indica si este día usa dataset base o también material subido",
-      "actividades": [
-        "Actividad 1 adaptada al estilo VARK y al tema seleccionado",
-        "Actividad 2",
-        "Actividad 3"
+      "enfoque_vark": "Cómo se mezcla VARK hoy",
+      "recurso_vark": "Recurso dominante del día",
+      "uso_materiales": "Dataset base o dataset + materiales",
+      "actividades": ["Actividad 1", "Actividad 2", "Actividad 3"],
+      "autoevaluacion": ["Pregunta 1", "Pregunta 2"],
+      "producto_esperado": "Resultado esperado del día",
+      "mini_quiz": [
+        {{
+          "pregunta": "Pregunta evaluable del día",
+          "opciones": ["Opción A", "Opción B", "Opción C", "Opción D"],
+          "respuesta_correcta": "Opción A",
+          "explicacion": "Explicación breve de por qué esa respuesta es correcta"
+        }}
       ],
-      "autoevaluacion": [
-        "Pregunta o tarea de autoevaluación 1",
-        "Pregunta o tarea de autoevaluación 2"
-      ],
-      "producto_esperado": "Qué debe lograr o producir el estudiante al final del día"
+      "recursos": {{
+        "audio": {{
+          "habilitado": true,
+          "titulo": "Audio del día",
+          "guion": "Guion claro para ser escuchado en voz alta, de 90 a 180 palabras",
+          "pasos_clave": ["Punto 1", "Punto 2", "Punto 3"]
+        }},
+        "visual": {{
+          "habilitado": true,
+          "titulo": "Mapa mental del día",
+          "tipo": "mapa_mental",
+          "mermaid": "mindmap\\n  root((Tema))\\n    Rama 1\\n    Rama 2",
+          "apoyo_visual": ["Elemento visual 1", "Elemento visual 2"]
+        }},
+        "kinestesico": {{
+          "habilitado": true,
+          "titulo": "Ejercicio práctico",
+          "instrucciones": "Instrucciones del ejercicio práctico",
+          "preguntas": ["Pregunta práctica 1", "Pregunta práctica 2"]
+        }},
+        "lectura": {{
+          "habilitado": false,
+          "titulo": "Resumen de lectura",
+          "resumen": "Resumen corto si esta modalidad tiene puntaje positivo",
+          "glosario": ["Término: definición breve"]
+        }},
+        "imagen_anatomica": {{
+          "habilitado": true,
+          "titulo": "Lámina anatómica guiada",
+          "tipo_vista": "anterior",
+          "descripcion": "Descripción breve de la lámina y de qué debe observar el estudiante",
+          "marcadores": [
+            {{"id": 1, "nombre": "Estructura 1", "x": 50, "y": 20, "pista": "Pista breve", "detalle": "Qué debe reconocer"}},
+            {{"id": 2, "nombre": "Estructura 2", "x": 55, "y": 55, "pista": "Pista breve", "detalle": "Qué debe reconocer"}}
+          ],
+          "preguntas": ["¿Qué estructura corresponde al marcador 1?", "¿Qué relación anatómica observas?"],
+          "modo_practica": "primero identificar sin ver respuesta y luego revelar"
+        }}
+      }}
     }}
   ],
-  "recomendaciones_finales": [
-    "Recomendación 1",
-    "Recomendación 2",
-    "Recomendación 3"
-  ]
+  "recomendaciones_finales": ["Recomendación 1", "Recomendación 2", "Recomendación 3"]
 }}
 
 REGLAS OBLIGATORIAS:
 - Escribe en español.
-- El arreglo plan_diario debe tener exactamente {dias_planificados} elementos.
+- plan_diario debe tener exactamente {dias_planificados} elementos.
 - Cada día debe usar como máximo {datos_academicos.minutos_por_dia} minutos.
 - Enfoca la ruta en el tema actual y el punto específico difícil.
-- La ruta debe reflejar claramente el resultado VARK y sus puntajes, no solo decir el nombre del estilo.
-- Si no hay materiales subidos, no bloquees la ruta: usa el dataset base y recomienda subir material como mejora opcional.
-- Si hay materiales subidos, úsalos como contexto adicional para enriquecer actividades y autoevaluación.
-- No inventes información anatómica específica que no esté en el contexto; si falta contenido, formula actividades de estudio centradas en revisar el libro base.
-- No uses markdown.
+- Si Auditivo > 0, genera audio.habilitado=true.
+- Si Visual > 0, genera visual.habilitado=true con un Mermaid simple y también imagen_anatomica.habilitado=true con 2 a 5 marcadores.
+- Los marcadores deben usar coordenadas x e y entre 10 y 90 para poder dibujarse dentro del diagrama.
+- Si Kinestésico > 0, genera kinestesico.habilitado=true.
+- Si Lectura/Escritura > 0, genera lectura.habilitado=true; si es 0, puede quedar false.
+- No inventes detalles anatómicos ultraespecíficos fuera del contexto; si falta precisión, enfoca la imagen en relaciones generales del tema y subtema.
+- Cada día debe incluir mini_quiz con 3 preguntas evaluables.
+- Cada pregunta del mini_quiz debe tener exactamente 4 opciones y una respuesta_correcta que coincida exactamente con una opción.
+- Las preguntas deben evaluar el tema del día, la lámina, el audio o el ejercicio práctico.
+- No uses markdown fuera del string mermaid.
 - No agregues texto fuera del JSON.
-"""
+'''
 
         response = client.models.generate_content(
             model=model,
@@ -364,7 +370,6 @@ REGLAS OBLIGATORIAS:
 
         contenido = limpiar_json(response.text)
         data = json.loads(contenido)
-
         return validar_respuesta_ruta(data, dias_planificados, datos_academicos.minutos_por_dia)
 
     except Exception as error:
@@ -377,18 +382,17 @@ def validar_respuesta_ruta(data, dias_planificados, minutos_maximos):
         return {}
 
     plan_diario = data.get("plan_diario", [])
-
     if not isinstance(plan_diario, list):
         plan_diario = []
 
     plan_limpio = []
-
     for index, dia in enumerate(plan_diario[:dias_planificados], start=1):
         if not isinstance(dia, dict):
             continue
 
         minutos = int(dia.get("minutos") or minutos_maximos)
         minutos = max(5, min(minutos, minutos_maximos))
+        recursos = dia.get("recursos") if isinstance(dia.get("recursos"), dict) else {}
 
         plan_limpio.append(
             {
@@ -403,6 +407,14 @@ def validar_respuesta_ruta(data, dias_planificados, minutos_maximos):
                 "actividades": normalizar_lista(dia.get("actividades", [])),
                 "autoevaluacion": normalizar_lista(dia.get("autoevaluacion", [])),
                 "producto_esperado": str(dia.get("producto_esperado", "")).strip(),
+                "mini_quiz": normalizar_mini_quiz(dia.get("mini_quiz", [])),
+                "recursos": {
+                    "audio": normalizar_audio(recursos.get("audio", {})),
+                    "visual": normalizar_visual(recursos.get("visual", {})),
+                    "kinestesico": normalizar_kinestesico(recursos.get("kinestesico", {})),
+                    "lectura": normalizar_lectura(recursos.get("lectura", {})),
+                    "imagen_anatomica": normalizar_imagen_anatomica(recursos.get("imagen_anatomica", {})),
+                },
             }
         )
 
@@ -410,15 +422,11 @@ def validar_respuesta_ruta(data, dias_planificados, minutos_maximos):
         return {}
 
     return {
-        "titulo": str(
-            data.get("titulo", "Ruta de aprendizaje personalizada")
-        ).strip(),
+        "titulo": str(data.get("titulo", "Ruta de aprendizaje personalizada")).strip(),
         "resumen_general": str(data.get("resumen_general", "")).strip(),
         "temas_priorizados": normalizar_lista(data.get("temas_priorizados", [])),
         "plan_diario": plan_limpio,
-        "recomendaciones_finales": normalizar_lista(
-            data.get("recomendaciones_finales", [])
-        ),
+        "recomendaciones_finales": normalizar_lista(data.get("recomendaciones_finales", [])),
     }
 
 
@@ -430,111 +438,314 @@ def generar_ruta_respaldo(
     dias_planificados,
 ):
     temas_base = []
-
     if datos_academicos.tema_actual:
         temas_base.append(datos_academicos.tema_actual)
-
     if datos_academicos.temas_dificiles:
         temas_base.append(datos_academicos.temas_dificiles)
-
     temas_base.extend(["Repaso guiado", "Autoevaluación", "Refuerzo final"])
 
-    actividades_por_estilo = {
-        "visual": [
-            "Crea un mapa conceptual del tema seleccionado.",
-            "Dibuja un esquema simple con relaciones anatómicas y usa colores para diferenciar partes.",
-            "Convierte el punto difícil en una tabla visual de ubicación, relación y función.",
-        ],
-        "auditivo": [
-            "Explica el tema en voz alta como si enseñaras a un compañero.",
-            "Graba un audio de 2 a 3 minutos con tu resumen del tema.",
-            "Responde preguntas oralmente sin mirar apuntes y corrige tus dudas al final.",
-        ],
-        "lectura": [
-            "Lee el tema y escribe un resumen breve con subtítulos.",
-            "Crea un glosario con términos anatómicos importantes.",
-            "Reformula con tus palabras el punto específico que te cuesta más.",
-        ],
-        "kinestesico": [
-            "Resuelve una actividad de identificación anatómica sobre el tema.",
-            "Relaciona cada estructura con su ubicación, función o relación anatómica.",
-            "Realiza un mini simulacro práctico con preguntas de reconocimiento.",
-        ],
-    }
-
-    actividades_mixtas = []
-    for item in perfil_vark_detalle["modalidades"]:
-        if item["puntaje"] <= 0:
-            continue
-        actividades_mixtas.extend(actividades_por_estilo[item["clave"]][:1])
-
-    if not actividades_mixtas:
-        actividades_mixtas = actividades_por_estilo.get(
-            perfil_vark.estilo_principal,
-            actividades_por_estilo["lectura"],
-        )
+    mezcla = perfil_vark_detalle["mezcla"]
+    tiene_visual = perfil_vark.puntaje_visual > 0
+    tiene_audio = perfil_vark.puntaje_auditivo > 0
+    tiene_lectura = perfil_vark.puntaje_lectura > 0
+    tiene_kin = perfil_vark.puntaje_kinestesico > 0
 
     plan = []
-
     for dia in range(1, dias_planificados + 1):
         tema = temas_base[(dia - 1) % len(temas_base)]
+        audio_habilitado = tiene_audio
+        visual_habilitado = tiene_visual
+        kin_habilitado = tiene_kin
+        lectura_habilitada = tiene_lectura
+        imagen_habilitada = tiene_visual or tiene_kin
+
+        mermaid = (
+            f"mindmap\n"
+            f"  root(({tema}))\n"
+            f"    Definición\n"
+            f"    Ubicación\n"
+            f"    Relaciones\n"
+            f"    Punto difícil\n"
+            f"      {datos_academicos.temas_dificiles or 'Repasar'}"
+        )
+
+        marcadores = [
+            {
+                "id": 1,
+                "nombre": tema,
+                "x": 50,
+                "y": 28,
+                "pista": "Ubica la región o estructura principal del tema.",
+                "detalle": f"Reconoce la idea principal relacionada con {tema}.",
+            },
+            {
+                "id": 2,
+                "nombre": datos_academicos.temas_dificiles or "Punto difícil",
+                "x": 52,
+                "y": 60,
+                "pista": "Este es el punto específico que debes reforzar.",
+                "detalle": "Relaciónalo con el tema principal del día.",
+            },
+        ]
 
         plan.append(
             {
                 "dia": dia,
                 "titulo": f"Día {dia}: {tema}",
                 "tema_principal": tema,
-                "objetivo": f"Comprender y repasar el tema: {tema} usando tu distribución VARK.",
+                "objetivo": f"Comprender y repasar {tema} usando una mezcla VARK adaptada a {mezcla}.",
                 "minutos": datos_academicos.minutos_por_dia,
-                "enfoque_vark": f"Ruta adaptada a {perfil_vark_detalle['mezcla']}.",
-                "recurso_vark": "Actividad combinada según tus puntajes VARK.",
+                "enfoque_vark": (
+                    f"Se prioriza {perfil_vark.estilo_display}. También se incorporan apoyos de {mezcla}."
+                ),
+                "recurso_vark": "Ruta multirecurso con audio, mapa, lámina anatómica y ejercicio práctico.",
                 "uso_materiales": "Dataset base de Anatomía I. Puedes subir materiales para enriquecer esta ruta.",
-                "actividades": actividades_mixtas[:4],
-                "autoevaluacion": [
-                    "Explica qué aprendiste sin mirar el material.",
-                    "Escribe o responde oralmente dos preguntas sobre el punto difícil.",
-                    "Marca qué parte necesitas repasar de nuevo.",
+                "actividades": [
+                    f"Repasa el tema {tema} durante 5 minutos.",
+                    "Escucha el guion generado y repítelo en voz alta.",
+                    "Observa el mapa mental y la lámina anatómica con marcadores.",
+                    "Resuelve el ejercicio práctico de identificación.",
                 ],
-                "producto_esperado": "Evidencia breve de estudio: audio, esquema, glosario o ejercicio según tu VARK.",
+                "autoevaluacion": [
+                    f"Explica con tus palabras qué es {tema}.",
+                    "Menciona dos relaciones anatómicas importantes.",
+                    "Identifica el marcador 1 y el marcador 2 antes de revelar la respuesta.",
+                ],
+                "producto_esperado": "Un repaso activo con audio, esquema visual, lámina señalada, ejercicio práctico y mini quiz completado.",
+                "mini_quiz": [
+                    {
+                        "pregunta": f"¿Cuál es el tema principal del día {dia}?",
+                        "opciones": [tema, "Sistema nervioso central", "Miembro superior", "Neurocráneo"],
+                        "respuesta_correcta": tema,
+                        "explicacion": f"El día {dia} está centrado en {tema}, seleccionado desde tus datos académicos o el dataset.",
+                    },
+                    {
+                        "pregunta": "¿Qué debes hacer primero en la lámina anatómica guiada?",
+                        "opciones": [
+                            "Identificar los marcadores antes de revelar la respuesta",
+                            "Copiar todo el texto sin observar la imagen",
+                            "Ignorar el punto difícil",
+                            "Saltar directamente al examen final",
+                        ],
+                        "respuesta_correcta": "Identificar los marcadores antes de revelar la respuesta",
+                        "explicacion": "La práctica visual y kinestésica mejora cuando intentas reconocer primero y luego verificas.",
+                    },
+                    {
+                        "pregunta": f"¿Qué punto debes priorizar durante el repaso de {tema}?",
+                        "opciones": [
+                            datos_academicos.temas_dificiles or "El punto difícil seleccionado",
+                            "Un tema no relacionado",
+                            "Solo la decoración del mapa",
+                            "Ningún punto específico",
+                        ],
+                        "respuesta_correcta": datos_academicos.temas_dificiles or "El punto difícil seleccionado",
+                        "explicacion": "La ruta prioriza el punto específico que marcaste como más difícil.",
+                    },
+                ],
+                "recursos": {
+                    "audio": {
+                        "habilitado": audio_habilitado,
+                        "titulo": f"Audio: resumen de {tema}",
+                        "guion": (
+                            f"Hoy estudiarás {tema}. Primero comprende su idea general, su ubicación anatómica y su relación con "
+                            f"el punto que más te cuesta: {datos_academicos.temas_dificiles or 'el subtema seleccionado'}. "
+                            f"Repite en voz alta las ideas principales y trata de explicarlas como si enseñaras a otra persona."
+                        ),
+                        "pasos_clave": [
+                            "Definir el tema con una frase clara.",
+                            "Ubicarlo dentro del tronco.",
+                            "Relacionarlo con el punto difícil seleccionado.",
+                        ],
+                    },
+                    "visual": {
+                        "habilitado": visual_habilitado,
+                        "titulo": f"Mapa mental de {tema}",
+                        "tipo": "mapa_mental",
+                        "mermaid": mermaid,
+                        "apoyo_visual": [
+                            "Ubicación general",
+                            "Relaciones anatómicas",
+                            datos_academicos.temas_dificiles or "Punto difícil",
+                        ],
+                    },
+                    "kinestesico": {
+                        "habilitado": kin_habilitado,
+                        "titulo": f"Ejercicio práctico sobre {tema}",
+                        "instrucciones": (
+                            f"Sin mirar tus apuntes, identifica tres ideas principales de {tema} y compáralas con el punto difícil seleccionado."
+                        ),
+                        "preguntas": [
+                            f"¿Cómo se relaciona {tema} con {datos_academicos.temas_dificiles or 'el punto difícil'}?",
+                            f"¿Qué estructura o concepto debes reconocer primero en {tema}?",
+                            "¿Qué volverías a practicar para fijar mejor el aprendizaje?",
+                        ],
+                    },
+                    "lectura": {
+                        "habilitado": lectura_habilitada,
+                        "titulo": f"Resumen escrito de {tema}",
+                        "resumen": (
+                            f"Resume {tema} en 4 o 5 líneas, enfocándote en definición, ubicación, relaciones y el punto difícil elegido."
+                        ),
+                        "glosario": [
+                            f"{tema}: concepto principal del día.",
+                            f"{datos_academicos.temas_dificiles or 'Punto difícil'}: subtema a reforzar.",
+                        ],
+                    },
+                    "imagen_anatomica": {
+                        "habilitado": imagen_habilitada,
+                        "titulo": f"Lámina anatómica guiada de {tema}",
+                        "tipo_vista": "anterior",
+                        "descripcion": (
+                            f"Observa la silueta del tronco y trata de identificar primero el tema principal y luego el punto difícil: "
+                            f"{datos_academicos.temas_dificiles or 'subtema seleccionado'}."
+                        ),
+                        "marcadores": marcadores,
+                        "preguntas": [
+                            "¿Qué estructura representa el marcador 1?",
+                            "¿Qué representa el marcador 2 y cómo se relaciona con el tema principal?",
+                        ],
+                        "modo_practica": "Primero intenta identificar sin ver la respuesta y luego revela el nombre de cada marcador.",
+                    },
+                },
             }
         )
 
     return {
-        "titulo": "Ruta de aprendizaje personalizada con VARK y dataset de Anatomía I",
+        "titulo": "Ruta de aprendizaje 10/10 con VARK, láminas y ejercicios",
         "resumen_general": (
-            "Esta ruta se genera con tus datos académicos, tu distribución VARK y el dataset interno de Anatomía I. "
-            "Los materiales subidos son opcionales y sirven para enriquecer el contexto del LLM."
+            "Esta ruta combina tu distribución VARK con el dataset interno de Anatomía I. "
+            "Cada día puede incluir audio, mapa mental, lámina anatómica guiada, ejercicio práctico y apoyo de lectura según tus puntajes."
         ),
         "temas_priorizados": temas_base[:5],
         "plan_diario": plan,
         "recomendaciones_finales": [
-            "Regenera la ruta después de subir materiales procesados para que Gemini tenga más contexto.",
-            "Respeta el tiempo diario seleccionado y cierra cada sesión con autoevaluación.",
-            "Prioriza el punto específico que marcaste como difícil.",
+            "Escucha el audio de cada día al menos dos veces.",
+            "Usa la lámina anatómica para identificar sin mirar primero y revelar después.",
+            "Si subes materiales, regenera la ruta para obtener actividades y marcadores más precisos.",
         ],
+    }
+
+
+def normalizar_mini_quiz(valor):
+    if not isinstance(valor, list):
+        return []
+
+    preguntas_limpias = []
+    for item in valor[:5]:
+        if not isinstance(item, dict):
+            continue
+
+        opciones = normalizar_lista(item.get("opciones", []))[:4]
+        if len(opciones) < 2:
+            continue
+
+        respuesta_correcta = str(item.get("respuesta_correcta", "")).strip()
+        if respuesta_correcta not in opciones:
+            respuesta_correcta = opciones[0]
+
+        preguntas_limpias.append(
+            {
+                "pregunta": str(item.get("pregunta", "")).strip(),
+                "opciones": opciones,
+                "respuesta_correcta": respuesta_correcta,
+                "explicacion": str(item.get("explicacion", "")).strip(),
+            }
+        )
+
+    return preguntas_limpias
+
+
+def normalizar_audio(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+    return {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": str(valor.get("titulo", "Audio de estudio")).strip(),
+        "guion": str(valor.get("guion", "")).strip(),
+        "pasos_clave": normalizar_lista(valor.get("pasos_clave", [])),
+    }
+
+
+def normalizar_visual(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+    return {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": str(valor.get("titulo", "Mapa visual")).strip(),
+        "tipo": str(valor.get("tipo", "mapa_mental")).strip(),
+        "mermaid": str(valor.get("mermaid", "")).strip(),
+        "apoyo_visual": normalizar_lista(valor.get("apoyo_visual", [])),
+    }
+
+
+def normalizar_kinestesico(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+    return {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": str(valor.get("titulo", "Ejercicio práctico")).strip(),
+        "instrucciones": str(valor.get("instrucciones", "")).strip(),
+        "preguntas": normalizar_lista(valor.get("preguntas", [])),
+    }
+
+
+def normalizar_lectura(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+    return {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": str(valor.get("titulo", "Apoyo de lectura")).strip(),
+        "resumen": str(valor.get("resumen", "")).strip(),
+        "glosario": normalizar_lista(valor.get("glosario", [])),
+    }
+
+
+def normalizar_imagen_anatomica(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+    marcadores = valor.get("marcadores", [])
+    marcadores_limpios = []
+    if isinstance(marcadores, list):
+        for idx, item in enumerate(marcadores, start=1):
+            if not isinstance(item, dict):
+                continue
+            x = max(10, min(int(item.get("x") or 50), 90))
+            y = max(10, min(int(item.get("y") or 50), 90))
+            marcadores_limpios.append(
+                {
+                    "id": int(item.get("id") or idx),
+                    "nombre": str(item.get("nombre", f"Estructura {idx}")).strip(),
+                    "x": x,
+                    "y": y,
+                    "pista": str(item.get("pista", "")).strip(),
+                    "detalle": str(item.get("detalle", "")).strip(),
+                }
+            )
+    return {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": str(valor.get("titulo", "Lámina anatómica guiada")).strip(),
+        "tipo_vista": str(valor.get("tipo_vista", "anterior")).strip(),
+        "descripcion": str(valor.get("descripcion", "")).strip(),
+        "marcadores": marcadores_limpios,
+        "preguntas": normalizar_lista(valor.get("preguntas", [])),
+        "modo_practica": str(valor.get("modo_practica", "")).strip(),
     }
 
 
 def normalizar_lista(valor):
     if isinstance(valor, list):
         return [str(item).strip() for item in valor if str(item).strip()]
-
     if isinstance(valor, str):
         return [linea.strip() for linea in valor.splitlines() if linea.strip()]
-
     return []
 
 
 def limpiar_json(texto):
     texto = str(texto or "").strip()
-
     if texto.startswith("```json"):
         texto = texto.replace("```json", "", 1).strip()
-
     if texto.startswith("```"):
         texto = texto.replace("```", "", 1).strip()
-
     if texto.endswith("```"):
         texto = texto[:-3].strip()
-
     return texto
