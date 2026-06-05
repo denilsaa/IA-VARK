@@ -244,22 +244,76 @@
                             {% endif %}
 
                             {% if dia.recursos.visual.habilitado %}
-                                <section class="resource-card visual-card-premium">
+                                <section class="resource-card visual-card-premium resource-span-2">
                                     <div class="resource-card-header">
                                         <i data-lucide="map"></i>
                                         <strong>{{ dia.recursos.visual.titulo }}</strong>
                                     </div>
                                     <div class="map-toolbar mt-3">
-                                        <p class="map-helper">Mapa mental del tema para ver relaciones anatómicas clave de un vistazo.</p>
-                                        <button type="button" class="btn btn-outline-primary btn-sm" data-open-visual="visual-map-{{ dia.dia }}">
-                                            Ver mapa en grande
-                                        </button>
+                                        <p class="map-helper">Mapa visual premium para comprender rápido el tema, sus partes y sus relaciones anatómicas.</p>
+                                        <div class="form-actions compact-actions">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" data-toggle-target="mermaid-block-{{ dia.dia }}">
+                                                Ver mapa técnico
+                                            </button>
+                                            <button type="button" class="btn btn-primary btn-sm" data-open-visual="visual-map-card-{{ dia.dia }}">
+                                                Ver mapa en grande
+                                            </button>
+                                        </div>
                                     </div>
-                                    {% if dia.recursos.visual.mermaid %}
-                                        <div class="mermaid-shell mt-3">
-                                            <div class="mermaid route-mermaid" id="visual-map-{{ dia.dia }}">{{ dia.recursos.visual.mermaid }}</div>
+
+                                    <div class="concept-map-card mt-3" id="visual-map-card-{{ dia.dia }}">
+                                        <div class="concept-map-shell">
+                                            <div class="concept-center-wrap">
+                                                <div class="concept-center-node">{{ dia.recursos.visual.nodo_central|default:tema_actual.tema_nombre|default:"Tema central" }}</div>
+                                            </div>
+                                            <div class="concept-branch-grid">
+                                                {% for rama in dia.recursos.visual.ramas %}
+                                                    <article class="concept-branch-card">
+                                                        <div class="concept-branch-tag">Rama {{ forloop.counter }}</div>
+                                                        <h4>{{ rama.titulo }}</h4>
+                                                        {% if rama.detalle %}<p>{{ rama.detalle }}</p>{% endif %}
+                                                        {% if rama.subpuntos %}
+                                                            <ul class="clean-list mini-points mt-2">
+                                                                {% for punto in rama.subpuntos %}
+                                                                    <li><i data-lucide="circle-dot"></i><span>{{ punto }}</span></li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        {% endif %}
+                                                    </article>
+                                                {% empty %}
+                                                    {% if dia.recursos.visual.apoyo_visual %}
+                                                        {% for item in dia.recursos.visual.apoyo_visual|slice:":4" %}
+                                                            <article class="concept-branch-card">
+                                                                <div class="concept-branch-tag">Idea clave</div>
+                                                                <h4>{{ item }}</h4>
+                                                            </article>
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="collapsible-box mt-3" id="mermaid-block-{{ dia.dia }}">
+                                        {% if dia.recursos.visual.mermaid %}
+                                            <div class="mermaid-shell">
+                                                <div class="mermaid route-mermaid" id="visual-map-{{ dia.dia }}">{{ dia.recursos.visual.mermaid }}</div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    {% if dia.recursos.visual.apoyo_visual %}
+                                        <div class="map-outline mt-3">
+                                            <strong>Claves rápidas del tema</strong>
+                                            <ul class="clean-list mt-3">
+                                                {% for item in dia.recursos.visual.apoyo_visual %}
+                                                    <li><i data-lucide="circle-dot"></i><span>{{ item }}</span></li>
+                                                {% endfor %}
+                                            </ul>
                                         </div>
                                     {% endif %}
+                                </section>
+                            {% endif %}
                                     {% if dia.recursos.visual.apoyo_visual %}
                                         <div class="map-outline mt-3">
                                             <strong>Lectura rápida del mapa</strong>
@@ -319,56 +373,53 @@
                                 <div class="anatomy-grid mt-4">
                                     <div>
                                         <div class="anatomy-board">
-                                            <svg class="torso-svg pelvis-svg premium-pelvis" viewBox="0 0 960 760" aria-hidden="true">
+                                            <svg class="torso-svg pelvis-svg premium-pelvis" viewBox="0 0 980 760" aria-hidden="true">
                                                 <defs>
-                                                    <linearGradient id="boneGradA" x1="0" x2="0" y1="0" y2="1">
-                                                        <stop offset="0%" stop-color="#f4fbfa"></stop>
-                                                        <stop offset="100%" stop-color="#d5ece7"></stop>
+                                                    <linearGradient id="boneOuter" x1="0" x2="0" y1="0" y2="1">
+                                                        <stop offset="0%" stop-color="#f7fcfb"></stop>
+                                                        <stop offset="100%" stop-color="#dbeee9"></stop>
                                                     </linearGradient>
-                                                    <linearGradient id="boneGradB" x1="0" x2="0" y1="0" y2="1">
-                                                        <stop offset="0%" stop-color="#eef8f6"></stop>
-                                                        <stop offset="100%" stop-color="#c8e4de"></stop>
+                                                    <linearGradient id="boneInner" x1="0" x2="0" y1="0" y2="1">
+                                                        <stop offset="0%" stop-color="#e9f7f3"></stop>
+                                                        <stop offset="100%" stop-color="#cde7e1"></stop>
                                                     </linearGradient>
-                                                    <linearGradient id="muscleGrad" x1="0" x2="0" y1="0" y2="1">
-                                                        <stop offset="0%" stop-color="#efb6aa"></stop>
-                                                        <stop offset="100%" stop-color="#d97d73"></stop>
+                                                    <linearGradient id="organPink" x1="0" x2="0" y1="0" y2="1">
+                                                        <stop offset="0%" stop-color="#f3c0b8"></stop>
+                                                        <stop offset="100%" stop-color="#dd8c82"></stop>
                                                     </linearGradient>
-                                                    <filter id="pelvisShadow2" x="-20%" y="-20%" width="140%" height="140%">
-                                                        <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0f766e" flood-opacity=".16"></feDropShadow>
+                                                    <filter id="atlasShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                                        <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0f766e" flood-opacity=".14"></feDropShadow>
                                                     </filter>
                                                 </defs>
-                                                <rect x="18" y="18" width="924" height="724" rx="28" fill="#f8fbfb"></rect>
-                                                <g filter="url(#pelvisShadow2)">
-                                                    <path d="M479 118 C451 136 437 176 442 214 C446 255 463 287 480 307 C497 287 514 255 518 214 C523 176 509 136 479 118 Z"
-                                                        fill="#dbeeea" stroke="#75b5ac" stroke-width="6"></path>
-                                                    <path d="M480 182 L480 350" stroke="#75b5ac" stroke-width="10" stroke-linecap="round"></path>
-                                                    <path d="M441 348 C326 296 200 311 125 401 C67 470 69 575 132 637 C188 692 282 685 334 619 C381 558 401 468 452 397 Z"
-                                                        fill="url(#boneGradA)" stroke="#74b2aa" stroke-width="8"></path>
-                                                    <path d="M519 348 C634 296 760 311 835 401 C893 470 891 575 828 637 C772 692 678 685 626 619 C579 558 559 468 508 397 Z"
-                                                        fill="url(#boneGradA)" stroke="#74b2aa" stroke-width="8"></path>
-                                                    <path d="M344 454 C286 475 258 536 287 589 C316 640 387 634 418 579 C448 525 410 469 344 454 Z"
-                                                        fill="#f8fbfb" stroke="#74b2aa" stroke-width="8"></path>
-                                                    <path d="M616 454 C674 475 702 536 673 589 C644 640 573 634 542 579 C512 525 550 469 616 454 Z"
-                                                        fill="#f8fbfb" stroke="#74b2aa" stroke-width="8"></path>
-                                                    <path d="M379 605 C415 637 545 637 581 605 C560 677 521 719 480 743 C439 719 400 677 379 605 Z"
-                                                        fill="url(#boneGradB)" stroke="#74b2aa" stroke-width="8"></path>
-                                                    <path d="M334 408 C383 437 422 490 442 580" stroke="#d97d73" stroke-width="26" stroke-linecap="round" opacity=".9"></path>
-                                                    <path d="M626 408 C577 437 538 490 518 580" stroke="#d97d73" stroke-width="26" stroke-linecap="round" opacity=".9"></path>
-                                                    <path d="M397 618 C430 646 530 646 563 618" stroke="#d97d73" stroke-width="24" stroke-linecap="round" opacity=".9"></path>
-                                                    <path d="M480 397 C452 448 452 525 480 585 C508 525 508 448 480 397 Z"
-                                                        fill="url(#muscleGrad)" opacity=".82" stroke="#bf6258" stroke-width="6"></path>
-                                                    <path d="M260 354 C318 339 373 342 422 365" stroke="#92c8c1" stroke-width="6" fill="none" stroke-linecap="round"></path>
-                                                    <path d="M700 354 C642 339 587 342 538 365" stroke="#92c8c1" stroke-width="6" fill="none" stroke-linecap="round"></path>
+                                                <rect x="18" y="18" width="944" height="724" rx="30" fill="#f8fbfb"></rect>
+                                                <g filter="url(#atlasShadow)">
+                                                    <path d="M316 180 C245 160 166 196 118 250 C64 311 55 404 91 480 C126 554 192 613 264 642 C332 668 388 636 421 584 C455 531 463 463 468 392 C472 320 439 214 316 180 Z"
+                                                          fill="url(#boneOuter)" stroke="#74b2aa" stroke-width="7"></path>
+                                                    <path d="M664 180 C735 160 814 196 862 250 C916 311 925 404 889 480 C854 554 788 613 716 642 C648 668 592 636 559 584 C525 531 517 463 512 392 C508 320 541 214 664 180 Z"
+                                                          fill="url(#boneOuter)" stroke="#74b2aa" stroke-width="7"></path>
+                                                    <path d="M442 274 C404 316 379 359 370 392 C356 446 359 526 413 610" fill="none" stroke="#74b2aa" stroke-width="7" stroke-linecap="round"></path>
+                                                    <path d="M538 274 C576 316 601 359 610 392 C624 446 621 526 567 610" fill="none" stroke="#74b2aa" stroke-width="7" stroke-linecap="round"></path>
+                                                    <path d="M375 396 C426 364 457 347 480 346 C503 347 534 364 585 396" fill="none" stroke="#74b2aa" stroke-width="8" stroke-linecap="round"></path>
+                                                    <path d="M421 584 C446 621 465 644 480 654 C495 644 514 621 539 584" fill="none" stroke="#74b2aa" stroke-width="8" stroke-linecap="round"></path>
+                                                    <ellipse cx="308" cy="490" rx="84" ry="76" fill="#f8fbfb" stroke="#74b2aa" stroke-width="7"></ellipse>
+                                                    <ellipse cx="652" cy="490" rx="84" ry="76" fill="#f8fbfb" stroke="#74b2aa" stroke-width="7"></ellipse>
+                                                    <path d="M462 220 C475 170 485 151 500 138 C513 151 523 170 536 220 C518 240 506 249 500 249 C494 249 482 240 462 220 Z" fill="url(#boneInner)" stroke="#74b2aa" stroke-width="6"></path>
+                                                    <path d="M480 239 L480 328" stroke="#74b2aa" stroke-width="8" stroke-linecap="round"></path>
+                                                    <path d="M448 354 C460 336 471 327 480 325 C489 327 500 336 512 354 L512 520 C501 540 491 552 480 564 C469 552 459 540 448 520 Z" fill="url(#organPink)" opacity=".85" stroke="#c97065" stroke-width="5"></path>
+                                                    <path d="M365 378 C333 401 313 449 306 530" fill="none" stroke="#d88177" stroke-width="20" stroke-linecap="round" opacity=".95"></path>
+                                                    <path d="M595 378 C627 401 647 449 654 530" fill="none" stroke="#d88177" stroke-width="20" stroke-linecap="round" opacity=".95"></path>
+                                                    <path d="M410 556 C451 570 509 570 550 556" fill="none" stroke="#d88177" stroke-width="22" stroke-linecap="round" opacity=".95"></path>
+                                                    <path d="M391 281 C330 253 271 249 215 266" fill="none" stroke="#9bd1ca" stroke-width="6" stroke-linecap="round"></path>
+                                                    <path d="M569 281 C630 253 689 249 745 266" fill="none" stroke="#9bd1ca" stroke-width="6" stroke-linecap="round"></path>
                                                 </g>
-                                                <g font-family="Arial, sans-serif" fill="#285f59">
-                                                    <text x="428" y="94" font-size="28" font-weight="700">Sacro</text>
-                                                    <text x="122" y="370" font-size="22">Hueso coxal izquierdo</text>
-                                                    <text x="633" y="370" font-size="22">Hueso coxal derecho</text>
-                                                    <text x="395" y="780" font-size="0"></text>
-                                                    <text x="414" y="728" font-size="24" font-weight="700">Suelo pélvico</text>
-                                                    <text x="430" y="384" font-size="22">Pelvis menor</text>
-                                                    <text x="287" y="448" font-size="20" opacity=".78">Foramen</text>
-                                                    <text x="596" y="448" font-size="20" opacity=".78">Foramen</text>
+                                                <g font-family="Arial, sans-serif" fill="#275e59">
+                                                    <text x="446" y="118" font-size="28" font-weight="700">Sacro</text>
+                                                    <text x="132" y="340" font-size="24">Coxal izquierdo</text>
+                                                    <text x="660" y="340" font-size="24">Coxal derecho</text>
+                                                    <text x="431" y="372" font-size="24" font-weight="700">Pelvis menor</text>
+                                                    <text x="265" y="408" font-size="20" opacity=".78">Foramen</text>
+                                                    <text x="609" y="408" font-size="20" opacity=".78">Foramen</text>
+                                                    <text x="419" y="692" font-size="24" font-weight="700">Suelo pélvico</text>
                                                 </g>
                                             </svg>
 
@@ -1104,6 +1155,127 @@
     .route-mermaid svg { min-height: 330px !important; }
     .anatomy-board { min-height: 560px !important; }
     .torso-svg, .pelvis-svg, .premium-pelvis { height: 540px !important; }
+}
+
+
+.resource-span-2 {
+    grid-column: 1 / -1;
+}
+.compact-actions { gap: .5rem; }
+.concept-map-card {
+    background: linear-gradient(180deg, #fcffff 0%, #f7fbfb 100%);
+    border: 1px solid rgba(15,118,110,.10);
+    border-radius: 1.25rem;
+    padding: 1rem;
+}
+.concept-map-shell {
+    position: relative;
+    min-height: 560px;
+    background: radial-gradient(circle at center, rgba(203, 241, 234, .25) 0%, rgba(255,255,255,.94) 62%);
+    border-radius: 1.25rem;
+    overflow: hidden;
+    padding: 1.25rem;
+}
+.concept-center-wrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+.concept-center-node {
+    width: 220px;
+    height: 220px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #9be1d5 0%, #76c9bb 100%);
+    color: #103a36;
+    font-size: 2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.25rem;
+    box-shadow: 0 16px 36px rgba(15,118,110,.18);
+    border: 6px solid rgba(255,255,255,.9);
+}
+.concept-branch-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    gap: 2rem 3rem;
+    min-height: 520px;
+    align-items: stretch;
+}
+.concept-branch-card {
+    position: relative;
+    background: rgba(255,255,255,.96);
+    border: 1px solid rgba(15,118,110,.12);
+    border-radius: 1.1rem;
+    padding: 1rem 1rem .95rem;
+    box-shadow: 0 14px 30px rgba(15,118,110,.07);
+}
+.concept-branch-card::after {
+    content: '';
+    position: absolute;
+    width: 72px;
+    height: 2px;
+    background: linear-gradient(90deg, #74c8ba 0%, rgba(116,200,186,.05) 100%);
+    top: 50%;
+}
+.concept-branch-card:nth-child(odd)::after { right: -72px; }
+.concept-branch-card:nth-child(even)::after { left: -72px; transform: scaleX(-1); }
+.concept-branch-grid .concept-branch-card:nth-child(1),
+.concept-branch-grid .concept-branch-card:nth-child(2) { align-self: start; }
+.concept-branch-grid .concept-branch-card:nth-child(3),
+.concept-branch-grid .concept-branch-card:nth-child(4) { align-self: end; }
+.concept-branch-tag {
+    display: inline-flex;
+    font-size: .76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #0f766e;
+    background: #e9f7f4;
+    border-radius: 999px;
+    padding: .28rem .6rem;
+    margin-bottom: .55rem;
+}
+.concept-branch-card h4 {
+    margin: 0 0 .45rem;
+    font-size: 1.22rem;
+    color: #133c38;
+}
+.concept-branch-card p {
+    margin: 0 0 .5rem;
+    color: #47605c;
+}
+.mini-points { display: grid; gap: .45rem; }
+.premium-pelvis {
+    filter: saturate(1.02) contrast(1.02);
+}
+.anatomy-board {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 12px 26px rgba(15,118,110,.05);
+}
+.marker-pin {
+    width: 3.1rem;
+    height: 3.1rem;
+    font-size: 1.12rem;
+    border: 4px solid #ffffff;
+    box-shadow: 0 14px 28px rgba(15, 139, 125, .24);
+}
+.marker-item {
+    border-radius: 1rem;
+    box-shadow: 0 8px 18px rgba(15,118,110,.05);
+}
+@media (max-width: 980px) {
+    .concept-map-shell { min-height: auto; }
+    .concept-center-wrap { position: static; pointer-events: auto; margin-bottom: 1rem; }
+    .concept-center-node { width: 100%; max-width: 320px; height: auto; min-height: 150px; margin: 0 auto; font-size: 1.55rem; }
+    .concept-branch-grid { grid-template-columns: 1fr; min-height: auto; gap: 1rem; }
+    .concept-branch-card::after { display: none; }
 }
 
 </style>

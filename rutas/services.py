@@ -326,8 +326,8 @@ Devuelve únicamente JSON válido con esta estructura exacta:
         "imagen_anatomica": {{
           "habilitado": true,
           "titulo": "Lámina anatómica guiada realista",
-          "tipo_vista": "anterior",
-          "descripcion": "Descripción breve de la lámina, indicando la vista anatómica y qué relaciones debe observar el estudiante",
+          "tipo_vista": "superior",
+          "descripcion": "Descripción breve de la lámina, indicando la vista anatómica, los límites, estructuras y relaciones que debe observar el estudiante",
           "marcadores": [
             {{"id": 1, "nombre": "Estructura 1", "x": 50, "y": 20, "pista": "Pista breve", "detalle": "Qué debe reconocer"}},
             {{"id": 2, "nombre": "Estructura 2", "x": 55, "y": 55, "pista": "Pista breve", "detalle": "Qué debe reconocer"}}
@@ -347,7 +347,7 @@ REGLAS OBLIGATORIAS:
 - Cada día debe usar como máximo {datos_academicos.minutos_por_dia} minutos.
 - Enfoca la ruta en el tema actual y el punto específico difícil.
 - Si Auditivo > 0, genera audio.habilitado=true.
-- Si Visual > 0, genera visual.habilitado=true con un Mermaid mucho más didáctico y visual. Prefiere flowchart TD o mindmap limpio con un nodo central, 3 a 5 ramas principales y 1 o 2 subramas por rama. Además imagen_anatomica.habilitado=true con 3 a 5 marcadores bien distribuidos visualmente. Las pistas deben ser específicas, cortas y conectadas al tema seleccionado.
+- Si Visual > 0, genera visual.habilitado=true con un mapa mental premium. Debe incluir nodo_central y exactamente 4 ramas; cada rama debe tener titulo corto, detalle claro y 2 subpuntos. Además genera un Mermaid de apoyo coherente con la misma estructura, mucho más didáctico y visual. Además imagen_anatomica.habilitado=true con 3 a 5 marcadores bien distribuidos visualmente. Las pistas deben ser específicas, cortas y conectadas al tema seleccionado.
 - Los marcadores deben usar coordenadas x e y entre 10 y 90 para poder dibujarse dentro del diagrama.
 - Si Kinestésico > 0, genera kinestesico.habilitado=true.
 - Si Lectura/Escritura > 0, genera lectura.habilitado=true; si es 0, puede quedar false.
@@ -355,7 +355,7 @@ REGLAS OBLIGATORIAS:
 - Cada día debe incluir mini_quiz con 3 preguntas evaluables.
 - Cada pregunta del mini_quiz debe tener exactamente 4 opciones y una respuesta_correcta que coincida exactamente con una opción.
 - Las preguntas deben evaluar el tema del día, la lámina, el audio o el ejercicio práctico.
-- Para Mermaid usa SOLO diagramas simples. Prefiere flowchart TD o mindmap con un estilo limpio, máximo 8 nodos visibles, textos cortos de 1 a 4 palabras por nodo, sin paréntesis complejos, sin comillas y sin caracteres raros. Distribuye el mapa para que se vea como un esquema docente claro y prioriza legibilidad visual.
+- Para Mermaid usa SOLO diagramas simples. Prefiere flowchart TD o mindmap con un estilo limpio, máximo 10 nodos visibles, textos cortos de 1 a 4 palabras por nodo, sin comillas y sin caracteres raros. Debe verse como un esquema docente claro y legible.
 - No uses markdown fuera del string mermaid.
 - No agregues texto fuera del JSON.
 '''
@@ -595,7 +595,7 @@ def generar_ruta_respaldo(
                     "imagen_anatomica": {
                         "habilitado": imagen_habilitada,
                         "titulo": f"Lámina anatómica guiada de {tema}",
-                        "tipo_vista": "anterior",
+                        "tipo_vista": "superior",
                         "descripcion": (
                             f"Observa la silueta del tronco y trata de identificar primero el tema principal y luego el punto difícil: "
                             f"{datos_academicos.temas_dificiles or 'subtema seleccionado'}."
@@ -670,10 +670,23 @@ def normalizar_audio(valor):
 def normalizar_visual(valor):
     if not isinstance(valor, dict):
         valor = {}
+    ramas = []
+    valor_ramas = valor.get("ramas", [])
+    if isinstance(valor_ramas, list):
+        for rama in valor_ramas[:4]:
+            if not isinstance(rama, dict):
+                continue
+            ramas.append({
+                "titulo": str(rama.get("titulo", "")).strip(),
+                "detalle": str(rama.get("detalle", "")).strip(),
+                "subpuntos": normalizar_lista(rama.get("subpuntos", []))[:3],
+            })
     return {
         "habilitado": bool(valor.get("habilitado")),
         "titulo": str(valor.get("titulo", "Mapa visual")).strip(),
         "tipo": str(valor.get("tipo", "mapa_mental")).strip(),
+        "nodo_central": str(valor.get("nodo_central", "Tema central")).strip(),
+        "ramas": ramas,
         "mermaid": str(valor.get("mermaid", "")).strip(),
         "apoyo_visual": normalizar_lista(valor.get("apoyo_visual", [])),
     }
