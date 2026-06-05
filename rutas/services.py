@@ -347,7 +347,7 @@ REGLAS OBLIGATORIAS:
 - Cada día debe usar como máximo {datos_academicos.minutos_por_dia} minutos.
 - Enfoca la ruta en el tema actual y el punto específico difícil.
 - Si Auditivo > 0, genera audio.habilitado=true.
-- Si Visual > 0, genera visual.habilitado=true con un Mermaid muy claro, grande y limpio; además imagen_anatomica.habilitado=true con 3 a 5 marcadores bien distribuidos visualmente y pistas anatómicas más específicas.
+- Si Visual > 0, genera visual.habilitado=true con un Mermaid muy claro, grande y limpio; además imagen_anatomica.habilitado=true con 3 a 5 marcadores bien distribuidos visualmente. Las pistas deben ser específicas, cortas y conectadas al tema seleccionado.
 - Los marcadores deben usar coordenadas x e y entre 10 y 90 para poder dibujarse dentro del diagrama.
 - Si Kinestésico > 0, genera kinestesico.habilitado=true.
 - Si Lectura/Escritura > 0, genera lectura.habilitado=true; si es 0, puede quedar false.
@@ -355,7 +355,7 @@ REGLAS OBLIGATORIAS:
 - Cada día debe incluir mini_quiz con 3 preguntas evaluables.
 - Cada pregunta del mini_quiz debe tener exactamente 4 opciones y una respuesta_correcta que coincida exactamente con una opción.
 - Las preguntas deben evaluar el tema del día, la lámina, el audio o el ejercicio práctico.
-- Para Mermaid usa SOLO diagramas simples. Preferible flowchart TD o mindmap con máximo 6 nodos. Usa textos cortos de 1 a 4 palabras por nodo y evita signos que rompan Mermaid. Prioriza legibilidad visual.
+- Para Mermaid usa SOLO diagramas simples. Preferible flowchart TD o mindmap con máximo 6 nodos. Usa textos cortos de 1 a 4 palabras por nodo, sin paréntesis complejos, sin dos puntos, sin comillas y sin caracteres raros. Prioriza legibilidad visual.
 - No uses markdown fuera del string mermaid.
 - No agregues texto fuera del JSON.
 '''
