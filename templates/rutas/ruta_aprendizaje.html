@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Ruta de aprendizaje | Tutor IA Anatomía VARK
+
 {% if ruta %}
 <div class="visual-modal" id="visual-modal">
     <div class="visual-modal-backdrop" data-close-visual></div>
@@ -243,20 +244,31 @@
                             {% endif %}
 
                             {% if dia.recursos.visual.habilitado %}
-                                <section class="resource-card">
+                                <section class="resource-card visual-card-premium">
                                     <div class="resource-card-header">
                                         <i data-lucide="map"></i>
                                         <strong>{{ dia.recursos.visual.titulo }}</strong>
                                     </div>
+                                    <div class="map-toolbar mt-3">
+                                        <p class="map-helper">Mapa mental del tema para ver relaciones anatómicas clave de un vistazo.</p>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" data-open-visual="visual-map-{{ dia.dia }}">
+                                            Ver mapa en grande
+                                        </button>
+                                    </div>
                                     {% if dia.recursos.visual.mermaid %}
-                                        <div class="mermaid route-mermaid">{{ dia.recursos.visual.mermaid }}</div>
+                                        <div class="mermaid-shell mt-3">
+                                            <div class="mermaid route-mermaid" id="visual-map-{{ dia.dia }}">{{ dia.recursos.visual.mermaid }}</div>
+                                        </div>
                                     {% endif %}
                                     {% if dia.recursos.visual.apoyo_visual %}
-                                        <ul class="clean-list mt-3">
-                                            {% for item in dia.recursos.visual.apoyo_visual %}
-                                                <li><i data-lucide="circle-dot"></i><span>{{ item }}</span></li>
-                                            {% endfor %}
-                                        </ul>
+                                        <div class="map-outline mt-3">
+                                            <strong>Lectura rápida del mapa</strong>
+                                            <ul class="clean-list mt-3">
+                                                {% for item in dia.recursos.visual.apoyo_visual %}
+                                                    <li><i data-lucide="circle-dot"></i><span>{{ item }}</span></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
                                     {% endif %}
                                 </section>
                             {% endif %}
@@ -307,79 +319,58 @@
                                 <div class="anatomy-grid mt-4">
                                     <div>
                                         <div class="anatomy-board">
-                                            <svg class="torso-svg pelvis-svg" viewBox="0 0 720 620" aria-hidden="true">
-                                                        <defs>
-                                                            <linearGradient id="pelvisBone" x1="0" x2="0" y1="0" y2="1">
-                                                                <stop offset="0%" stop-color="#e7f5f2"></stop>
-                                                                <stop offset="100%" stop-color="#b9ded7"></stop>
-                                                            </linearGradient>
-                                                            <linearGradient id="muscleLayer" x1="0" x2="0" y1="0" y2="1">
-                                                                <stop offset="0%" stop-color="#f0b7a8"></stop>
-                                                                <stop offset="100%" stop-color="#df7e73"></stop>
-                                                            </linearGradient>
-                                                            <filter id="pelvisShadow" x="-20%" y="-20%" width="140%" height="140%">
-                                                                <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0f766e" flood-opacity=".16"></feDropShadow>
-                                                            </filter>
-                                                        </defs>
-
-                                                        <rect x="16" y="16" width="688" height="588" rx="28" fill="#f7fbfb"></rect>
-
-                                                        <g filter="url(#pelvisShadow)">
-                                                            <path d="M360 72 C333 92 322 126 326 164 C330 199 348 224 360 238 C372 224 390 199 394 164 C398 126 387 92 360 72 Z"
-                                                                  fill="#d6ece8" stroke="#7bb8af" stroke-width="4"></path>
-                                                            <path d="M360 130 L360 270" stroke="#6fa9a2" stroke-width="8" stroke-linecap="round"></path>
-
-                                                            <path d="M328 260
-                                                                     C250 226 172 226 112 294
-                                                                     C65 347 68 429 118 481
-                                                                     C160 525 228 522 266 470
-                                                                     C303 420 313 340 342 296 Z"
-                                                                  fill="url(#pelvisBone)" stroke="#6fa9a2" stroke-width="5"></path>
-
-                                                            <path d="M392 260
-                                                                     C470 226 548 226 608 294
-                                                                     C655 347 652 429 602 481
-                                                                     C560 525 492 522 454 470
-                                                                     C417 420 407 340 378 296 Z"
-                                                                  fill="url(#pelvisBone)" stroke="#6fa9a2" stroke-width="5"></path>
-
-                                                            <path d="M253 331
-                                                                     C211 346 190 392 211 431
-                                                                     C232 470 284 466 306 425
-                                                                     C328 384 300 342 253 331 Z"
-                                                                  fill="#f7fbfb" stroke="#6fa9a2" stroke-width="5"></path>
-
-                                                            <path d="M467 331
-                                                                     C509 346 530 392 509 431
-                                                                     C488 470 436 466 414 425
-                                                                     C392 384 420 342 467 331 Z"
-                                                                  fill="#f7fbfb" stroke="#6fa9a2" stroke-width="5"></path>
-
-                                                            <path d="M290 430 C318 456 402 456 430 430
-                                                                     C414 500 388 545 360 570
-                                                                     C332 545 306 500 290 430 Z"
-                                                                  fill="#d2ebe6" stroke="#6fa9a2" stroke-width="5"></path>
-
-                                                            <path d="M286 310 C315 335 340 362 350 417"
-                                                                  stroke="#df7e73" stroke-width="18" stroke-linecap="round" opacity=".88"></path>
-                                                            <path d="M434 310 C405 335 380 362 370 417"
-                                                                  stroke="#df7e73" stroke-width="18" stroke-linecap="round" opacity=".88"></path>
-                                                            <path d="M306 472 C338 498 382 498 414 472"
-                                                                  stroke="#df7e73" stroke-width="18" stroke-linecap="round" opacity=".88"></path>
-                                                            <path d="M360 300 C338 336 338 389 360 430 C382 389 382 336 360 300 Z"
-                                                                  fill="url(#muscleLayer)" opacity=".78" stroke="#c76662" stroke-width="4"></path>
-                                                        </g>
-
-                                                        <g font-family="Arial, sans-serif" font-size="18" fill="#245f59" opacity=".84">
-                                                            <text x="300" y="52">Sacro</text>
-                                                            <text x="94" y="283">Hueso coxal</text>
-                                                            <text x="515" y="283">Hueso coxal</text>
-                                                            <text x="270" y="590">Suelo pélvico</text>
-                                                            <text x="302" y="284">Pelvis menor</text>
-                                                            <text x="224" y="324">Foramen</text>
-                                                            <text x="430" y="324">Foramen</text>
-                                                        </g>
-                                                    </svg>
+                                            <svg class="torso-svg pelvis-svg premium-pelvis" viewBox="0 0 960 760" aria-hidden="true">
+                                                <defs>
+                                                    <linearGradient id="boneGradA" x1="0" x2="0" y1="0" y2="1">
+                                                        <stop offset="0%" stop-color="#f4fbfa"></stop>
+                                                        <stop offset="100%" stop-color="#d5ece7"></stop>
+                                                    </linearGradient>
+                                                    <linearGradient id="boneGradB" x1="0" x2="0" y1="0" y2="1">
+                                                        <stop offset="0%" stop-color="#eef8f6"></stop>
+                                                        <stop offset="100%" stop-color="#c8e4de"></stop>
+                                                    </linearGradient>
+                                                    <linearGradient id="muscleGrad" x1="0" x2="0" y1="0" y2="1">
+                                                        <stop offset="0%" stop-color="#efb6aa"></stop>
+                                                        <stop offset="100%" stop-color="#d97d73"></stop>
+                                                    </linearGradient>
+                                                    <filter id="pelvisShadow2" x="-20%" y="-20%" width="140%" height="140%">
+                                                        <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0f766e" flood-opacity=".16"></feDropShadow>
+                                                    </filter>
+                                                </defs>
+                                                <rect x="18" y="18" width="924" height="724" rx="28" fill="#f8fbfb"></rect>
+                                                <g filter="url(#pelvisShadow2)">
+                                                    <path d="M479 118 C451 136 437 176 442 214 C446 255 463 287 480 307 C497 287 514 255 518 214 C523 176 509 136 479 118 Z"
+                                                        fill="#dbeeea" stroke="#75b5ac" stroke-width="6"></path>
+                                                    <path d="M480 182 L480 350" stroke="#75b5ac" stroke-width="10" stroke-linecap="round"></path>
+                                                    <path d="M441 348 C326 296 200 311 125 401 C67 470 69 575 132 637 C188 692 282 685 334 619 C381 558 401 468 452 397 Z"
+                                                        fill="url(#boneGradA)" stroke="#74b2aa" stroke-width="8"></path>
+                                                    <path d="M519 348 C634 296 760 311 835 401 C893 470 891 575 828 637 C772 692 678 685 626 619 C579 558 559 468 508 397 Z"
+                                                        fill="url(#boneGradA)" stroke="#74b2aa" stroke-width="8"></path>
+                                                    <path d="M344 454 C286 475 258 536 287 589 C316 640 387 634 418 579 C448 525 410 469 344 454 Z"
+                                                        fill="#f8fbfb" stroke="#74b2aa" stroke-width="8"></path>
+                                                    <path d="M616 454 C674 475 702 536 673 589 C644 640 573 634 542 579 C512 525 550 469 616 454 Z"
+                                                        fill="#f8fbfb" stroke="#74b2aa" stroke-width="8"></path>
+                                                    <path d="M379 605 C415 637 545 637 581 605 C560 677 521 719 480 743 C439 719 400 677 379 605 Z"
+                                                        fill="url(#boneGradB)" stroke="#74b2aa" stroke-width="8"></path>
+                                                    <path d="M334 408 C383 437 422 490 442 580" stroke="#d97d73" stroke-width="26" stroke-linecap="round" opacity=".9"></path>
+                                                    <path d="M626 408 C577 437 538 490 518 580" stroke="#d97d73" stroke-width="26" stroke-linecap="round" opacity=".9"></path>
+                                                    <path d="M397 618 C430 646 530 646 563 618" stroke="#d97d73" stroke-width="24" stroke-linecap="round" opacity=".9"></path>
+                                                    <path d="M480 397 C452 448 452 525 480 585 C508 525 508 448 480 397 Z"
+                                                        fill="url(#muscleGrad)" opacity=".82" stroke="#bf6258" stroke-width="6"></path>
+                                                    <path d="M260 354 C318 339 373 342 422 365" stroke="#92c8c1" stroke-width="6" fill="none" stroke-linecap="round"></path>
+                                                    <path d="M700 354 C642 339 587 342 538 365" stroke="#92c8c1" stroke-width="6" fill="none" stroke-linecap="round"></path>
+                                                </g>
+                                                <g font-family="Arial, sans-serif" fill="#285f59">
+                                                    <text x="428" y="94" font-size="28" font-weight="700">Sacro</text>
+                                                    <text x="122" y="370" font-size="22">Hueso coxal izquierdo</text>
+                                                    <text x="633" y="370" font-size="22">Hueso coxal derecho</text>
+                                                    <text x="395" y="780" font-size="0"></text>
+                                                    <text x="414" y="728" font-size="24" font-weight="700">Suelo pélvico</text>
+                                                    <text x="430" y="384" font-size="22">Pelvis menor</text>
+                                                    <text x="287" y="448" font-size="20" opacity=".78">Foramen</text>
+                                                    <text x="596" y="448" font-size="20" opacity=".78">Foramen</text>
+                                                </g>
+                                            </svg>
 
                                             {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
                                                 <button type="button"
@@ -392,6 +383,9 @@
                                             {% endfor %}
                                         </div>
                                         <p class="marker-help mt-2"><strong>Modo práctica:</strong> {{ dia.recursos.imagen_anatomica.modo_practica }}</p>
+                                        <div class="form-actions mt-3">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" data-open-visual="anatomy-visual-{{ dia.dia }}">Ver lámina en grande</button>
+                                        </div>
                                     </div>
 
                                     <div>
@@ -1049,11 +1043,74 @@
     }
 }
 
+
+/* ===== premium visual realism ===== */
+.visual-card-premium {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfefe 100%);
+}
+.map-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.map-helper {
+    margin: 0;
+    color: #4b5f5b;
+}
+.map-outline {
+    background: #f7fbfb;
+    border: 1px solid rgba(15,118,110,.12);
+    border-radius: 1rem;
+    padding: 1rem 1.1rem;
+}
+.mermaid-shell {
+    background: radial-gradient(circle at top, #fcffff 0%, #f4fbfa 100%);
+    border: 1px solid rgba(15,118,110,.10);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 10px 24px rgba(15,118,110,.05);
+    min-height: 520px !important;
+}
+.route-mermaid {
+    min-height: 460px !important;
+}
+.route-mermaid svg {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 440px !important;
+}
+.anatomy-board {
+    background: radial-gradient(circle at top, #fcffff 0%, #f2faf8 100%) !important;
+    min-height: 700px !important;
+}
+.torso-svg, .pelvis-svg, .premium-pelvis {
+    width: 100% !important;
+    height: 670px !important;
+    display: block !important;
+}
+.visual-modal-body .torso-svg,
+.visual-modal-body .pelvis-svg,
+.visual-modal-body .premium-pelvis {
+    height: 82vh !important;
+}
+.anatomy-caption {
+    color: #5a6f6a;
+    font-size: .95rem;
+}
+@media (max-width: 980px) {
+    .map-toolbar { align-items: flex-start; }
+    .mermaid-shell { min-height: 420px !important; }
+    .route-mermaid { min-height: 360px !important; }
+    .route-mermaid svg { min-height: 330px !important; }
+    .anatomy-board { min-height: 560px !important; }
+    .torso-svg, .pelvis-svg, .premium-pelvis { height: 540px !important; }
+}
+
 </style>
 
 <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+    mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', theme: 'base', themeVariables: { primaryColor: '#e8f7f3', primaryTextColor: '#153b38', primaryBorderColor: '#0f766e', lineColor: '#27645d', secondaryColor: '#f2fbf9', tertiaryColor: '#ffffff', fontSize: '22px', clusterBkg: '#f7fbfb', clusterBorder: '#0f766e' }, flowchart: { curve: 'basis', useMaxWidth: true, htmlLabels: true }, mindmap: { padding: 18 } });
 </script>
 
 <script>
@@ -1162,18 +1219,37 @@
                 if (target) target.classList.toggle("is-visible");
             });
         });
+
+        const modal = document.getElementById('visual-modal');
+        const modalBody = document.getElementById('visual-modal-body');
+
+        document.querySelectorAll('[data-open-visual]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                let source = null;
+                const key = btn.dataset.openVisual || '';
+                if (key.startsWith('visual-map-')) {
+                    source = document.getElementById(key)?.closest('.visual-card-premium') || document.getElementById(key)?.closest('.resource-card');
+                } else if (key.startsWith('anatomy-visual-')) {
+                    source = btn.closest('.anatomical-panel');
+                }
+                if (source && modal && modalBody) {
+                    modalBody.innerHTML = source.outerHTML;
+                    modal.classList.add('is-open');
+                    if (window.lucide) { lucide.createIcons(); }
+                }
+            });
+        });
+
+        document.querySelectorAll('[data-close-visual]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (modal && modalBody) {
+                    modal.classList.remove('is-open');
+                    modalBody.innerHTML = '';
+                }
+            });
+        });
     });
 
 </script>
-
-{% if ruta %}
-<div class="visual-modal" id="visual-modal">
-    <div class="visual-modal-backdrop" data-close-visual></div>
-    <div class="visual-modal-dialog">
-        <button type="button" class="visual-modal-close" data-close-visual>&times;</button>
-        <div class="visual-modal-body" id="visual-modal-body"></div>
-    </div>
-</div>
-{% endif %}
 
 {% endblock %}

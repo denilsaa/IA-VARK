@@ -306,7 +306,7 @@ Devuelve únicamente JSON válido con esta estructura exacta:
         }},
         "visual": {{
           "habilitado": true,
-          "titulo": "Mapa mental del día",
+          "titulo": "Mapa mental premium del día",
           "tipo": "mapa_mental",
           "mermaid": "mindmap\\n  root((Tema))\\n    Rama 1\\n    Rama 2",
           "apoyo_visual": ["Elemento visual 1", "Elemento visual 2"]
@@ -325,9 +325,9 @@ Devuelve únicamente JSON válido con esta estructura exacta:
         }},
         "imagen_anatomica": {{
           "habilitado": true,
-          "titulo": "Lámina anatómica guiada",
+          "titulo": "Lámina anatómica guiada realista",
           "tipo_vista": "anterior",
-          "descripcion": "Descripción breve de la lámina y de qué debe observar el estudiante",
+          "descripcion": "Descripción breve de la lámina, indicando la vista anatómica y qué relaciones debe observar el estudiante",
           "marcadores": [
             {{"id": 1, "nombre": "Estructura 1", "x": 50, "y": 20, "pista": "Pista breve", "detalle": "Qué debe reconocer"}},
             {{"id": 2, "nombre": "Estructura 2", "x": 55, "y": 55, "pista": "Pista breve", "detalle": "Qué debe reconocer"}}
@@ -347,15 +347,15 @@ REGLAS OBLIGATORIAS:
 - Cada día debe usar como máximo {datos_academicos.minutos_por_dia} minutos.
 - Enfoca la ruta en el tema actual y el punto específico difícil.
 - Si Auditivo > 0, genera audio.habilitado=true.
-- Si Visual > 0, genera visual.habilitado=true con un Mermaid muy claro, grande y limpio; además imagen_anatomica.habilitado=true con 3 a 5 marcadores bien distribuidos visualmente. Las pistas deben ser específicas, cortas y conectadas al tema seleccionado.
+- Si Visual > 0, genera visual.habilitado=true con un Mermaid mucho más didáctico y visual. Prefiere flowchart TD o mindmap limpio con un nodo central, 3 a 5 ramas principales y 1 o 2 subramas por rama. Además imagen_anatomica.habilitado=true con 3 a 5 marcadores bien distribuidos visualmente. Las pistas deben ser específicas, cortas y conectadas al tema seleccionado.
 - Los marcadores deben usar coordenadas x e y entre 10 y 90 para poder dibujarse dentro del diagrama.
 - Si Kinestésico > 0, genera kinestesico.habilitado=true.
 - Si Lectura/Escritura > 0, genera lectura.habilitado=true; si es 0, puede quedar false.
-- No inventes detalles anatómicos ultraespecíficos fuera del contexto; si falta precisión, enfoca la imagen en relaciones generales del tema y subtema.
+- No inventes detalles anatómicos ultraespecíficos fuera del contexto; si falta precisión, enfoca la lámina en relaciones generales del tema y subtema, priorizando una vista anatómica realista y coherente.
 - Cada día debe incluir mini_quiz con 3 preguntas evaluables.
 - Cada pregunta del mini_quiz debe tener exactamente 4 opciones y una respuesta_correcta que coincida exactamente con una opción.
 - Las preguntas deben evaluar el tema del día, la lámina, el audio o el ejercicio práctico.
-- Para Mermaid usa SOLO diagramas simples. Preferible flowchart TD o mindmap con máximo 6 nodos. Usa textos cortos de 1 a 4 palabras por nodo, sin paréntesis complejos, sin dos puntos, sin comillas y sin caracteres raros. Prioriza legibilidad visual.
+- Para Mermaid usa SOLO diagramas simples. Prefiere flowchart TD o mindmap con un estilo limpio, máximo 8 nodos visibles, textos cortos de 1 a 4 palabras por nodo, sin paréntesis complejos, sin comillas y sin caracteres raros. Distribuye el mapa para que se vea como un esquema docente claro y prioriza legibilidad visual.
 - No uses markdown fuera del string mermaid.
 - No agregues texto fuera del JSON.
 '''
