@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Ruta de aprendizaje | Tutor IA Anatomía VARK{% endblock %}
+{% block title %}Ruta de aprendizaje | Tutor IA Anatomía VARK
+{% if ruta %}
+<div class="visual-modal" id="visual-modal">
+    <div class="visual-modal-backdrop" data-close-visual></div>
+    <div class="visual-modal-dialog">
+        <button type="button" class="visual-modal-close" data-close-visual>&times;</button>
+        <div class="visual-modal-body" id="visual-modal-body"></div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
 
 {% block content %}
 <section class="page-hero">
@@ -56,7 +67,7 @@
                 <strong>Qué tiene esta ruta 10/10</strong>
             </div>
             <p>
-                Cada día puede incluir <strong>audio escuchable</strong>, <strong>mapa mental</strong>,
+                Cada día puede incluir <strong>audio escuchable</strong>, <strong>mapa mental grande</strong>,
                 <strong>lámina anatómica guiada con marcadores</strong>, <strong>ejercicio práctico</strong>
                 <strong>mini quiz evaluable</strong> y <strong>apoyo de lectura</strong> según tu combinación VARK.
             </p>
@@ -200,7 +211,9 @@
                                         <i data-lucide="volume-2"></i>
                                         <strong>{{ dia.recursos.audio.titulo }}</strong>
                                     </div>
-                                    <p>{{ dia.recursos.audio.guion }}</p>
+                                    <p class="audio-ready">
+                                        Audio explicativo listo para escuchar. El guion está oculto para no saturar la ruta.
+                                    </p>
                                     {% if dia.recursos.audio.pasos_clave %}
                                         <ul class="clean-list mt-3">
                                             {% for paso in dia.recursos.audio.pasos_clave %}
@@ -217,6 +230,14 @@
                                             <i data-lucide="square"></i>
                                             <span>Detener</span>
                                         </button>
+                                        <button type="button" class="btn btn-outline-primary icon-btn" data-toggle-target="audio-summary-{{ dia.dia }}">
+                                            <i data-lucide="file-text"></i>
+                                            <span>Ver guion</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="audio-summary mt-3 collapsible-box" id="audio-summary-{{ dia.dia }}">
+                                        <p>{{ dia.recursos.audio.guion }}</p>
                                     </div>
                                 </section>
                             {% endif %}
@@ -319,9 +340,7 @@
                                                             <strong>Marcador {{ marcador.id }}</strong>
                                                             <p class="text-muted">{{ marcador.pista }}</p>
                                                         </div>
-                                                        <button type="button"
-                                                                class="btn btn-outline-primary btn-sm"
-                                                                data-target="marker-{{ dia.dia }}-{{ marcador.id }}">
+                                                        <button type="button" class="btn btn-outline-primary btn-sm" data-toggle-target="marker-{{ dia.dia }}-{{ marcador.id }}">
                                                             Revelar
                                                         </button>
                                                     </div>
@@ -359,26 +378,24 @@
 
                                 <div class="quiz-list">
                                     {% for pregunta in dia.mini_quiz %}
-                                        {% with pregunta_num=forloop.counter %}
-                                            <div class="quiz-question" data-question>
-                                                <strong>{{ pregunta_num }}. {{ pregunta.pregunta }}</strong>
-                                                <div class="quiz-options mt-3">
-                                                    {% for opcion in pregunta.opciones %}
-                                                        <label class="quiz-option">
-                                                            <input type="radio"
-                                                                   name="quiz-{{ dia.dia }}-{{ pregunta_num }}"
-                                                                   value="{{ opcion|escape }}"
-                                                                   data-correct="{% if opcion == pregunta.respuesta_correcta %}true{% else %}false{% endif %}">
-                                                            <span>{{ opcion }}</span>
-                                                        </label>
-                                                    {% endfor %}
-                                                </div>
-                                                <div class="quiz-explanation">
-                                                    <strong>Respuesta correcta:</strong> {{ pregunta.respuesta_correcta }}<br>
-                                                    {{ pregunta.explicacion }}
-                                                </div>
+                                        <div class="quiz-question" data-question>
+                                            <strong>{{ forloop.counter }}. {{ pregunta.pregunta }}</strong>
+                                            <div class="quiz-options mt-3">
+                                                {% for opcion in pregunta.opciones %}
+                                                    <label class="quiz-option">
+                                                        <input type="radio"
+                                                               name="quiz-{{ dia.dia }}-{{ forloop.parentloop.counter }}"
+                                                               value="{{ opcion|escape }}"
+                                                               data-correct="{% if opcion == pregunta.respuesta_correcta %}true{% else %}false{% endif %}">
+                                                        <span>{{ opcion }}</span>
+                                                    </label>
+                                                {% endfor %}
                                             </div>
-                                        {% endwith %}
+                                            <div class="quiz-explanation">
+                                                <strong>Respuesta correcta:</strong> {{ pregunta.respuesta_correcta }}<br>
+                                                {{ pregunta.explicacion }}
+                                            </div>
+                                        </div>
                                     {% endfor %}
                                 </div>
 
@@ -660,6 +677,145 @@
 @media (max-width: 900px) {
     .anatomy-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== Ruta 10/10 visual premium ===== */
+.route-hero-box { font-size: 1.02rem; }
+.premium-day-card { overflow: hidden; }
+.resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+}
+.resource-card,
+.anatomical-panel {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 1.15rem;
+    padding: 1.25rem;
+    background: #fff;
+}
+.audio-card { background: linear-gradient(180deg, #f6fffd 0%, #ffffff 100%); }
+.audio-ready { font-size: 1.05rem; }
+.collapsible-box { display: none; }
+.collapsible-box.is-visible { display: block; }
+.mermaid-shell,
+.route-mermaid {
+    overflow: auto;
+    background: linear-gradient(180deg, #fbfefe 0%, #f4fbfa 100%);
+    border-radius: 1.1rem;
+    padding: 1.2rem;
+    min-height: 520px;
+    border: 1px solid rgba(0,0,0,.06);
+}
+.route-mermaid {
+    min-width: 980px;
+}
+.route-mermaid svg {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 520px;
+}
+.anatomy-grid,
+.anatomy-grid-large {
+    display: grid;
+    grid-template-columns: minmax(420px, 1.35fr) minmax(320px, .85fr);
+    gap: 1.25rem;
+}
+.anatomy-board {
+    min-height: 760px !important;
+    overflow: hidden;
+    background: linear-gradient(180deg, #ffffff 0%, #f4fbfa 100%);
+    border: 1px solid rgba(0,0,0,.08);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+.torso-svg {
+    width: 100%;
+    height: 720px !important;
+    display: block;
+}
+.marker-pin {
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    border: 3px solid #ffffff !important;
+    font-weight: 800 !important;
+    font-size: 1.08rem !important;
+    z-index: 2;
+}
+.marker-pin:hover {
+    transform: translate(-50%, -50%) scale(1.08);
+}
+.progress-bar-fill { width: 0%; }
+@media (max-width: 980px) {
+    .anatomy-grid,
+    .anatomy-grid-large { grid-template-columns: 1fr; }
+    .anatomy-board { min-height: 560px !important; }
+    .torso-svg { height: 520px !important; }
+}
+@media (max-width: 720px) {
+    .route-mermaid { min-width: 620px; }
+}
+
+
+.visual-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    z-index: 9999;
+}
+.visual-modal.is-open {
+    display: block;
+}
+.visual-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, .68);
+    backdrop-filter: blur(3px);
+}
+.visual-modal-dialog {
+    position: relative;
+    z-index: 2;
+    width: min(1200px, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    margin: 1rem auto;
+    background: #fff;
+    border-radius: 1.2rem;
+    overflow: auto;
+    padding: 1.25rem;
+}
+.visual-modal-body .mermaid-shell,
+.visual-modal-body .route-mermaid {
+    min-height: 78vh;
+}
+.visual-modal-body .route-mermaid {
+    min-width: 1200px;
+}
+.visual-modal-body .route-mermaid svg {
+    min-height: 76vh !important;
+}
+.visual-modal-body .anatomy-board {
+    min-height: 82vh !important;
+}
+.visual-modal-body .torso-svg {
+    height: 78vh !important;
+}
+.visual-modal-close {
+    position: sticky;
+    top: .5rem;
+    margin-left: auto;
+    display: block;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,.1);
+    background: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+@media (max-width: 720px) {
+    .route-mermaid { min-width: 780px; }
+    .visual-modal-body .route-mermaid { min-width: 980px; }
+}
+
 </style>
 
 <script type="module">
@@ -678,7 +834,7 @@
         stopStudyAudio();
         activeUtterance = new SpeechSynthesisUtterance(text);
         activeUtterance.lang = 'es-ES';
-        activeUtterance.rate = 1;
+        activeUtterance.rate = 0.95;
         activeUtterance.pitch = 1;
         window.speechSynthesis.speak(activeUtterance);
     }
@@ -748,29 +904,6 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.marker-pin').forEach(function(button) {
-            const x = button.dataset.x || '50';
-            const y = button.dataset.y || '50';
-            const target = button.dataset.target;
-
-            button.style.left = `${x}%`;
-            button.style.top = `${y}%`;
-
-            button.addEventListener('click', function() {
-                toggleMarkerDetail(target);
-            });
-        });
-
-        document.querySelectorAll('[data-target]').forEach(function(button) {
-            if (button.classList.contains('marker-pin')) return;
-
-            button.addEventListener('click', function() {
-                toggleMarkerDetail(button.dataset.target);
-            });
-        });
-    });
-
     document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll(".progress-bar-fill").forEach(function (bar) {
             const progress = bar.dataset.progress || "0";
@@ -782,8 +915,32 @@
             const y = pin.dataset.y || "50";
             pin.style.left = x + "%";
             pin.style.top = y + "%";
+
+            pin.addEventListener("click", function () {
+                const targetId = pin.dataset.target;
+                const target = document.getElementById(targetId);
+                if (target) target.classList.toggle("is-visible");
+            });
+        });
+
+        document.querySelectorAll("[data-toggle-target]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                const target = document.getElementById(btn.dataset.toggleTarget);
+                if (target) target.classList.toggle("is-visible");
+            });
         });
     });
 
 </script>
+
+{% if ruta %}
+<div class="visual-modal" id="visual-modal">
+    <div class="visual-modal-backdrop" data-close-visual></div>
+    <div class="visual-modal-dialog">
+        <button type="button" class="visual-modal-close" data-close-visual>&times;</button>
+        <div class="visual-modal-body" id="visual-modal-body"></div>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}
