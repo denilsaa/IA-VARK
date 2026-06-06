@@ -820,7 +820,7 @@ def generar_y_guardar_imagen_gemini(prompt, carpeta, nombre_archivo, aspect_rati
     if env_model:
         model_candidates.append(env_model)
     # Fallbacks seguros
-    for candidate in ["gemini-3.1-flash-image", "gemini-2.5-flash-image", "gemini-3-pro-image"]:
+    for candidate in ["gemini-3.1-flash-image","gemini-2.5-flash-image",]:
         if candidate not in model_candidates:
             model_candidates.append(candidate)
 
