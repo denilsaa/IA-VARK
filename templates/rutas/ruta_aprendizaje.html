@@ -266,7 +266,7 @@
                                     {% else %}
                                         <div class="image-pending-box mt-3">
                                             <strong>Imagen pendiente de generación</strong>
-                                            <p>El contenido visual ya fue preparado, pero la imagen IA no se creó. Revisa GEMINI_API_KEY, GEMINI_IMAGE_MODEL o vuelve a regenerar la ruta.</p>
+                                            <p>El contenido visual ya fue preparado, pero la imagen IA no se creó. Revisa GEMINI_API_KEY, GEMINI_IMAGE_MODEL o vuelve a regenerar la ruta.{% if dia.recursos.visual.image_error %}<br><small><strong>Detalle:</strong> {{ dia.recursos.visual.image_error }}</small>{% endif %}</p>
                                         </div>
                                     {% endif %}
 
@@ -351,7 +351,7 @@
                                 {% else %}
                                     <div class="image-pending-box mt-3">
                                         <strong>Lámina pendiente de generación</strong>
-                                        <p>La descripción anatómica ya fue preparada, pero la imagen IA no se creó. Revisa GEMINI_API_KEY, GEMINI_IMAGE_MODEL o vuelve a regenerar la ruta.</p>
+                                        <p>La descripción anatómica ya fue preparada, pero la imagen IA no se creó. Revisa GEMINI_API_KEY, GEMINI_IMAGE_MODEL o vuelve a regenerar la ruta.{% if dia.recursos.imagen_anatomica.image_error %}<br><small><strong>Detalle:</strong> {{ dia.recursos.imagen_anatomica.image_error }}</small>{% endif %}</p>
                                     </div>
                                 {% endif %}
 
