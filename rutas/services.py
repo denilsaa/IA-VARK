@@ -562,6 +562,29 @@ def generar_ruta_respaldo(
                         "habilitado": visual_habilitado,
                         "titulo": f"Mapa mental de {tema}",
                         "tipo": "mapa_mental",
+                        "nodo_central": tema,
+                        "ramas": [
+                            {
+                                "titulo": "Definición",
+                                "detalle": f"Idea central de {tema} explicada con palabras simples.",
+                                "subpuntos": ["Concepto base", "Función o importancia"],
+                            },
+                            {
+                                "titulo": "Ubicación",
+                                "detalle": "Dónde se reconoce dentro del tema anatómico seleccionado.",
+                                "subpuntos": ["Región principal", "Referencia espacial"],
+                            },
+                            {
+                                "titulo": "Relaciones",
+                                "detalle": "Estructuras o conceptos que debes conectar para comprenderlo mejor.",
+                                "subpuntos": ["Relación cercana", "Límite o conexión"],
+                            },
+                            {
+                                "titulo": "Punto difícil",
+                                "detalle": datos_academicos.temas_dificiles or "Subtema que debes reforzar durante el repaso.",
+                                "subpuntos": ["Identificar", "Explicar sin mirar"],
+                            },
+                        ],
                         "mermaid": mermaid,
                         "apoyo_visual": [
                             "Ubicación general",
@@ -670,17 +693,49 @@ def normalizar_audio(valor):
 def normalizar_visual(valor):
     if not isinstance(valor, dict):
         valor = {}
+
+    apoyo_visual = normalizar_lista(valor.get("apoyo_visual", []))
     ramas = []
     valor_ramas = valor.get("ramas", [])
+
     if isinstance(valor_ramas, list):
         for rama in valor_ramas[:4]:
             if not isinstance(rama, dict):
                 continue
+
+            titulo = str(rama.get("titulo", "")).strip()
+            detalle = str(rama.get("detalle", "")).strip()
+            subpuntos = normalizar_lista(rama.get("subpuntos", []))[:3]
+
+            if titulo or detalle or subpuntos:
+                ramas.append({
+                    "titulo": titulo or "Idea clave",
+                    "detalle": detalle,
+                    "subpuntos": subpuntos,
+                })
+
+    # Si Gemini no devuelve ramas estructuradas, convertimos el apoyo_visual
+    # en tarjetas limpias para que el mapa no quede vacío ni deforme.
+    if not ramas and apoyo_visual:
+        for item in apoyo_visual[:4]:
+            texto = str(item).strip()
+            if not texto:
+                continue
+
+            if ":" in texto:
+                titulo, detalle = texto.split(":", 1)
+                titulo = titulo.strip()
+                detalle = detalle.strip()
+            else:
+                titulo = texto
+                detalle = "Concepto clave para conectar con el tema central."
+
             ramas.append({
-                "titulo": str(rama.get("titulo", "")).strip(),
-                "detalle": str(rama.get("detalle", "")).strip(),
-                "subpuntos": normalizar_lista(rama.get("subpuntos", []))[:3],
+                "titulo": titulo or "Idea clave",
+                "detalle": detalle,
+                "subpuntos": [],
             })
+
     return {
         "habilitado": bool(valor.get("habilitado")),
         "titulo": str(valor.get("titulo", "Mapa visual")).strip(),
@@ -688,7 +743,7 @@ def normalizar_visual(valor):
         "nodo_central": str(valor.get("nodo_central", "Tema central")).strip(),
         "ramas": ramas,
         "mermaid": str(valor.get("mermaid", "")).strip(),
-        "apoyo_visual": normalizar_lista(valor.get("apoyo_visual", [])),
+        "apoyo_visual": apoyo_visual,
     }
 
 

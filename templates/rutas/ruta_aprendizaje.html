@@ -1264,6 +1264,100 @@
   .concept-branch-grid { grid-template-columns: 1fr !important; }
 }
 
+
+/* ===== FIX MAPA MENTAL LIMPIO Y LEGIBLE ===== */
+.concept-map-card {
+    background: linear-gradient(180deg, #fbffff 0%, #f6fbfa 100%) !important;
+    border: 1px solid rgba(15, 118, 110, .14) !important;
+    border-radius: 1.15rem !important;
+    padding: 1rem !important;
+}
+.concept-map-shell {
+    position: relative !important;
+    min-height: auto !important;
+    display: grid !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+    overflow: visible !important;
+    background:
+        radial-gradient(circle at top left, rgba(15, 139, 125, .10), transparent 34%),
+        linear-gradient(180deg, #ffffff 0%, #f7fbfb 100%) !important;
+    border-radius: 1rem !important;
+}
+.concept-center-wrap {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    pointer-events: auto !important;
+    margin: 0 !important;
+}
+.concept-center-node {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    border-radius: 1rem !important;
+    display: block !important;
+    text-align: left !important;
+    padding: 1rem 1.15rem !important;
+    font-size: 1.45rem !important;
+    line-height: 1.25 !important;
+    color: #083b37 !important;
+    background: linear-gradient(135deg, #dff7f3 0%, #bcece3 100%) !important;
+    border: 1px solid rgba(15, 118, 110, .20) !important;
+    border-left: .55rem solid #0f8b7d !important;
+    box-shadow: 0 10px 24px rgba(15, 118, 110, .10) !important;
+}
+.concept-center-node::before {
+    content: 'TEMA CENTRAL';
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    margin-bottom: .45rem;
+    padding: .22rem .55rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,.72);
+    color: #0f766e;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+}
+.concept-branch-grid {
+    position: static !important;
+    z-index: 1 !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)) !important;
+    gap: 1rem !important;
+    min-height: auto !important;
+    align-items: stretch !important;
+}
+.concept-branch-card {
+    min-height: 100% !important;
+    border-radius: 1rem !important;
+    padding: 1rem !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(15, 118, 110, .13) !important;
+    box-shadow: 0 10px 22px rgba(15, 118, 110, .06) !important;
+}
+.concept-branch-card::after {
+    display: none !important;
+}
+.concept-branch-tag {
+    background: #e5f7f4 !important;
+    color: #08756d !important;
+}
+.concept-branch-card h4 {
+    font-size: 1.08rem !important;
+    line-height: 1.25 !important;
+}
+.mini-points li {
+    align-items: flex-start !important;
+}
+@media (max-width: 720px) {
+    .concept-center-node { font-size: 1.2rem !important; }
+    .concept-branch-grid { grid-template-columns: 1fr !important; }
+}
+
 </style>
 
 <script type="module">
