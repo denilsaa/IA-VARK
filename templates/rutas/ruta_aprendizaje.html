@@ -230,69 +230,49 @@
                                     </div>
                                 </section>
                             {% endif %}
-
                             {% if dia.recursos.visual.habilitado %}
                                 <section class="resource-card visual-card-premium resource-span-2">
                                     <div class="resource-card-header">
                                         <i data-lucide="map"></i>
                                         <strong>{{ dia.recursos.visual.titulo }}</strong>
                                     </div>
-                                    <div class="map-toolbar mt-3">
-                                        <p class="map-helper">Mapa visual premium para comprender rápido el tema, sus partes y sus relaciones anatómicas.</p>
-                                        <div class="form-actions compact-actions">
-                                            <button type="button" class="btn btn-outline-primary btn-sm" data-toggle-target="mermaid-block-{{ dia.dia }}">
-                                                Ver mapa técnico
-                                            </button>
-                                            <button type="button" class="btn btn-primary btn-sm" data-open-visual="visual-map-card-{{ dia.dia }}">
+
+                                    {% if dia.recursos.visual.descripcion %}
+                                        <p class="mt-3">{{ dia.recursos.visual.descripcion }}</p>
+                                    {% else %}
+                                        <p class="mt-3">Mapa mental generado por IA para estudiar el tema del día.</p>
+                                    {% endif %}
+
+                                    {% if dia.recursos.visual.image_url %}
+                                        <div class="generated-visual-card mt-3">
+                                            <img src="{{ dia.recursos.visual.image_url }}"
+                                                 alt="{{ dia.recursos.visual.titulo }}"
+                                                 class="study-generated-image">
+                                        </div>
+
+                                        <div class="form-actions mt-3">
+                                            <button type="button"
+                                                    class="btn btn-primary btn-sm"
+                                                    data-open-visual="generated-map-{{ dia.dia }}">
                                                 Ver mapa en grande
                                             </button>
                                         </div>
-                                    </div>
 
-                                    <div class="concept-map-card mt-3" id="visual-map-card-{{ dia.dia }}">
-                                        <div class="concept-map-shell">
-                                            <div class="concept-center-wrap">
-                                                <div class="concept-center-node">{{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</div>
-                                            </div>
-                                            <div class="concept-branch-grid">
-                                                {% for rama in dia.recursos.visual.ramas %}
-                                                    <article class="concept-branch-card">
-                                                        <div class="concept-branch-tag">Rama {{ forloop.counter }}</div>
-                                                        <h4>{{ rama.titulo }}</h4>
-                                                        {% if rama.detalle %}<p>{{ rama.detalle }}</p>{% endif %}
-                                                        {% if rama.subpuntos %}
-                                                            <ul class="clean-list mini-points mt-2">
-                                                                {% for punto in rama.subpuntos %}
-                                                                    <li><i data-lucide="circle-dot"></i><span>{{ punto }}</span></li>
-                                                                {% endfor %}
-                                                            </ul>
-                                                        {% endif %}
-                                                    </article>
-                                                {% empty %}
-                                                    {% if dia.recursos.visual.apoyo_visual %}
-                                                        {% for item in dia.recursos.visual.apoyo_visual|slice:":4" %}
-                                                            <article class="concept-branch-card">
-                                                                <div class="concept-branch-tag">Idea clave</div>
-                                                                <h4>{{ item }}</h4>
-                                                            </article>
-                                                        {% endfor %}
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </div>
+                                        <div class="visual-modal-source" id="generated-map-{{ dia.dia }}">
+                                            <img src="{{ dia.recursos.visual.image_url }}"
+                                                 alt="{{ dia.recursos.visual.titulo }}"
+                                                 class="study-generated-image">
                                         </div>
-                                    </div>
-
-                                    <div class="collapsible-box mt-3" id="mermaid-block-{{ dia.dia }}">
-                                        {% if dia.recursos.visual.mermaid %}
-                                            <div class="mermaid-shell">
-                                                <div class="mermaid route-mermaid" id="visual-map-{{ dia.dia }}">{{ dia.recursos.visual.mermaid }}</div>
-                                            </div>
-                                        {% endif %}
-                                    </div>
+                                    {% else %}
+                                        <div class="image-pending-box mt-3">
+                                            <strong>Imagen pendiente de generación</strong>
+                                            <p>El contenido visual ya fue preparado, pero la imagen IA no se creó. Revisa GEMINI_API_KEY, GEMINI_IMAGE_MODEL o vuelve a regenerar la ruta.</p>
+                                        </div>
+                                    {% endif %}
 
                                     {% if dia.recursos.visual.apoyo_visual %}
                                         <div class="map-outline mt-3">
-                                            <strong>Claves rápidas del tema</strong>
+                                            <strong>Claves rápidas del mapa</strong>
                                             <ul class="clean-list mt-3">
                                                 {% for item in dia.recursos.visual.apoyo_visual %}
                                                     <li><i data-lucide="circle-dot"></i><span>{{ item }}</span></li>
@@ -337,118 +317,60 @@
                                 </section>
                             {% endif %}
                         </div>
-
                         {% if dia.recursos.imagen_anatomica.habilitado %}
                             <section class="form-panel wide-panel mt-4 anatomical-panel">
                                 <div class="resource-card-header">
                                     <i data-lucide="image"></i>
                                     <strong>{{ dia.recursos.imagen_anatomica.titulo }}</strong>
                                 </div>
-                                <p>{{ dia.recursos.imagen_anatomica.descripcion }}</p>
 
-                                <div class="anatomy-grid mt-4">
-                                    <div>
-                                        <div class="anatomy-board">
-                                            <svg class="torso-svg pelvis-svg premium-pelvis" viewBox="0 0 980 760" aria-hidden="true">
-                                                <defs>
-                                                    <linearGradient id="boneOuter" x1="0" x2="0" y1="0" y2="1">
-                                                        <stop offset="0%" stop-color="#f7fcfb"></stop>
-                                                        <stop offset="100%" stop-color="#dbeee9"></stop>
-                                                    </linearGradient>
-                                                    <linearGradient id="boneInner" x1="0" x2="0" y1="0" y2="1">
-                                                        <stop offset="0%" stop-color="#e9f7f3"></stop>
-                                                        <stop offset="100%" stop-color="#cde7e1"></stop>
-                                                    </linearGradient>
-                                                    <linearGradient id="organPink" x1="0" x2="0" y1="0" y2="1">
-                                                        <stop offset="0%" stop-color="#f3c0b8"></stop>
-                                                        <stop offset="100%" stop-color="#dd8c82"></stop>
-                                                    </linearGradient>
-                                                    <filter id="atlasShadow" x="-20%" y="-20%" width="140%" height="140%">
-                                                        <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0f766e" flood-opacity=".14"></feDropShadow>
-                                                    </filter>
-                                                </defs>
-                                                <rect x="18" y="18" width="944" height="724" rx="30" fill="#f8fbfb"></rect>
-                                                <g filter="url(#atlasShadow)">
-                                                    <path d="M316 180 C245 160 166 196 118 250 C64 311 55 404 91 480 C126 554 192 613 264 642 C332 668 388 636 421 584 C455 531 463 463 468 392 C472 320 439 214 316 180 Z"
-                                                          fill="url(#boneOuter)" stroke="#74b2aa" stroke-width="7"></path>
-                                                    <path d="M664 180 C735 160 814 196 862 250 C916 311 925 404 889 480 C854 554 788 613 716 642 C648 668 592 636 559 584 C525 531 517 463 512 392 C508 320 541 214 664 180 Z"
-                                                          fill="url(#boneOuter)" stroke="#74b2aa" stroke-width="7"></path>
-                                                    <path d="M442 274 C404 316 379 359 370 392 C356 446 359 526 413 610" fill="none" stroke="#74b2aa" stroke-width="7" stroke-linecap="round"></path>
-                                                    <path d="M538 274 C576 316 601 359 610 392 C624 446 621 526 567 610" fill="none" stroke="#74b2aa" stroke-width="7" stroke-linecap="round"></path>
-                                                    <path d="M375 396 C426 364 457 347 480 346 C503 347 534 364 585 396" fill="none" stroke="#74b2aa" stroke-width="8" stroke-linecap="round"></path>
-                                                    <path d="M421 584 C446 621 465 644 480 654 C495 644 514 621 539 584" fill="none" stroke="#74b2aa" stroke-width="8" stroke-linecap="round"></path>
-                                                    <ellipse cx="308" cy="490" rx="84" ry="76" fill="#f8fbfb" stroke="#74b2aa" stroke-width="7"></ellipse>
-                                                    <ellipse cx="652" cy="490" rx="84" ry="76" fill="#f8fbfb" stroke="#74b2aa" stroke-width="7"></ellipse>
-                                                    <path d="M462 220 C475 170 485 151 500 138 C513 151 523 170 536 220 C518 240 506 249 500 249 C494 249 482 240 462 220 Z" fill="url(#boneInner)" stroke="#74b2aa" stroke-width="6"></path>
-                                                    <path d="M480 239 L480 328" stroke="#74b2aa" stroke-width="8" stroke-linecap="round"></path>
-                                                    <path d="M448 354 C460 336 471 327 480 325 C489 327 500 336 512 354 L512 520 C501 540 491 552 480 564 C469 552 459 540 448 520 Z" fill="url(#organPink)" opacity=".85" stroke="#c97065" stroke-width="5"></path>
-                                                    <path d="M365 378 C333 401 313 449 306 530" fill="none" stroke="#d88177" stroke-width="20" stroke-linecap="round" opacity=".95"></path>
-                                                    <path d="M595 378 C627 401 647 449 654 530" fill="none" stroke="#d88177" stroke-width="20" stroke-linecap="round" opacity=".95"></path>
-                                                    <path d="M410 556 C451 570 509 570 550 556" fill="none" stroke="#d88177" stroke-width="22" stroke-linecap="round" opacity=".95"></path>
-                                                    <path d="M391 281 C330 253 271 249 215 266" fill="none" stroke="#9bd1ca" stroke-width="6" stroke-linecap="round"></path>
-                                                    <path d="M569 281 C630 253 689 249 745 266" fill="none" stroke="#9bd1ca" stroke-width="6" stroke-linecap="round"></path>
-                                                </g>
-                                                <g font-family="Arial, sans-serif" fill="#275e59">
-                                                    <text x="446" y="118" font-size="28" font-weight="700">Sacro</text>
-                                                    <text x="132" y="340" font-size="24">Coxal izquierdo</text>
-                                                    <text x="660" y="340" font-size="24">Coxal derecho</text>
-                                                    <text x="431" y="372" font-size="24" font-weight="700">Pelvis menor</text>
-                                                    <text x="265" y="408" font-size="20" opacity=".78">Foramen</text>
-                                                    <text x="609" y="408" font-size="20" opacity=".78">Foramen</text>
-                                                    <text x="419" y="692" font-size="24" font-weight="700">Suelo pélvico</text>
-                                                </g>
-                                            </svg>
+                                {% if dia.recursos.imagen_anatomica.descripcion %}
+                                    <p>{{ dia.recursos.imagen_anatomica.descripcion }}</p>
+                                {% endif %}
 
-                                            {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
-                                                <button type="button"
-                                                        class="marker-pin"
-                                                        data-x="{{ marcador.x }}"
-                                                        data-y="{{ marcador.y }}"
-                                                        data-target="marker-{{ dia.dia }}-{{ marcador.id }}">
-                                                    {{ marcador.id }}
-                                                </button>
-                                            {% endfor %}
-                                        </div>
-                                        <p class="marker-help mt-2"><strong>Modo práctica:</strong> {{ dia.recursos.imagen_anatomica.modo_practica }}</p>
-                                        <div class="form-actions mt-3">
-                                            <button type="button" class="btn btn-outline-primary btn-sm" data-open-visual="anatomy-visual-{{ dia.dia }}">Ver lámina en grande</button>
-                                        </div>
+                                {% if dia.recursos.imagen_anatomica.image_url %}
+                                    <div class="generated-anatomy-card mt-3">
+                                        <img src="{{ dia.recursos.imagen_anatomica.image_url }}"
+                                             alt="{{ dia.recursos.imagen_anatomica.titulo }}"
+                                             class="study-generated-image">
                                     </div>
 
-                                    <div>
-                                        <div class="marker-list">
-                                            {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
-                                                <div class="marker-item">
-                                                    <div class="marker-item-head">
-                                                        <span class="marker-badge">{{ marcador.id }}</span>
-                                                        <div>
-                                                            <strong>Marcador {{ marcador.id }}</strong>
-                                                            <p class="text-muted">{{ marcador.pista }}</p>
-                                                        </div>
-                                                        <button type="button" class="btn btn-outline-primary btn-sm" data-toggle-target="marker-{{ dia.dia }}-{{ marcador.id }}">
-                                                            Revelar
-                                                        </button>
-                                                    </div>
-                                                    <div class="marker-answer" id="marker-{{ dia.dia }}-{{ marcador.id }}">
-                                                        <p><strong>Respuesta:</strong> {{ marcador.nombre }}</p>
-                                                        {% if marcador.detalle %}<p>{{ marcador.detalle }}</p>{% endif %}
-                                                    </div>
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-
-                                        {% if dia.recursos.imagen_anatomica.preguntas %}
-                                            <div class="text-preview mt-3">
-                                                <strong>Preguntas sobre la imagen</strong>
-                                                <ul class="clean-list mt-3">
-                                                    {% for pregunta in dia.recursos.imagen_anatomica.preguntas %}
-                                                        <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
-                                                    {% endfor %}
-                                                </ul>
-                                            </div>
-                                        {% endif %}
+                                    <div class="form-actions mt-3">
+                                        <button type="button"
+                                                class="btn btn-primary btn-sm"
+                                                data-open-visual="generated-anatomy-{{ dia.dia }}">
+                                            Ver lámina en grande
+                                        </button>
                                     </div>
-                                </div>
+
+                                    <div class="visual-modal-source" id="generated-anatomy-{{ dia.dia }}">
+                                        <img src="{{ dia.recursos.imagen_anatomica.image_url }}"
+                                             alt="{{ dia.recursos.imagen_anatomica.titulo }}"
+                                             class="study-generated-image">
+                                    </div>
+                                {% else %}
+                                    <div class="image-pending-box mt-3">
+                                        <strong>Lámina pendiente de generación</strong>
+                                        <p>La descripción anatómica ya fue preparada, pero la imagen IA no se creó. Revisa GEMINI_API_KEY, GEMINI_IMAGE_MODEL o vuelve a regenerar la ruta.</p>
+                                    </div>
+                                {% endif %}
+
+                                {% if dia.recursos.imagen_anatomica.modo_practica %}
+                                    <p class="marker-help mt-3">
+                                        <strong>Modo práctica:</strong> {{ dia.recursos.imagen_anatomica.modo_practica }}
+                                    </p>
+                                {% endif %}
+
+                                {% if dia.recursos.imagen_anatomica.preguntas %}
+                                    <div class="text-preview mt-3">
+                                        <strong>Preguntas sobre la imagen</strong>
+                                        <ul class="clean-list mt-3">
+                                            {% for pregunta in dia.recursos.imagen_anatomica.preguntas %}
+                                                <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
                             </section>
                         {% endif %}
 
@@ -1358,6 +1280,47 @@
     .concept-branch-grid { grid-template-columns: 1fr !important; }
 }
 
+
+.study-generated-image {
+    width: 100%;
+    max-width: 100%;
+    display: block;
+    border-radius: 22px;
+    border: 1px solid #d9ece8;
+    box-shadow: 0 18px 40px rgba(15, 118, 110, 0.12);
+    background: #f8fbfb;
+}
+
+.generated-visual-card,
+.generated-anatomy-card {
+    background: linear-gradient(180deg, #ffffff 0%, #f7fbfa 100%);
+    border: 1px solid #dcefeb;
+    border-radius: 24px;
+    padding: 16px;
+}
+
+.image-pending-box {
+    border: 1px dashed #7bbdb5;
+    background: #f5fbfa;
+    color: #23423f;
+    border-radius: 18px;
+    padding: 18px;
+}
+
+.image-pending-box p {
+    margin: .4rem 0 0;
+    color: #4b5563;
+}
+
+.visual-modal-source {
+    display: none;
+}
+
+.visual-modal-body .study-generated-image {
+    max-height: 82vh;
+    object-fit: contain;
+}
+
 </style>
 
 <script type="module">
@@ -1479,13 +1442,18 @@
             btn.addEventListener('click', function() {
                 let source = null;
                 const key = btn.dataset.openVisual || '';
-                if (key.startsWith('visual-map-')) {
+                const directSource = document.getElementById(key);
+
+                if (directSource && directSource.classList.contains('visual-modal-source')) {
+                    source = directSource;
+                } else if (key.startsWith('visual-map-')) {
                     source = document.getElementById(key)?.closest('.visual-card-premium') || document.getElementById(key)?.closest('.resource-card');
                 } else if (key.startsWith('anatomy-visual-')) {
                     source = btn.closest('.anatomical-panel');
                 }
+
                 if (source && modal && modalBody) {
-                    modalBody.innerHTML = source.outerHTML;
+                    modalBody.innerHTML = source.classList.contains('visual-modal-source') ? source.innerHTML : source.outerHTML;
                     modal.classList.add('is-open');
                     if (window.lucide) { lucide.createIcons(); }
                 }

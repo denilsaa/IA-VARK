@@ -1,6 +1,10 @@
+import base64
 import json
 import os
+import re
+from pathlib import Path
 
+from django.conf import settings
 from django.utils.text import Truncator
 
 from .models import RutaAprendizaje
@@ -79,6 +83,12 @@ def generar_ruta_aprendizaje(user, perfil_vark, datos_academicos, materiales):
             dias_hasta_examen=dias_hasta_examen,
             dias_planificados=dias_planificados,
         )
+
+    respuesta = enriquecer_plan_con_imagenes_ia(
+        respuesta=respuesta,
+        user=user,
+        datos_academicos=datos_academicos,
+    )
 
     ruta, _ = RutaAprendizaje.objects.update_or_create(
         user=user,
@@ -325,15 +335,12 @@ Devuelve únicamente JSON válido con esta estructura exacta:
         }},
         "imagen_anatomica": {{
           "habilitado": true,
-          "titulo": "Lámina anatómica guiada realista",
-          "tipo_vista": "superior",
-          "descripcion": "Descripción breve de la lámina, indicando la vista anatómica, los límites, estructuras y relaciones que debe observar el estudiante",
-          "marcadores": [
-            {{"id": 1, "nombre": "Estructura 1", "x": 50, "y": 20, "pista": "Pista breve", "detalle": "Qué debe reconocer"}},
-            {{"id": 2, "nombre": "Estructura 2", "x": 55, "y": 55, "pista": "Pista breve", "detalle": "Qué debe reconocer"}}
-          ],
-          "preguntas": ["¿Qué estructura corresponde al marcador 1?", "¿Qué relación anatómica observas?"],
-          "modo_practica": "primero identificar sin ver respuesta y luego revelar"
+          "titulo": "Lámina anatómica generada por IA",
+          "tipo_vista": "superior/anterior/lateral según corresponda",
+          "descripcion": "Descripción breve de la lámina anatómica que debe observar el estudiante",
+          "prompt_imagen": "Prompt detallado en español para crear una ilustración anatómica educativa estilo atlas médico sobre el tema del día",
+          "preguntas": ["¿Qué estructura principal observas?", "¿Qué relación anatómica debes identificar?"],
+          "modo_practica": "Primero observar la imagen sin leer respuestas y luego responder las preguntas"
         }}
       }}
     }}
@@ -347,15 +354,16 @@ REGLAS OBLIGATORIAS:
 - Cada día debe usar como máximo {datos_academicos.minutos_por_dia} minutos.
 - Enfoca la ruta en el tema actual y el punto específico difícil.
 - Si Auditivo > 0, genera audio.habilitado=true.
-- Si Visual > 0, genera visual.habilitado=true con un mapa mental premium. Debe incluir nodo_central y exactamente 4 ramas; cada rama debe tener titulo corto, detalle claro y 2 subpuntos. Además genera un Mermaid de apoyo coherente con la misma estructura, mucho más didáctico y visual. Además imagen_anatomica.habilitado=true con 3 a 5 marcadores bien distribuidos visualmente. Las pistas deben ser específicas, cortas y conectadas al tema seleccionado.
-- Los marcadores deben usar coordenadas x e y entre 10 y 90 para poder dibujarse dentro del diagrama.
+- Si Visual > 0, genera visual.habilitado=true. Debe incluir descripcion, apoyo_visual y prompt_imagen. El prompt_imagen debe servir para crear una imagen real tipo mapa mental educativo, moderno, limpio, legible y en español.
+- Si Visual > 0 o Kinestésico > 0, genera imagen_anatomica.habilitado=true. Debe incluir descripcion, preguntas, modo_practica y prompt_imagen. El prompt_imagen debe servir para crear una lámina anatómica realista, educativa, estilo atlas médico, relacionada con el tema del día.
+- No dependas de Mermaid como recurso principal. El recurso visual principal será una imagen generada por IA.
+- No dependas de coordenadas x/y como recurso principal. La lámina debe ser generada por IA.
 - Si Kinestésico > 0, genera kinestesico.habilitado=true.
 - Si Lectura/Escritura > 0, genera lectura.habilitado=true; si es 0, puede quedar false.
 - No inventes detalles anatómicos ultraespecíficos fuera del contexto; si falta precisión, enfoca la lámina en relaciones generales del tema y subtema, priorizando una vista anatómica realista y coherente.
 - Cada día debe incluir mini_quiz con 3 preguntas evaluables.
 - Cada pregunta del mini_quiz debe tener exactamente 4 opciones y una respuesta_correcta que coincida exactamente con una opción.
 - Las preguntas deben evaluar el tema del día, la lámina, el audio o el ejercicio práctico.
-- Para Mermaid usa SOLO diagramas simples. Prefiere flowchart TD o mindmap con un estilo limpio, máximo 10 nodos visibles, textos cortos de 1 a 4 palabras por nodo, sin comillas y sin caracteres raros. Debe verse como un esquema docente claro y legible.
 - No uses markdown fuera del string mermaid.
 - No agregues texto fuera del JSON.
 '''
@@ -650,6 +658,236 @@ def generar_ruta_respaldo(
     }
 
 
+def enriquecer_plan_con_imagenes_ia(respuesta, user, datos_academicos):
+    """
+    Genera imágenes reales con IA para el mapa mental y la lámina anatómica.
+    Guarda los archivos en MEDIA_ROOT/rutas_generadas/ y agrega image_url al JSON.
+
+    Para desactivar temporalmente la generación de imágenes en Render:
+    GENERAR_IMAGENES_RUTA=false
+    """
+    if not isinstance(respuesta, dict):
+        return respuesta
+
+    generar_imagenes = os.getenv("GENERAR_IMAGENES_RUTA", "true").strip().lower()
+    if generar_imagenes not in ["1", "true", "yes", "si", "sí"]:
+        return respuesta
+
+    plan = respuesta.get("plan_diario", [])
+    if not isinstance(plan, list):
+        return respuesta
+
+    try:
+        max_imagenes = int(os.getenv("MAX_IMAGENES_RUTA", "6"))
+    except ValueError:
+        max_imagenes = 6
+
+    imagenes_generadas = 0
+
+    for dia in plan:
+        if not isinstance(dia, dict):
+            continue
+
+        recursos = dia.get("recursos", {})
+        if not isinstance(recursos, dict):
+            continue
+
+        numero_dia = dia.get("dia") or 1
+        tema = dia.get("tema_principal") or datos_academicos.tema_actual or "Anatomía I"
+
+        visual = recursos.get("visual", {})
+        if isinstance(visual, dict) and visual.get("habilitado"):
+            if not visual.get("prompt_imagen"):
+                visual["prompt_imagen"] = construir_prompt_mapa_mental(
+                    tema=tema,
+                    datos_academicos=datos_academicos,
+                    visual=visual,
+                )
+
+            if imagenes_generadas < max_imagenes and not visual.get("image_url"):
+                image_url = generar_y_guardar_imagen_gemini(
+                    prompt=visual["prompt_imagen"],
+                    carpeta="mapas",
+                    nombre_archivo=f"user_{user.id}_dia_{numero_dia}_mapa.png",
+                )
+                if image_url:
+                    visual["image_url"] = image_url
+                    imagenes_generadas += 1
+
+        anatomica = recursos.get("imagen_anatomica", {})
+        if isinstance(anatomica, dict) and anatomica.get("habilitado"):
+            if not anatomica.get("prompt_imagen"):
+                anatomica["prompt_imagen"] = construir_prompt_lamina_anatomica(
+                    tema=tema,
+                    datos_academicos=datos_academicos,
+                    anatomica=anatomica,
+                )
+
+            if imagenes_generadas < max_imagenes and not anatomica.get("image_url"):
+                image_url = generar_y_guardar_imagen_gemini(
+                    prompt=anatomica["prompt_imagen"],
+                    carpeta="laminas",
+                    nombre_archivo=f"user_{user.id}_dia_{numero_dia}_lamina.png",
+                )
+                if image_url:
+                    anatomica["image_url"] = image_url
+                    imagenes_generadas += 1
+
+    return respuesta
+
+
+def construir_prompt_mapa_mental(tema, datos_academicos, visual):
+    apoyo = visual.get("apoyo_visual", [])
+    if isinstance(apoyo, list):
+        apoyo_texto = ", ".join(str(item) for item in apoyo[:6])
+    else:
+        apoyo_texto = str(apoyo or "")
+
+    return f"""
+Crea una imagen educativa tipo mapa mental premium sobre Anatomía I.
+
+Tema central: {tema}
+Materia: {datos_academicos.materia}
+Punto específico difícil: {datos_academicos.temas_dificiles or "No especificado"}
+Ideas de apoyo: {apoyo_texto}
+
+Requisitos visuales obligatorios:
+- Formato horizontal 16:9.
+- Estilo moderno, limpio, universitario y profesional.
+- Fondo claro, con colores suaves tipo médico/anatómico.
+- Nodo central grande, legible y centrado.
+- 4 ramas principales bien distribuidas alrededor del nodo central.
+- Cada rama debe tener texto corto en español.
+- Usar conectores visuales claros.
+- Debe verse como un recurso de estudio, no como decoración.
+- Evitar errores ortográficos.
+- Evitar exceso de texto.
+- No usar logotipos, marcas de agua ni nombres de instituciones.
+""".strip()
+
+
+def construir_prompt_lamina_anatomica(tema, datos_academicos, anatomica):
+    descripcion = anatomica.get("descripcion", "")
+
+    return f"""
+Crea una ilustración anatómica educativa estilo atlas médico para estudiantes universitarios.
+
+Tema anatómico: {tema}
+Materia: {datos_academicos.materia}
+Punto específico difícil: {datos_academicos.temas_dificiles or "No especificado"}
+Descripción didáctica: {descripcion}
+
+Requisitos visuales obligatorios:
+- Imagen anatómica clara, detallada y educativa.
+- Estilo lámina de estudio universitario, no fotografía quirúrgica.
+- Fondo claro.
+- Vista anatómica coherente con el tema.
+- Estructuras principales visibles y diferenciadas con colores suaves.
+- Incluir etiquetas breves en español cuando ayuden a estudiar.
+- Debe parecer una lámina anatómica real de repaso.
+- No mostrar sangre, heridas, cirugía ni contenido gráfico.
+- No usar marcas de agua, logotipos ni nombres de instituciones.
+- Evitar texto excesivo.
+""".strip()
+
+
+def generar_y_guardar_imagen_gemini(prompt, carpeta, nombre_archivo):
+    """
+    Genera una imagen con Gemini Image y la guarda en media/rutas_generadas/.
+    Devuelve una URL relativa, por ejemplo: /media/rutas_generadas/mapas/archivo.png
+    """
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        print("No se generó imagen: falta GEMINI_API_KEY.")
+        return ""
+
+    try:
+        from google import genai
+
+        client = genai.Client(api_key=api_key)
+        model = os.getenv("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image").strip()
+
+        response = client.models.generate_content(
+            model=model,
+            contents=[prompt],
+        )
+
+        ruta_relativa = f"rutas_generadas/{carpeta}/{limpiar_nombre_archivo(nombre_archivo)}"
+        ruta_absoluta = Path(settings.MEDIA_ROOT) / ruta_relativa
+        ruta_absoluta.parent.mkdir(parents=True, exist_ok=True)
+
+        for part in obtener_partes_respuesta(response):
+            if guardar_parte_imagen(part, ruta_absoluta):
+                return settings.MEDIA_URL + ruta_relativa.replace("\\", "/")
+
+        print("Gemini respondió, pero no devolvió una imagen utilizable.")
+        return ""
+
+    except Exception as error:
+        print("Error generando imagen con Gemini:", error)
+        return ""
+
+
+def obtener_partes_respuesta(response):
+    partes = []
+
+    direct_parts = getattr(response, "parts", None)
+    if direct_parts:
+        partes.extend(direct_parts)
+
+    candidates = getattr(response, "candidates", None) or []
+    for candidate in candidates:
+        content = getattr(candidate, "content", None)
+        candidate_parts = getattr(content, "parts", None) if content else None
+        if candidate_parts:
+            partes.extend(candidate_parts)
+
+    return partes
+
+
+def guardar_parte_imagen(part, ruta_absoluta):
+    """
+    Soporta respuestas de imagen como:
+    - part.as_image()
+    - part.inline_data.data en base64
+    - part.inline_data.data como bytes
+    """
+    try:
+        if hasattr(part, "as_image"):
+            image = part.as_image()
+            if image:
+                image.save(ruta_absoluta)
+                return True
+    except Exception:
+        pass
+
+    inline_data = getattr(part, "inline_data", None) or getattr(part, "inlineData", None)
+    if not inline_data:
+        return False
+
+    data = getattr(inline_data, "data", None)
+    if not data:
+        return False
+
+    try:
+        if isinstance(data, bytes):
+            ruta_absoluta.write_bytes(data)
+        else:
+            ruta_absoluta.write_bytes(base64.b64decode(data))
+        return True
+    except Exception as error:
+        print("No se pudo guardar la imagen generada:", error)
+        return False
+
+
+def limpiar_nombre_archivo(nombre):
+    nombre = str(nombre or "imagen.png").strip()
+    nombre = re.sub(r"[^a-zA-Z0-9_.-]", "_", nombre)
+    if not nombre.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+        nombre += ".png"
+    return nombre
+
+
 def normalizar_mini_quiz(valor):
     if not isinstance(valor, list):
         return []
@@ -690,6 +928,7 @@ def normalizar_audio(valor):
     }
 
 
+
 def normalizar_visual(valor):
     if not isinstance(valor, dict):
         valor = {}
@@ -714,8 +953,6 @@ def normalizar_visual(valor):
                     "subpuntos": subpuntos,
                 })
 
-    # Si Gemini no devuelve ramas estructuradas, convertimos el apoyo_visual
-    # en tarjetas limpias para que el mapa no quede vacío ni deforme.
     if not ramas and apoyo_visual:
         for item in apoyo_visual[:4]:
             texto = str(item).strip()
@@ -738,12 +975,15 @@ def normalizar_visual(valor):
 
     return {
         "habilitado": bool(valor.get("habilitado")),
-        "titulo": str(valor.get("titulo", "Mapa visual")).strip(),
+        "titulo": str(valor.get("titulo", "Mapa visual generado por IA")).strip(),
         "tipo": str(valor.get("tipo", "mapa_mental")).strip(),
+        "descripcion": str(valor.get("descripcion", "")).strip(),
         "nodo_central": str(valor.get("nodo_central", "Tema central")).strip(),
         "ramas": ramas,
         "mermaid": str(valor.get("mermaid", "")).strip(),
         "apoyo_visual": apoyo_visual,
+        "prompt_imagen": str(valor.get("prompt_imagen", "")).strip(),
+        "image_url": str(valor.get("image_url", "")).strip(),
     }
 
 
@@ -769,17 +1009,26 @@ def normalizar_lectura(valor):
     }
 
 
+
 def normalizar_imagen_anatomica(valor):
     if not isinstance(valor, dict):
         valor = {}
+
     marcadores = valor.get("marcadores", [])
     marcadores_limpios = []
+
     if isinstance(marcadores, list):
         for idx, item in enumerate(marcadores, start=1):
             if not isinstance(item, dict):
                 continue
-            x = max(10, min(int(item.get("x") or 50), 90))
-            y = max(10, min(int(item.get("y") or 50), 90))
+
+            try:
+                x = max(10, min(int(item.get("x") or 50), 90))
+                y = max(10, min(int(item.get("y") or 50), 90))
+            except (TypeError, ValueError):
+                x = 50
+                y = 50
+
             marcadores_limpios.append(
                 {
                     "id": int(item.get("id") or idx),
@@ -790,14 +1039,17 @@ def normalizar_imagen_anatomica(valor):
                     "detalle": str(item.get("detalle", "")).strip(),
                 }
             )
+
     return {
         "habilitado": bool(valor.get("habilitado")),
-        "titulo": str(valor.get("titulo", "Lámina anatómica guiada")).strip(),
-        "tipo_vista": str(valor.get("tipo_vista", "anterior")).strip(),
+        "titulo": str(valor.get("titulo", "Lámina anatómica generada por IA")).strip(),
+        "tipo_vista": str(valor.get("tipo_vista", "superior")).strip(),
         "descripcion": str(valor.get("descripcion", "")).strip(),
         "marcadores": marcadores_limpios,
         "preguntas": normalizar_lista(valor.get("preguntas", [])),
         "modo_practica": str(valor.get("modo_practica", "")).strip(),
+        "prompt_imagen": str(valor.get("prompt_imagen", "")).strip(),
+        "image_url": str(valor.get("image_url", "")).strip(),
     }
 
 
