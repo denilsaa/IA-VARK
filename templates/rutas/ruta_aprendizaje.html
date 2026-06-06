@@ -302,18 +302,6 @@
                                     {% endif %}
                                 </section>
                             {% endif %}
-                                    {% if dia.recursos.visual.apoyo_visual %}
-                                        <div class="map-outline mt-3">
-                                            <strong>Lectura rápida del mapa</strong>
-                                            <ul class="clean-list mt-3">
-                                                {% for item in dia.recursos.visual.apoyo_visual %}
-                                                    <li><i data-lucide="circle-dot"></i><span>{{ item }}</span></li>
-                                                {% endfor %}
-                                            </ul>
-                                        </div>
-                                    {% endif %}
-                                </section>
-                            {% endif %}
 
                             {% if dia.recursos.kinestesico.habilitado %}
                                 <section class="resource-card">
