@@ -316,10 +316,11 @@ Devuelve únicamente JSON válido con esta estructura exacta:
         }},
         "visual": {{
           "habilitado": true,
-          "titulo": "Mapa mental premium del día",
+          "titulo": "Mapa mental generado por IA",
           "tipo": "mapa_mental",
-          "mermaid": "mindmap\\n  root((Tema))\\n    Rama 1\\n    Rama 2",
-          "apoyo_visual": ["Elemento visual 1", "Elemento visual 2"]
+          "descripcion": "Descripción breve del mapa mental que se generará",
+          "apoyo_visual": ["Idea visual 1", "Idea visual 2", "Idea visual 3"],
+          "prompt_imagen": "Prompt detallado en español para crear una imagen tipo mapa mental educativo, moderno, limpio y legible sobre el tema del día"
         }},
         "kinestesico": {{
           "habilitado": true,
@@ -705,14 +706,18 @@ def enriquecer_plan_con_imagenes_ia(respuesta, user, datos_academicos):
                 )
 
             if imagenes_generadas < max_imagenes and not visual.get("image_url"):
-                image_url = generar_y_guardar_imagen_gemini(
+                image_url, image_error = generar_y_guardar_imagen_gemini(
                     prompt=visual["prompt_imagen"],
                     carpeta="mapas",
                     nombre_archivo=f"user_{user.id}_dia_{numero_dia}_mapa.png",
+                    aspect_ratio="16:9",
                 )
                 if image_url:
                     visual["image_url"] = image_url
+                    visual["image_error"] = ""
                     imagenes_generadas += 1
+                elif image_error:
+                    visual["image_error"] = image_error
 
         anatomica = recursos.get("imagen_anatomica", {})
         if isinstance(anatomica, dict) and anatomica.get("habilitado"):
@@ -724,14 +729,18 @@ def enriquecer_plan_con_imagenes_ia(respuesta, user, datos_academicos):
                 )
 
             if imagenes_generadas < max_imagenes and not anatomica.get("image_url"):
-                image_url = generar_y_guardar_imagen_gemini(
+                image_url, image_error = generar_y_guardar_imagen_gemini(
                     prompt=anatomica["prompt_imagen"],
                     carpeta="laminas",
                     nombre_archivo=f"user_{user.id}_dia_{numero_dia}_lamina.png",
+                    aspect_ratio="4:3",
                 )
                 if image_url:
                     anatomica["image_url"] = image_url
+                    anatomica["image_error"] = ""
                     imagenes_generadas += 1
+                elif image_error:
+                    anatomica["image_error"] = image_error
 
     return respuesta
 
@@ -791,41 +800,78 @@ Requisitos visuales obligatorios:
 """.strip()
 
 
-def generar_y_guardar_imagen_gemini(prompt, carpeta, nombre_archivo):
+def generar_y_guardar_imagen_gemini(prompt, carpeta, nombre_archivo, aspect_ratio="1:1"):
     """
     Genera una imagen con Gemini Image y la guarda en media/rutas_generadas/.
-    Devuelve una URL relativa, por ejemplo: /media/rutas_generadas/mapas/archivo.png
+    Devuelve una tupla: (image_url, image_error)
     """
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
-        print("No se generó imagen: falta GEMINI_API_KEY.")
-        return ""
+        return "", "Falta la variable GEMINI_API_KEY en Render."
 
     try:
         from google import genai
-
-        client = genai.Client(api_key=api_key)
-        model = os.getenv("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image").strip()
-
-        response = client.models.generate_content(
-            model=model,
-            contents=[prompt],
-        )
-
-        ruta_relativa = f"rutas_generadas/{carpeta}/{limpiar_nombre_archivo(nombre_archivo)}"
-        ruta_absoluta = Path(settings.MEDIA_ROOT) / ruta_relativa
-        ruta_absoluta.parent.mkdir(parents=True, exist_ok=True)
-
-        for part in obtener_partes_respuesta(response):
-            if guardar_parte_imagen(part, ruta_absoluta):
-                return settings.MEDIA_URL + ruta_relativa.replace("\\", "/")
-
-        print("Gemini respondió, pero no devolvió una imagen utilizable.")
-        return ""
-
+        from google.genai import types
     except Exception as error:
-        print("Error generando imagen con Gemini:", error)
-        return ""
+        return "", f"No se pudo importar google-genai: {error}"
+
+    model_candidates = []
+    env_model = os.getenv("GEMINI_IMAGE_MODEL", "").strip()
+    if env_model:
+        model_candidates.append(env_model)
+    # Fallbacks seguros
+    for candidate in ["gemini-3.1-flash-image", "gemini-2.5-flash-image", "gemini-3-pro-image"]:
+        if candidate not in model_candidates:
+            model_candidates.append(candidate)
+
+    image_size = os.getenv("GEMINI_IMAGE_SIZE", "1K").strip() or "1K"
+    last_error = ""
+
+    try:
+        client = genai.Client(api_key=api_key)
+    except Exception as error:
+        return "", f"No se pudo crear el cliente Gemini: {error}"
+
+    ruta_relativa = f"rutas_generadas/{carpeta}/{limpiar_nombre_archivo(nombre_archivo)}"
+    ruta_absoluta = Path(settings.MEDIA_ROOT) / ruta_relativa
+    ruta_absoluta.parent.mkdir(parents=True, exist_ok=True)
+
+    for model in model_candidates:
+        try:
+            config = types.GenerateContentConfig(
+                response_modalities=["TEXT", "IMAGE"],
+                image_config=types.ImageConfig(
+                    aspect_ratio=aspect_ratio,
+                    image_size=image_size,
+                ),
+            )
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config=config,
+            )
+
+            for part in obtener_partes_respuesta(response):
+                if guardar_parte_imagen(part, ruta_absoluta):
+                    return settings.MEDIA_URL + ruta_relativa.replace("\\", "/"), ""
+
+            # Segundo intento simple, sin config, por compatibilidad SDK/modelo
+            response = client.models.generate_content(
+                model=model,
+                contents=[prompt],
+            )
+            for part in obtener_partes_respuesta(response):
+                if guardar_parte_imagen(part, ruta_absoluta):
+                    return settings.MEDIA_URL + ruta_relativa.replace("\\", "/"), ""
+
+            last_error = f"El modelo {model} respondió, pero no devolvió imagen utilizable."
+
+        except Exception as error:
+            last_error = f"{model}: {error}"
+            print("Error generando imagen con Gemini:", last_error)
+            continue
+
+    return "", last_error or "No fue posible generar la imagen con Gemini."
 
 
 def obtener_partes_respuesta(response):
@@ -984,6 +1030,7 @@ def normalizar_visual(valor):
         "apoyo_visual": apoyo_visual,
         "prompt_imagen": str(valor.get("prompt_imagen", "")).strip(),
         "image_url": str(valor.get("image_url", "")).strip(),
+        "image_error": str(valor.get("image_error", "")).strip(),
     }
 
 
@@ -1050,6 +1097,7 @@ def normalizar_imagen_anatomica(valor):
         "modo_practica": str(valor.get("modo_practica", "")).strip(),
         "prompt_imagen": str(valor.get("prompt_imagen", "")).strip(),
         "image_url": str(valor.get("image_url", "")).strip(),
+        "image_error": str(valor.get("image_error", "")).strip(),
     }
 
 
