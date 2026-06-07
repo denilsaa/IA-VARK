@@ -2,7 +2,10 @@ import base64
 import json
 import os
 import re
+import time
 from pathlib import Path
+
+import requests
 
 from django.conf import settings
 from django.utils.text import Truncator
@@ -802,6 +805,117 @@ Requisitos visuales obligatorios:
 
 def generar_y_guardar_imagen_gemini(prompt, carpeta, nombre_archivo, aspect_ratio="1:1"):
     """
+    Punto único de generación de imágenes.
+    - Si IMAGE_PROVIDER=local: usa tu PC por Cloudflare Tunnel + ComfyUI.
+    - Si no: intenta Gemini Image como respaldo.
+    Devuelve una tupla: (image_url, image_error)
+    """
+    provider = os.getenv("IMAGE_PROVIDER", "gemini").strip().lower()
+    if provider == "local":
+        return generar_y_guardar_imagen_local(prompt, carpeta, nombre_archivo, aspect_ratio)
+    return generar_y_guardar_imagen_gemini_api(prompt, carpeta, nombre_archivo, aspect_ratio)
+
+
+def generar_y_guardar_imagen_local(prompt, carpeta, nombre_archivo, aspect_ratio="1:1"):
+    """
+    Llama al servidor local de imágenes expuesto con Cloudflare Tunnel.
+
+    Variables necesarias en Render:
+    IMAGE_PROVIDER=local
+    LOCAL_IMAGE_API_URL=https://TU-TUNEL.trycloudflare.com/generate-anatomy
+    LOCAL_IMAGE_JOB_BASE_URL=https://TU-TUNEL.trycloudflare.com
+    """
+    api_url = os.getenv("LOCAL_IMAGE_API_URL", "").strip().rstrip("/")
+    job_base_url = os.getenv("LOCAL_IMAGE_JOB_BASE_URL", "").strip().rstrip("/")
+
+    if not api_url:
+        return "", "Falta LOCAL_IMAGE_API_URL en Render."
+    if not job_base_url:
+        # Si no lo pusiste, lo inferimos quitando /generate-anatomy.
+        job_base_url = api_url.replace("/generate-anatomy", "").rstrip("/")
+
+    ruta_relativa = f"rutas_generadas/{carpeta}/{limpiar_nombre_archivo(nombre_archivo)}"
+    ruta_absoluta = Path(settings.MEDIA_ROOT) / ruta_relativa
+    ruta_absoluta.parent.mkdir(parents=True, exist_ok=True)
+
+    # Ajustes de tamaño. Para demo conviene 1024x1024 o 1024x768.
+    if aspect_ratio == "16:9":
+        width, height = 1024, 768
+    elif aspect_ratio == "4:3":
+        width, height = 1024, 768
+    else:
+        width, height = 1024, 1024
+
+    negative_prompt = (
+        "text, labels, letters, words, watermark, logo, blurry, low quality, "
+        "distorted anatomy, deformed pelvis, extra bones, malformed bones, blood, gore, "
+        "surgery, cartoon, messy composition, bad proportions"
+    )
+
+    payload = {
+        "prompt": prompt,
+        "negative_prompt": negative_prompt,
+        "width": width,
+        "height": height,
+    }
+
+    try:
+        start_response = requests.post(
+            api_url,
+            json=payload,
+            timeout=int(os.getenv("LOCAL_IMAGE_START_TIMEOUT", "30")),
+        )
+        start_response.raise_for_status()
+        start_data = start_response.json()
+        job_id = start_data.get("job_id")
+
+        if not job_id:
+            return "", f"La API local no devolvió job_id. Respuesta: {start_data}"
+
+        max_wait = int(os.getenv("LOCAL_IMAGE_MAX_WAIT", "150"))
+        poll_interval = int(os.getenv("LOCAL_IMAGE_POLL_INTERVAL", "5"))
+        deadline = time.time() + max_wait
+        last_status = "queued"
+        last_error = ""
+
+        while time.time() < deadline:
+            time.sleep(poll_interval)
+            job_response = requests.get(
+                f"{job_base_url}/job/{job_id}",
+                timeout=int(os.getenv("LOCAL_IMAGE_JOB_TIMEOUT", "30")),
+            )
+            job_response.raise_for_status()
+            job_data = job_response.json()
+            last_status = job_data.get("status", "")
+            last_error = job_data.get("error", "")
+
+            if last_status == "done":
+                download_url = job_data.get("download_url")
+                if not download_url:
+                    return "", f"Job terminado, pero sin download_url. Respuesta: {job_data}"
+
+                if download_url.startswith("http"):
+                    image_url = download_url
+                else:
+                    image_url = f"{job_base_url}{download_url}"
+
+                image_response = requests.get(image_url, timeout=90)
+                image_response.raise_for_status()
+                ruta_absoluta.write_bytes(image_response.content)
+
+                return settings.MEDIA_URL + ruta_relativa.replace("\\", "/"), ""
+
+            if last_status == "error":
+                return "", f"La API local devolvió error: {last_error or job_data}"
+
+        return "", f"Timeout esperando imagen local. Último estado: {last_status}. Último error: {last_error}"
+
+    except Exception as error:
+        return "", f"Error llamando API local de imágenes: {error}"
+
+
+def generar_y_guardar_imagen_gemini_api(prompt, carpeta, nombre_archivo, aspect_ratio="1:1"):
+    """
     Genera una imagen con Gemini Image y la guarda en media/rutas_generadas/.
     Devuelve una tupla: (image_url, image_error)
     """
@@ -820,7 +934,7 @@ def generar_y_guardar_imagen_gemini(prompt, carpeta, nombre_archivo, aspect_rati
     if env_model:
         model_candidates.append(env_model)
     # Fallbacks seguros
-    for candidate in ["gemini-3.1-flash-image","gemini-2.5-flash-image",]:
+    for candidate in ["gemini-3.1-flash-image", "gemini-2.5-flash-image", "gemini-3-pro-image"]:
         if candidate not in model_candidates:
             model_candidates.append(candidate)
 
