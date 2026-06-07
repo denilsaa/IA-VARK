@@ -57,7 +57,7 @@
             </div>
             <p>
                 Cada día puede incluir <strong>audio escuchable</strong>, <strong>mapa mental grande</strong>,
-                <strong>lámina anatómica guiada con marcadores</strong>, <strong>ejercicio práctico</strong>
+                <strong>lámina anatómica IA para modo práctica</strong>, <strong>ejercicio práctico</strong>
                 <strong>mini quiz evaluable</strong> y <strong>apoyo de lectura</strong> según tu combinación VARK.
             </p>
         </div>
@@ -240,35 +240,44 @@
                                     {% if dia.recursos.visual.descripcion %}
                                         <p class="mt-3">{{ dia.recursos.visual.descripcion }}</p>
                                     {% else %}
-                                        <p class="mt-3">Mapa mental generado por IA para estudiar el tema del día.</p>
+                                        <p class="mt-3">Mapa mental generado por IA y renderizado con texto real para evitar letras deformes.</p>
                                     {% endif %}
 
-                                    {% if dia.recursos.visual.image_url %}
-                                        <div class="generated-visual-card mt-3">
-                                            <img src="{{ dia.recursos.visual.image_url }}"
-                                                 alt="{{ dia.recursos.visual.titulo }}"
-                                                 class="study-generated-image">
+                                    <div class="mindmap-premium mt-3">
+                                        <div class="mindmap-center">
+                                            <span>Idea central</span>
+                                            <strong>{{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</strong>
                                         </div>
 
-                                        <div class="form-actions mt-3">
-                                            <button type="button"
-                                                    class="btn btn-primary btn-sm"
-                                                    data-open-visual="generated-map-{{ dia.dia }}">
-                                                Ver mapa en grande
-                                            </button>
+                                        <div class="mindmap-branches">
+                                            {% for rama in dia.recursos.visual.ramas %}
+                                                <article class="mindmap-branch branch-{{ forloop.counter }}">
+                                                    <div class="branch-number">{{ forloop.counter }}</div>
+                                                    <div>
+                                                        <strong>{{ rama.titulo }}</strong>
+                                                        {% if rama.detalle %}<p>{{ rama.detalle }}</p>{% endif %}
+                                                        {% if rama.subpuntos %}
+                                                            <ul>
+                                                                {% for subpunto in rama.subpuntos %}
+                                                                    <li>{{ subpunto }}</li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        {% endif %}
+                                                    </div>
+                                                </article>
+                                            {% empty %}
+                                                {% for item in dia.recursos.visual.apoyo_visual %}
+                                                    <article class="mindmap-branch branch-{{ forloop.counter }}">
+                                                        <div class="branch-number">{{ forloop.counter }}</div>
+                                                        <div>
+                                                            <strong>{{ item }}</strong>
+                                                            <p>Idea clave conectada con el tema principal.</p>
+                                                        </div>
+                                                    </article>
+                                                {% endfor %}
+                                            {% endfor %}
                                         </div>
-
-                                        <div class="visual-modal-source" id="generated-map-{{ dia.dia }}">
-                                            <img src="{{ dia.recursos.visual.image_url }}"
-                                                 alt="{{ dia.recursos.visual.titulo }}"
-                                                 class="study-generated-image">
-                                        </div>
-                                    {% else %}
-                                        <div class="image-pending-box mt-3">
-                                            <strong>Imagen pendiente de generación</strong>
-                                            <p>El contenido visual ya fue preparado, pero la imagen IA no se creó. Revisa GEMINI_API_KEY, GEMINI_IMAGE_MODEL o vuelve a regenerar la ruta.{% if dia.recursos.visual.image_error %}<br><small><strong>Detalle:</strong> {{ dia.recursos.visual.image_error }}</small>{% endif %}</p>
-                                        </div>
-                                    {% endif %}
+                                    </div>
 
                                     {% if dia.recursos.visual.apoyo_visual %}
                                         <div class="map-outline mt-3">
@@ -1319,6 +1328,152 @@
 .visual-modal-body .study-generated-image {
     max-height: 82vh;
     object-fit: contain;
+}
+
+
+/* Mapa mental premium renderizado por el sistema: texto real, sin letras deformes */
+.mindmap-premium {
+    position: relative;
+    min-height: 520px;
+    padding: 2rem;
+    border: 1px solid #d9ece8;
+    border-radius: 1.5rem;
+    background:
+        radial-gradient(circle at center, rgba(15, 139, 125, .10) 0, transparent 30%),
+        linear-gradient(180deg, #ffffff 0%, #f7fbfa 100%);
+    overflow: hidden;
+}
+.mindmap-premium::before,
+.mindmap-premium::after {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 72%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(15, 139, 125, .35), transparent);
+    transform: translate(-50%, -50%);
+}
+.mindmap-premium::after {
+    width: 1px;
+    height: 72%;
+    background: linear-gradient(180deg, transparent, rgba(15, 139, 125, .28), transparent);
+}
+.mindmap-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 230px;
+    min-height: 150px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #0f8b7d, #77d6ca);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.25rem;
+    box-shadow: 0 20px 45px rgba(15, 139, 125, .25);
+    z-index: 2;
+}
+.mindmap-center span {
+    font-size: .76rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    opacity: .9;
+    margin-bottom: .35rem;
+}
+.mindmap-center strong {
+    font-size: 1.35rem;
+    line-height: 1.15;
+}
+.mindmap-branches {
+    position: relative;
+    z-index: 3;
+    min-height: 450px;
+}
+.mindmap-branch {
+    position: absolute;
+    width: min(360px, 34%);
+    background: #ffffff;
+    border: 1px solid #d8ece8;
+    border-radius: 1.25rem;
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .85rem;
+    box-shadow: 0 16px 35px rgba(15, 23, 42, .08);
+}
+.mindmap-branch strong {
+    display: block;
+    color: #063b36;
+    margin-bottom: .25rem;
+}
+.mindmap-branch p {
+    margin: 0;
+    color: #415856;
+    font-size: .95rem;
+}
+.mindmap-branch ul {
+    margin: .5rem 0 0;
+    padding-left: 1rem;
+    color: #415856;
+    font-size: .9rem;
+}
+.branch-number {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: #0f8b7d;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+}
+.branch-1 { left: 0; top: 0; }
+.branch-2 { right: 0; top: 0; }
+.branch-3 { left: 0; bottom: 0; }
+.branch-4 { right: 0; bottom: 0; }
+.generated-anatomy-card {
+    background: linear-gradient(180deg, #ffffff 0%, #f7fbfa 100%);
+    border: 1px solid #dcefeb;
+    border-radius: 24px;
+    padding: 16px;
+}
+.study-generated-image {
+    width: 100%;
+    max-width: 100%;
+    display: block;
+    border-radius: 22px;
+    border: 1px solid #d9ece8;
+    box-shadow: 0 18px 40px rgba(15, 118, 110, 0.12);
+    background: #f8fbfb;
+}
+.image-pending-box {
+    border: 1px dashed #7bbdb5;
+    background: #f5fbfa;
+    color: #23423f;
+    border-radius: 18px;
+    padding: 18px;
+}
+.visual-modal-source { display: none; }
+
+@media (max-width: 920px) {
+    .mindmap-premium { min-height: auto; padding: 1rem; }
+    .mindmap-premium::before,
+    .mindmap-premium::after { display: none; }
+    .mindmap-center {
+        position: static;
+        transform: none;
+        width: 100%;
+        min-height: auto;
+        border-radius: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    .mindmap-branches { min-height: auto; display: grid; gap: 1rem; }
+    .mindmap-branch { position: static; width: 100%; }
 }
 
 </style>
