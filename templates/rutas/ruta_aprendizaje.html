@@ -240,90 +240,84 @@
                                     {% if dia.recursos.visual.descripcion %}
                                         <p class="mt-3">{{ dia.recursos.visual.descripcion }}</p>
                                     {% else %}
-                                        <p class="mt-3">Mapa mental limpio generado por IA y renderizado por el sistema para mantener texto legible.</p>
+                                        <p class="mt-3">Mapa mental estructurado por IA y renderizado con texto real para evitar letras deformes.</p>
                                     {% endif %}
 
-                                    <div class="concept-map-card mt-3">
-                                        <div class="concept-map-shell premium-clean-map" id="clean-map-{{ dia.dia }}">
-                                            <div class="concept-center-wrap">
-                                                <div class="concept-center-node">
-                                                    {{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}
-                                                </div>
-                                            </div>
+                                    <div class="mindmap-pro mt-3" id="generated-map-{{ dia.dia }}">
+                                        <div class="mindmap-core">
+                                            <span class="mindmap-kicker">Tema central</span>
+                                            <strong>{{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</strong>
+                                            <small>{{ dia.tema_principal }}</small>
+                                        </div>
 
-                                            <div class="concept-branch-grid">
+                                        <div class="mindmap-branches">
+                                            {% if dia.recursos.visual.ramas %}
                                                 {% for rama in dia.recursos.visual.ramas %}
-                                                    <article class="concept-branch-card">
-                                                        <span class="concept-branch-tag">Rama {{ forloop.counter }}</span>
-                                                        <h4>{{ rama.titulo }}</h4>
-                                                        {% if rama.detalle %}<p>{{ rama.detalle }}</p>{% endif %}
-                                                        {% if rama.subpuntos %}
-                                                            <ul class="clean-list mini-points mt-2">
-                                                                {% for subpunto in rama.subpuntos %}
-                                                                    <li><i data-lucide="check-circle-2"></i><span>{{ subpunto }}</span></li>
-                                                                {% endfor %}
-                                                            </ul>
-                                                        {% endif %}
+                                                    <article class="mindmap-branch branch-{{ forloop.counter }}">
+                                                        <div class="branch-number">{{ forloop.counter }}</div>
+                                                        <div>
+                                                            <span class="branch-label">Rama {{ forloop.counter }}</span>
+                                                            <h4>{{ rama.titulo }}</h4>
+                                                            {% if rama.detalle %}<p>{{ rama.detalle }}</p>{% endif %}
+                                                            {% if rama.subpuntos %}
+                                                                <ul>
+                                                                    {% for subpunto in rama.subpuntos %}
+                                                                        <li>{{ subpunto }}</li>
+                                                                    {% endfor %}
+                                                                </ul>
+                                                            {% endif %}
+                                                        </div>
                                                     </article>
-                                                {% empty %}
-                                                    {% for item in dia.recursos.visual.apoyo_visual %}
-                                                        <article class="concept-branch-card">
-                                                            <span class="concept-branch-tag">Idea {{ forloop.counter }}</span>
-                                                            <h4>{{ item }}</h4>
-                                                            <p>Concepto clave para conectar con el tema central.</p>
-                                                        </article>
-                                                    {% endfor %}
                                                 {% endfor %}
-                                            </div>
+                                            {% else %}
+                                                {% for item in dia.recursos.visual.apoyo_visual %}
+                                                    <article class="mindmap-branch branch-{{ forloop.counter }}">
+                                                        <div class="branch-number">{{ forloop.counter }}</div>
+                                                        <div>
+                                                            <span class="branch-label">Clave {{ forloop.counter }}</span>
+                                                            <h4>{{ item }}</h4>
+                                                            <p>Idea clave conectada con el tema central.</p>
+                                                        </div>
+                                                    </article>
+                                                {% endfor %}
+                                            {% endif %}
                                         </div>
                                     </div>
 
                                     <div class="form-actions mt-3">
                                         <button type="button"
                                                 class="btn btn-primary btn-sm"
-                                                data-open-visual="generated-map-{{ dia.dia }}">
+                                                data-open-visual="generated-map-modal-{{ dia.dia }}">
                                             Ver mapa en grande
                                         </button>
                                     </div>
 
-                                    <div class="visual-modal-source" id="generated-map-{{ dia.dia }}">
-                                        <div class="concept-map-card">
-                                            <div class="concept-map-shell premium-clean-map modal-clean-map">
-                                                <div class="concept-center-wrap">
-                                                    <div class="concept-center-node">
-                                                        {{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}
-                                                    </div>
-                                                </div>
-                                                <div class="concept-branch-grid">
-                                                    {% for rama in dia.recursos.visual.ramas %}
-                                                        <article class="concept-branch-card">
-                                                            <span class="concept-branch-tag">Rama {{ forloop.counter }}</span>
+                                    <div class="visual-modal-source" id="generated-map-modal-{{ dia.dia }}">
+                                        <div class="mindmap-pro modal-map">
+                                            <div class="mindmap-core">
+                                                <span class="mindmap-kicker">Tema central</span>
+                                                <strong>{{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</strong>
+                                                <small>{{ dia.tema_principal }}</small>
+                                            </div>
+                                            <div class="mindmap-branches">
+                                                {% for rama in dia.recursos.visual.ramas %}
+                                                    <article class="mindmap-branch branch-{{ forloop.counter }}">
+                                                        <div class="branch-number">{{ forloop.counter }}</div>
+                                                        <div>
+                                                            <span class="branch-label">Rama {{ forloop.counter }}</span>
                                                             <h4>{{ rama.titulo }}</h4>
                                                             {% if rama.detalle %}<p>{{ rama.detalle }}</p>{% endif %}
                                                             {% if rama.subpuntos %}
-                                                                <ul class="clean-list mini-points mt-2">
-                                                                    {% for subpunto in rama.subpuntos %}
-                                                                        <li><i data-lucide="check-circle-2"></i><span>{{ subpunto }}</span></li>
-                                                                    {% endfor %}
+                                                                <ul>
+                                                                    {% for subpunto in rama.subpuntos %}<li>{{ subpunto }}</li>{% endfor %}
                                                                 </ul>
                                                             {% endif %}
-                                                        </article>
-                                                    {% endfor %}
-                                                </div>
+                                                        </div>
+                                                    </article>
+                                                {% endfor %}
                                             </div>
                                         </div>
                                     </div>
-
-                                    {% if dia.recursos.visual.apoyo_visual %}
-                                        <div class="map-outline mt-3">
-                                            <strong>Claves rápidas del mapa</strong>
-                                            <ul class="clean-list mt-3">
-                                                {% for item in dia.recursos.visual.apoyo_visual %}
-                                                    <li><i data-lucide="circle-dot"></i><span>{{ item }}</span></li>
-                                                {% endfor %}
-                                            </ul>
-                                        </div>
-                                    {% endif %}
                                 </section>
                             {% endif %}
 
@@ -362,7 +356,7 @@
                             {% endif %}
                         </div>
                         {% if dia.recursos.imagen_anatomica.habilitado %}
-                            <section class="form-panel wide-panel mt-4 anatomical-panel practice-premium-panel">
+                            <section class="form-panel wide-panel mt-4 anatomical-panel">
                                 <div class="resource-card-header">
                                     <i data-lucide="image"></i>
                                     <strong>{{ dia.recursos.imagen_anatomica.titulo }}</strong>
@@ -416,19 +410,14 @@
                                                  alt="{{ dia.recursos.imagen_anatomica.titulo }}"
                                                  class="study-generated-image">
                                             {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
-                                                <span class="anatomy-marker"
-                                                      data-x="{{ marcador.x|default:'50' }}"
-                                                      data-y="{{ marcador.y|default:'50' }}">{{ marcador.id }}</span>
+                                                <span class="anatomy-marker" data-x="{{ marcador.x|default:'50' }}" data-y="{{ marcador.y|default:'50' }}">{{ marcador.id }}</span>
                                             {% endfor %}
                                         </div>
                                     </div>
                                 {% else %}
                                     <div class="image-pending-box mt-3">
                                         <strong>Lámina pendiente de generación</strong>
-                                        <p>
-                                            La descripción anatómica ya fue preparada, pero la imagen IA no se creó.
-                                            {% if dia.recursos.imagen_anatomica.image_error %}<br><small><strong>Detalle:</strong> {{ dia.recursos.imagen_anatomica.image_error }}</small>{% endif %}
-                                        </p>
+                                        <p>La descripción anatómica ya fue preparada, pero la imagen IA no se creó. Revisa GEMINI_API_KEY, GEMINI_IMAGE_MODEL o vuelve a regenerar la ruta.{% if dia.recursos.imagen_anatomica.image_error %}<br><small><strong>Detalle:</strong> {{ dia.recursos.imagen_anatomica.image_error }}</small>{% endif %}</p>
                                     </div>
                                 {% endif %}
 
@@ -438,18 +427,7 @@
                                     </p>
                                 {% endif %}
 
-                                {% if dia.recursos.imagen_anatomica.preguntas_guiadas %}
-                                    <div class="practice-question-grid mt-3">
-                                        <strong class="practice-title">Preguntas guiadas con pista y respuesta</strong>
-                                        {% for pregunta in dia.recursos.imagen_anatomica.preguntas_guiadas %}
-                                            <details class="practice-question-card">
-                                                <summary><i data-lucide="help-circle"></i> {{ pregunta.pregunta }}</summary>
-                                                {% if pregunta.pista %}<p><strong>Pista:</strong> {{ pregunta.pista }}</p>{% endif %}
-                                                {% if pregunta.respuesta %}<p><strong>Respuesta esperada:</strong> {{ pregunta.respuesta }}</p>{% endif %}
-                                            </details>
-                                        {% endfor %}
-                                    </div>
-                                {% elif dia.recursos.imagen_anatomica.preguntas %}
+                                {% if dia.recursos.imagen_anatomica.preguntas %}
                                     <div class="text-preview mt-3">
                                         <strong>Preguntas sobre la imagen</strong>
                                         <ul class="clean-list mt-3">
@@ -458,20 +436,6 @@
                                             {% endfor %}
                                         </ul>
                                     </div>
-                                {% endif %}
-
-                                {% if dia.recursos.imagen_anatomica.historial_generacion %}
-                                    <details class="generation-history mt-3">
-                                        <summary>Historial técnico de generación IA</summary>
-                                        <ul>
-                                            {% for item in dia.recursos.imagen_anatomica.historial_generacion %}
-                                                <li>
-                                                    <strong>{{ item.fecha }}</strong> — {{ item.proveedor }} / {{ item.categoria }} / {{ item.resultado }}
-                                                    {% if item.detalle %}<br><small>{{ item.detalle }}</small>{% endif %}
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
-                                    </details>
                                 {% endif %}
                             </section>
                         {% endif %}
@@ -1425,118 +1389,193 @@
 
 
 
-/* ===== MEJORA 100/10: MAPA LIMPIO + MODO PRÁCTICA PREMIUM ===== */
-.premium-clean-map {
+/* ===== MAPA MENTAL 100/10: texto real, limpio y sin imágenes deformes ===== */
+.mindmap-pro {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 24px;
     background:
-        radial-gradient(circle at 12% 15%, rgba(15, 139, 125, .14), transparent 28%),
-        radial-gradient(circle at 90% 20%, rgba(20, 184, 166, .10), transparent 25%),
-        linear-gradient(180deg, #ffffff 0%, #f7fbfb 100%) !important;
+        radial-gradient(circle at 10% 10%, rgba(20, 184, 166, .16), transparent 28%),
+        radial-gradient(circle at 90% 20%, rgba(45, 212, 191, .12), transparent 28%),
+        linear-gradient(135deg, #f8fffe 0%, #eefbf8 100%);
+    border: 1px solid rgba(15, 118, 110, .18);
+    box-shadow: 0 18px 45px rgba(15, 118, 110, .08);
 }
-.modal-clean-map {
-    max-height: 82vh;
-    overflow: auto;
+.mindmap-pro::before {
+    content: '';
+    position: absolute;
+    inset: 22px;
+    border-radius: 22px;
+    border: 1px dashed rgba(15, 118, 110, .18);
+    pointer-events: none;
 }
-.practice-premium-panel {
+.mindmap-core {
+    position: relative;
+    z-index: 2;
+    max-width: 760px;
+    margin: 0 auto 22px;
+    padding: 20px 24px;
+    border-radius: 24px;
+    text-align: center;
+    color: #052f2b;
+    background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+    border: 1px solid rgba(15, 118, 110, .24);
+    box-shadow: 0 16px 35px rgba(15, 118, 110, .16);
+}
+.mindmap-kicker {
+    display: inline-flex;
+    padding: .24rem .7rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,.75);
+    color: #0f766e;
+    font-size: .74rem;
+    font-weight: 900;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    margin-bottom: .55rem;
+}
+.mindmap-core strong {
+    display: block;
+    font-size: clamp(1.55rem, 3vw, 2.55rem);
+    line-height: 1.05;
+    letter-spacing: -.04em;
+}
+.mindmap-core small {
+    display: block;
+    margin-top: .45rem;
+    color: #27645d;
+    font-weight: 700;
+}
+.mindmap-branches {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+.mindmap-branch {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: flex-start;
+    min-height: 172px;
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.88);
     border: 1px solid rgba(15, 118, 110, .14);
+    box-shadow: 0 14px 30px rgba(15, 118, 110, .08);
 }
+.branch-number {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: #0f766e;
+    font-weight: 900;
+    box-shadow: 0 10px 18px rgba(15, 118, 110, .24);
+}
+.branch-label {
+    display: inline-flex;
+    margin-bottom: .35rem;
+    padding: .18rem .55rem;
+    border-radius: 999px;
+    background: #e6fffb;
+    color: #0f766e;
+    font-size: .72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+}
+.mindmap-branch h4 {
+    margin: 0 0 .45rem;
+    font-size: 1.18rem;
+    color: #062f2c;
+    line-height: 1.15;
+}
+.mindmap-branch p {
+    margin: 0 0 .6rem;
+    color: #365a56;
+}
+.mindmap-branch ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: .38rem;
+}
+.mindmap-branch li {
+    position: relative;
+    padding-left: 1.35rem;
+    color: #143b37;
+}
+.mindmap-branch li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #0f766e;
+    font-weight: 900;
+}
+.branch-1 { border-left: 6px solid #0f766e; }
+.branch-2 { border-left: 6px solid #0891b2; }
+.branch-3 { border-left: 6px solid #7c3aed; }
+.branch-4 { border-left: 6px solid #f59e0b; }
+
 .anatomy-image-wrap {
     position: relative;
-    width: 100%;
     overflow: hidden;
-    border-radius: 22px;
-    background: #f8fbfb;
-}
-.anatomy-image-wrap .study-generated-image {
     border-radius: 22px;
 }
 .anatomy-marker {
     position: absolute;
-    left: 50%;
-    top: 50%;
     transform: translate(-50%, -50%);
-    width: 2.45rem;
-    height: 2.45rem;
-    border-radius: 999px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
     border: 3px solid #ffffff;
     background: #0f8b7d;
     color: #ffffff;
     font-weight: 900;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 14px 30px rgba(15, 118, 110, .32);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 10px 22px rgba(15, 118, 110, .35);
     cursor: help;
-    z-index: 4;
-}
-.anatomy-marker:hover {
-    background: #0b6f64;
-    transform: translate(-50%, -50%) scale(1.08);
+    z-index: 3;
 }
 .marker-legend-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: .85rem;
+    gap: .75rem;
 }
-.marker-study-card,
-.practice-question-card,
-.generation-history {
-    border: 1px solid rgba(15,118,110,.13);
-    background: #ffffff;
-    border-radius: 1rem;
-    padding: .85rem 1rem;
-    box-shadow: 0 8px 18px rgba(15,118,110,.05);
+.marker-study-card {
+    border: 1px solid rgba(15, 118, 110, .14);
+    border-radius: 16px;
+    padding: .85rem;
+    background: #f8fffe;
 }
-.marker-study-card summary,
-.practice-question-card summary,
-.generation-history summary {
+.marker-study-card summary {
     cursor: pointer;
     font-weight: 800;
-    color: #103a36;
-}
-.marker-study-card p,
-.practice-question-card p {
-    margin: .65rem 0 0;
-    color: #405854;
+    color: #0b3b37;
 }
 .marker-dot-mini {
-    display: inline-flex;
-    width: 1.65rem;
-    height: 1.65rem;
-    border-radius: 999px;
-    background: #0f8b7d;
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #0f766e;
     color: #fff;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
     margin-right: .35rem;
+    font-size: .8rem;
 }
-.practice-question-grid {
-    display: grid;
-    gap: .8rem;
-    background: linear-gradient(180deg, #f8fffd 0%, #f3fbf9 100%);
-    border: 1px solid rgba(15,118,110,.12);
-    border-radius: 1.15rem;
-    padding: 1rem;
-}
-.practice-title {
-    display: block;
-    color: #0b3b37;
-    font-size: 1.02rem;
-}
-.generation-history ul {
-    margin: .75rem 0 0;
-    padding-left: 1.2rem;
-    color: #506964;
-}
-.visual-modal-body .anatomy-image-wrap {
-    max-height: 82vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.visual-modal-body .anatomy-image-wrap img {
-    max-height: 82vh;
-    object-fit: contain;
+@media (max-width: 820px) {
+    .mindmap-branches { grid-template-columns: 1fr; }
+    .mindmap-pro { padding: 16px; }
 }
 
 </style>
