@@ -1,1749 +1,1448 @@
-{% extends "base.html" %}
-
-{% block title %}Ruta de aprendizaje | Tutor IA Anatomía VARK{% endblock %}
-
-{% block content %}
-<section class="page-hero">
-    <div>
-        <p class="eyebrow">Ruta personalizada</p>
-        <h1>Ruta de aprendizaje</h1>
-        <p>
-            Esta versión de la ruta está pensada para aprender de verdad:
-            combina tu resultado VARK, tu tema de Anatomía I, tu punto difícil y,
-            si existen, los materiales subidos.
-        </p>
-    </div>
-</section>
-
-<section class="section-band">
-    <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-
-        <div class="dashboard-grid">
-            <article class="feature-card dashboard-card">
-                <i data-lucide="scan-eye"></i>
-                <h3>Perfil VARK</h3>
-                <strong>{{ perfil_vark.estilo_display }}</strong>
-                <p>V: {{ perfil_vark.puntaje_visual }} / A: {{ perfil_vark.puntaje_auditivo }} / L: {{ perfil_vark.puntaje_lectura }} / K: {{ perfil_vark.puntaje_kinestesico }}</p>
-            </article>
-            <article class="feature-card dashboard-card">
-                <i data-lucide="book-open"></i>
-                <h3>Tema actual</h3>
-                <strong>{{ datos_academicos.tema_actual }}</strong>
-                <p>{{ datos_academicos.temas_dificiles|default:"Sin punto específico" }}</p>
-            </article>
-            <article class="feature-card dashboard-card">
-                <i data-lucide="calendar-days"></i>
-                <h3>Días hasta examen</h3>
-                <strong>{{ datos_academicos.dias_restantes }}</strong>
-                <p>{{ datos_academicos.fecha_examen_formateada }}</p>
-            </article>
-            <article class="feature-card dashboard-card">
-                <i data-lucide="clock"></i>
-                <h3>Tiempo diario</h3>
-                <strong>{{ datos_academicos.tiempo_estudio_display }}</strong>
-                <p>Máximo por día</p>
-            </article>
-        </div>
-
-        <div class="info-box mt-4">
-            <div class="ai-box-title">
-                <i data-lucide="sparkles"></i>
-                <strong>Qué tiene esta ruta 10/10</strong>
-            </div>
-            <p>
-                Cada día puede incluir <strong>audio escuchable</strong>, <strong>mapa mental grande</strong>,
-                <strong>lámina anatómica guiada con marcadores</strong>, <strong>ejercicio práctico</strong>
-                <strong>mini quiz evaluable</strong> y <strong>apoyo de lectura</strong> según tu combinación VARK.
-            </p>
-        </div>
-
-        {% if ruta %}
-            <div class="form-panel wide-panel mt-4">
-                <p class="eyebrow">Plan generado</p>
-                <h2>{{ ruta.titulo }}</h2>
-                <p>{{ ruta.resumen_general }}</p>
-
-                <div class="detail-grid mt-4">
-                    <div>
-                        <strong>Estilo usado</strong>
-                        <p>{{ ruta.estilo_vark_usado }}</p>
-                    </div>
-                    <div>
-                        <strong>Días planificados</strong>
-                        <p>{{ ruta.dias_planificados }}</p>
-                    </div>
-                    <div>
-                        <strong>Minutos por día</strong>
-                        <p>{{ ruta.minutos_por_dia }} min</p>
-                    </div>
-                    <div>
-                        <strong>Actualizado</strong>
-                        <p>{{ ruta.actualizado|date:"d/m/Y H:i" }}</p>
-                    </div>
-                </div>
-
-                <div class="progress-panel mt-4">
-                    <div>
-                        <p class="eyebrow">Avance real</p>
-                        <h3>{{ progreso_general.porcentaje }}% completado</h3>
-                        <p>
-                            {{ progreso_general.dias_completados }}/{{ progreso_general.total_dias }}
-                            días completados.
-                            {% if progreso_general.promedio_quiz != None %}
-                                Promedio de mini quizzes: {{ progreso_general.promedio_quiz }}%.
-                            {% else %}
-                                Aún no hay mini quizzes guardados.
-                            {% endif %}
-                        </p>
-                    </div>
-                    <div class="progress-bar-wrap">
-                        <div class="progress-bar-fill" data-progress="{{ progreso_general.porcentaje|default:0 }}"></div>
-                    </div>
-                </div>
-
-                {% if ruta.temas_priorizados_lista %}
-                    <div class="text-preview mt-4">
-                        <strong>Temas priorizados</strong>
-                        <ul class="clean-list mt-3">
-                            {% for tema in ruta.temas_priorizados_lista %}
-                                <li><i data-lucide="check"></i><span>{{ tema }}</span></li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="section-heading mt-4">
-                <p class="eyebrow">Plan diario</p>
-                <h2>Recursos concretos para aprender</h2>
-            </div>
-
-            <div class="route-list">
-                {% for dia in dias_ruta %}
-                    <article class="form-panel route-day-card">
-                        <div class="route-day-header">
-                            <div class="route-day-number">{{ dia.dia }}</div>
-                            <div>
-                                <p class="eyebrow">Día {{ dia.dia }}</p>
-                                <h3>{{ dia.titulo }}</h3>
-                                <p>{{ dia.objetivo }}</p>
-                            </div>
-                        </div>
-
-                        <div class="day-progress-box mt-4 {% if dia.progreso and dia.progreso.completado %}is-complete{% endif %}">
-                            <div>
-                                <strong>
-                                    {% if dia.progreso and dia.progreso.completado %}
-                                        Día completado
-                                    {% else %}
-                                        Día pendiente
-                                    {% endif %}
-                                </strong>
-                                <p>
-                                    {% if dia.progreso and dia.progreso.quiz_total %}
-                                        Mini quiz guardado: {{ dia.progreso.quiz_texto }}
-                                        {% if dia.progreso.quiz_porcentaje != None %}({{ dia.progreso.quiz_porcentaje }}%){% endif %}
-                                    {% else %}
-                                        Mini quiz aún no guardado.
-                                    {% endif %}
-                                </p>
-                            </div>
-
-                            <form method="post" action="{% url 'rutas:actualizar_progreso' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="dia" value="{{ dia.dia }}">
-                                {% if dia.progreso and dia.progreso.completado %}
-                                    <input type="hidden" name="accion" value="pendiente">
-                                    <button type="submit" class="btn btn-outline-primary btn-sm">Marcar pendiente</button>
-                                {% else %}
-                                    <input type="hidden" name="accion" value="completar">
-                                    <button type="submit" class="btn btn-primary btn-sm">Marcar completado</button>
-                                {% endif %}
-                            </form>
-                        </div>
-
-                        <div class="detail-grid mt-4">
-                            <div>
-                                <strong>Tema principal</strong>
-                                <p>{{ dia.tema_principal }}</p>
-                            </div>
-                            <div>
-                                <strong>Tiempo sugerido</strong>
-                                <p>{{ dia.minutos }} min</p>
-                            </div>
-                            <div>
-                                <strong>Recurso dominante</strong>
-                                <p>{{ dia.recurso_vark }}</p>
-                            </div>
-                            <div>
-                                <strong>Uso de materiales</strong>
-                                <p>{{ dia.uso_materiales }}</p>
-                            </div>
-                        </div>
-
-                        {% if dia.enfoque_vark %}
-                            <div class="info-box mt-4">
-                                <div class="ai-box-title"><i data-lucide="blend"></i><strong>Adaptación VARK</strong></div>
-                                <p>{{ dia.enfoque_vark }}</p>
-                            </div>
-                        {% endif %}
-
-                        <div class="resource-grid mt-4">
-                            {% if dia.recursos.audio.habilitado %}
-                                <section class="resource-card">
-                                    <div class="resource-card-header">
-                                        <i data-lucide="volume-2"></i>
-                                        <strong>{{ dia.recursos.audio.titulo }}</strong>
-                                    </div>
-                                    <p class="audio-ready">
-                                        Audio explicativo listo para escuchar. El guion está oculto para no saturar la ruta.
-                                    </p>
-                                    {% if dia.recursos.audio.pasos_clave %}
-                                        <ul class="clean-list mt-3">
-                                            {% for paso in dia.recursos.audio.pasos_clave %}
-                                                <li><i data-lucide="check"></i><span>{{ paso }}</span></li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                    <div class="form-actions mt-3">
-                                        <button type="button" class="btn btn-primary icon-btn" onclick="playStudyAudio('{{ dia.recursos.audio.guion|escapejs }}')">
-                                            <i data-lucide="play"></i>
-                                            <span>Escuchar audio</span>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-primary icon-btn" onclick="stopStudyAudio()">
-                                            <i data-lucide="square"></i>
-                                            <span>Detener</span>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-primary icon-btn" data-toggle-target="audio-summary-{{ dia.dia }}">
-                                            <i data-lucide="file-text"></i>
-                                            <span>Ver guion</span>
-                                        </button>
-                                    </div>
-
-                                    <div class="audio-summary mt-3 collapsible-box" id="audio-summary-{{ dia.dia }}">
-                                        <p>{{ dia.recursos.audio.guion }}</p>
-                                    </div>
-                                </section>
-                            {% endif %}
-                            {% if dia.recursos.visual.habilitado %}
-                                <section class="resource-card visual-card-premium resource-span-2">
-                                    <div class="resource-card-header">
-                                        <i data-lucide="map"></i>
-                                        <strong>{{ dia.recursos.visual.titulo }}</strong>
-                                    </div>
-
-                                    {% if dia.recursos.visual.descripcion %}
-                                        <p class="mt-3">{{ dia.recursos.visual.descripcion }}</p>
-                                    {% else %}
-                                        <p class="mt-3">Mapa mental estructurado por IA y renderizado con texto real para evitar letras deformes.</p>
-                                    {% endif %}
-
-                                    <div class="mindmap-pro mt-3" id="generated-map-{{ dia.dia }}">
-                                        <div class="mindmap-core">
-                                            <span class="mindmap-kicker">Tema central</span>
-                                            <strong>{{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</strong>
-                                            <small>{{ dia.tema_principal }}</small>
-                                        </div>
-
-                                        <div class="mindmap-branches">
-                                            {% if dia.recursos.visual.ramas %}
-                                                {% for rama in dia.recursos.visual.ramas %}
-                                                    <article class="mindmap-branch branch-{{ forloop.counter }}">
-                                                        <div class="branch-number">{{ forloop.counter }}</div>
-                                                        <div>
-                                                            <span class="branch-label">Rama {{ forloop.counter }}</span>
-                                                            <h4>{{ rama.titulo }}</h4>
-                                                            {% if rama.detalle %}<p>{{ rama.detalle }}</p>{% endif %}
-                                                            {% if rama.subpuntos %}
-                                                                <ul>
-                                                                    {% for subpunto in rama.subpuntos %}
-                                                                        <li>{{ subpunto }}</li>
-                                                                    {% endfor %}
-                                                                </ul>
-                                                            {% endif %}
-                                                        </div>
-                                                    </article>
-                                                {% endfor %}
-                                            {% else %}
-                                                {% for item in dia.recursos.visual.apoyo_visual %}
-                                                    <article class="mindmap-branch branch-{{ forloop.counter }}">
-                                                        <div class="branch-number">{{ forloop.counter }}</div>
-                                                        <div>
-                                                            <span class="branch-label">Clave {{ forloop.counter }}</span>
-                                                            <h4>{{ item }}</h4>
-                                                            <p>Idea clave conectada con el tema central.</p>
-                                                        </div>
-                                                    </article>
-                                                {% endfor %}
-                                            {% endif %}
-                                        </div>
-                                    </div>
-
-                                    <div class="form-actions mt-3">
-                                        <button type="button"
-                                                class="btn btn-primary btn-sm"
-                                                data-open-visual="generated-map-modal-{{ dia.dia }}">
-                                            Ver mapa en grande
-                                        </button>
-                                    </div>
-
-                                    <div class="visual-modal-source" id="generated-map-modal-{{ dia.dia }}">
-                                        <div class="mindmap-pro modal-map">
-                                            <div class="mindmap-core">
-                                                <span class="mindmap-kicker">Tema central</span>
-                                                <strong>{{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</strong>
-                                                <small>{{ dia.tema_principal }}</small>
-                                            </div>
-                                            <div class="mindmap-branches">
-                                                {% for rama in dia.recursos.visual.ramas %}
-                                                    <article class="mindmap-branch branch-{{ forloop.counter }}">
-                                                        <div class="branch-number">{{ forloop.counter }}</div>
-                                                        <div>
-                                                            <span class="branch-label">Rama {{ forloop.counter }}</span>
-                                                            <h4>{{ rama.titulo }}</h4>
-                                                            {% if rama.detalle %}<p>{{ rama.detalle }}</p>{% endif %}
-                                                            {% if rama.subpuntos %}
-                                                                <ul>
-                                                                    {% for subpunto in rama.subpuntos %}<li>{{ subpunto }}</li>{% endfor %}
-                                                                </ul>
-                                                            {% endif %}
-                                                        </div>
-                                                    </article>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-                            {% endif %}
-
-                            {% if dia.recursos.kinestesico.habilitado %}
-                                <section class="resource-card">
-                                    <div class="resource-card-header">
-                                        <i data-lucide="activity"></i>
-                                        <strong>{{ dia.recursos.kinestesico.titulo }}</strong>
-                                    </div>
-                                    <p>{{ dia.recursos.kinestesico.instrucciones }}</p>
-                                    {% if dia.recursos.kinestesico.preguntas %}
-                                        <ul class="clean-list mt-3">
-                                            {% for pregunta in dia.recursos.kinestesico.preguntas %}
-                                                <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </section>
-                            {% endif %}
-
-                            {% if dia.recursos.lectura.habilitado %}
-                                <section class="resource-card">
-                                    <div class="resource-card-header">
-                                        <i data-lucide="book-text"></i>
-                                        <strong>{{ dia.recursos.lectura.titulo }}</strong>
-                                    </div>
-                                    <p>{{ dia.recursos.lectura.resumen }}</p>
-                                    {% if dia.recursos.lectura.glosario %}
-                                        <ul class="clean-list mt-3">
-                                            {% for item in dia.recursos.lectura.glosario %}
-                                                <li><i data-lucide="bookmark"></i><span>{{ item }}</span></li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </section>
-                            {% endif %}
-                        </div>
-                        {% if dia.recursos.imagen_anatomica.habilitado %}
-                            <section class="form-panel wide-panel mt-4 anatomical-panel">
-                                <div class="resource-card-header">
-                                    <i data-lucide="image"></i>
-                                    <strong>{{ dia.recursos.imagen_anatomica.titulo }}</strong>
-                                </div>
-
-                                {% if dia.recursos.imagen_anatomica.descripcion %}
-                                    <p>{{ dia.recursos.imagen_anatomica.descripcion }}</p>
-                                {% endif %}
-
-                                {% if dia.recursos.imagen_anatomica.image_url %}
-                                    <div class="generated-anatomy-card mt-3">
-                                        <div class="anatomy-image-wrap">
-                                            <img src="{{ dia.recursos.imagen_anatomica.image_url }}"
-                                                 alt="{{ dia.recursos.imagen_anatomica.titulo }}"
-                                                 class="study-generated-image">
-                                            {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
-                                                <button type="button"
-                                                        class="anatomy-marker"
-                                                        data-x="{{ marcador.x|default:'50' }}"
-                                                        data-y="{{ marcador.y|default:'50' }}"
-                                                        title="{{ marcador.nombre }}: {{ marcador.pista }}">
-                                                    {{ marcador.id }}
-                                                </button>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-
-                                    {% if dia.recursos.imagen_anatomica.marcadores %}
-                                        <div class="marker-legend-grid mt-3">
-                                            {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
-                                                <details class="marker-study-card">
-                                                    <summary><span class="marker-dot-mini">{{ marcador.id }}</span> {{ marcador.nombre }}</summary>
-                                                    {% if marcador.pista %}<p><strong>Pista:</strong> {{ marcador.pista }}</p>{% endif %}
-                                                    {% if marcador.detalle %}<p><strong>Detalle:</strong> {{ marcador.detalle }}</p>{% endif %}
-                                                </details>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-
-                                    <div class="form-actions mt-3">
-                                        <button type="button"
-                                                class="btn btn-primary btn-sm"
-                                                data-open-visual="generated-anatomy-{{ dia.dia }}">
-                                            Ver lámina en grande
-                                        </button>
-                                    </div>
-
-                                    <div class="visual-modal-source" id="generated-anatomy-{{ dia.dia }}">
-                                        <div class="anatomy-image-wrap modal-anatomy-wrap">
-                                            <img src="{{ dia.recursos.imagen_anatomica.image_url }}"
-                                                 alt="{{ dia.recursos.imagen_anatomica.titulo }}"
-                                                 class="study-generated-image">
-                                            {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
-                                                <span class="anatomy-marker" data-x="{{ marcador.x|default:'50' }}" data-y="{{ marcador.y|default:'50' }}">{{ marcador.id }}</span>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                {% else %}
-                                    <div class="image-pending-box mt-3">
-                                        <strong>Lámina pendiente de generación</strong>
-                                        <p>La descripción anatómica ya fue preparada, pero la imagen IA no se creó. Revisa GEMINI_API_KEY, GEMINI_IMAGE_MODEL o vuelve a regenerar la ruta.{% if dia.recursos.imagen_anatomica.image_error %}<br><small><strong>Detalle:</strong> {{ dia.recursos.imagen_anatomica.image_error }}</small>{% endif %}</p>
-                                    </div>
-                                {% endif %}
-
-                                {% if dia.recursos.imagen_anatomica.modo_practica %}
-                                    <p class="marker-help mt-3">
-                                        <strong>Modo práctica:</strong> {{ dia.recursos.imagen_anatomica.modo_practica }}
-                                    </p>
-                                {% endif %}
-
-                                {% if dia.recursos.imagen_anatomica.preguntas %}
-                                    <div class="text-preview mt-3">
-                                        <strong>Preguntas sobre la imagen</strong>
-                                        <ul class="clean-list mt-3">
-                                            {% for pregunta in dia.recursos.imagen_anatomica.preguntas %}
-                                                <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
-                                {% endif %}
-                            </section>
-                        {% endif %}
-
-
-                        {% if dia.mini_quiz %}
-                            <section class="form-panel wide-panel mt-4 quiz-panel" data-quiz-day="{{ dia.dia }}">
-                                <div class="resource-card-header">
-                                    <i data-lucide="clipboard-check"></i>
-                                    <strong>Mini quiz evaluable del día</strong>
-                                </div>
-                                <p>Responde las preguntas y presiona calificar para ver tu resultado.</p>
-
-                                <div class="quiz-list">
-                                    {% for pregunta in dia.mini_quiz %}
-                                        <div class="quiz-question" data-question>
-                                            <strong>{{ forloop.counter }}. {{ pregunta.pregunta }}</strong>
-                                            <div class="quiz-options mt-3">
-                                                {% for opcion in pregunta.opciones %}
-                                                    <label class="quiz-option">
-                                                        <input type="radio"
-                                                               name="quiz-{{ dia.dia }}-{{ forloop.parentloop.counter }}"
-                                                               value="{{ opcion|escape }}"
-                                                               data-correct="{% if opcion == pregunta.respuesta_correcta %}true{% else %}false{% endif %}">
-                                                        <span>{{ opcion }}</span>
-                                                    </label>
-                                                {% endfor %}
-                                            </div>
-                                            <div class="quiz-explanation">
-                                                <strong>Respuesta correcta:</strong> {{ pregunta.respuesta_correcta }}<br>
-                                                {{ pregunta.explicacion }}
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-
-                                <div class="form-actions mt-3 quiz-actions">
-                                    <button type="button" class="btn btn-primary icon-btn" onclick="gradeQuiz(this)">
-                                        <i data-lucide="check-circle"></i>
-                                        <span>Calificar mini quiz</span>
-                                    </button>
-                                    <strong class="quiz-score"></strong>
-
-                                    <form method="post" action="{% url 'rutas:actualizar_progreso' %}" class="quiz-save-form">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="dia" value="{{ dia.dia }}">
-                                        <input type="hidden" name="accion" value="guardar_quiz">
-                                        <input type="hidden" name="quiz_puntaje" value="">
-                                        <input type="hidden" name="quiz_total" value="">
-                                        <button type="submit" class="btn btn-outline-primary icon-btn">
-                                            <i data-lucide="save"></i>
-                                            <span>Guardar resultado</span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </section>
-                        {% endif %}
-
-                        {% if dia.actividades %}
-                            <div class="text-preview mt-4">
-                                <strong>Actividades</strong>
-                                <ul class="clean-list mt-3">
-                                    {% for actividad in dia.actividades %}
-                                        <li><i data-lucide="circle-dot"></i><span>{{ actividad }}</span></li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        {% endif %}
-
-                        {% if dia.autoevaluacion %}
-                            <div class="text-preview mt-4">
-                                <strong>Autoevaluación</strong>
-                                <ul class="clean-list mt-3">
-                                    {% for pregunta in dia.autoevaluacion %}
-                                        <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        {% endif %}
-
-                        {% if dia.producto_esperado %}
-                            <div class="info-box mt-4">
-                                <div class="ai-box-title"><i data-lucide="target"></i><strong>Producto esperado</strong></div>
-                                <p>{{ dia.producto_esperado }}</p>
-                            </div>
-                        {% endif %}
-
-                        <form method="post" action="{% url 'rutas:actualizar_progreso' %}" class="notes-form mt-4">
-                            {% csrf_token %}
-                            <input type="hidden" name="dia" value="{{ dia.dia }}">
-                            <input type="hidden" name="accion" value="guardar_notas">
-                            <label><strong>Notas personales del día</strong></label>
-                            <textarea name="notas" rows="3" placeholder="Escribe qué aprendiste, qué te falta repasar o qué duda te quedó...">{% if dia.progreso %}{{ dia.progreso.notas }}{% endif %}</textarea>
-                            <div class="form-actions mt-2">
-                                <button type="submit" class="btn btn-outline-primary btn-sm">Guardar notas</button>
-                            </div>
-                        </form>
-                    </article>
-                {% endfor %}
-            </div>
-
-            {% if ruta.recomendaciones_lista %}
-                <div class="form-panel wide-panel mt-4">
-                    <p class="eyebrow">Cierre</p>
-                    <h2>Recomendaciones finales</h2>
-                    <ul class="clean-list mt-3">
-                        {% for recomendacion in ruta.recomendaciones_lista %}
-                            <li><i data-lucide="check"></i><span>{{ recomendacion }}</span></li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-
-            <div class="form-actions mt-4">
-                <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">Volver al dashboard</a>
-                <form method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary icon-btn">
-                        <i data-lucide="refresh-cw"></i>
-                        <span>Regenerar ruta con Gemini</span>
-                    </button>
-                </form>
-            </div>
-        {% else %}
-            <div class="empty-state mt-4">
-                <i data-lucide="route"></i>
-                <h2>Aún no tienes una ruta generada</h2>
-                <p>
-                    Presiona el botón para que Gemini genere la ruta con audio, mapas, láminas anatómicas y ejercicios.
-                </p>
-                <form method="post" class="mt-4">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary icon-btn">
-                        <i data-lucide="sparkles"></i>
-                        <span>Generar ruta con Gemini</span>
-                    </button>
-                </form>
-            </div>
-        {% endif %}
-    </div>
-</section>
-
-<style>
-.resource-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1rem;
-}
-.resource-card,
-.anatomical-panel {
-    border: 1px solid rgba(0,0,0,.08);
-    border-radius: 1rem;
-    padding: 1rem;
-    background: #fff;
-}
-.resource-card-header {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    margin-bottom: .75rem;
-}
-.route-mermaid {
-    overflow-x: auto;
-    background: #f8fbfb;
-    border-radius: .75rem;
-    padding: .75rem;
-}
-.anatomy-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-.anatomy-board {
-    position: relative;
-    border-radius: 1rem;
-    background: linear-gradient(180deg, #ffffff 0%, #f4fbfa 100%);
-    border: 1px solid rgba(0,0,0,.08);
-    padding: 1rem;
-    min-height: 460px;
-}
-.torso-svg {
-    width: 100%;
-    height: 420px;
-    display: block;
-}
-.marker-pin {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    width: 2rem;
-    height: 2rem;
-    border-radius: 999px;
-    border: none;
-    background: #0f8b7d;
-    color: white;
-    font-weight: 700;
-    box-shadow: 0 8px 20px rgba(15, 139, 125, .25);
-    cursor: pointer;
-}
-.marker-pin:hover { background: #0a6e63; }
-.marker-help { color: #4b5563; }
-.marker-list { display: grid; gap: .75rem; }
-.marker-item {
-    border: 1px solid rgba(0,0,0,.08);
-    border-radius: .85rem;
-    padding: .85rem;
-    background: #fcfefe;
-}
-.marker-item-head {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: .75rem;
-    align-items: start;
-}
-.marker-badge {
-    display: inline-flex;
-    width: 2rem;
-    height: 2rem;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    background: #dff5f1;
-    color: #0f8b7d;
-    font-weight: 700;
-}
-.marker-answer {
-    display: none;
-    margin-top: .75rem;
-    padding-top: .75rem;
-    border-top: 1px dashed rgba(0,0,0,.12);
-}
-.marker-answer.is-visible { display: block; }
-
-.quiz-panel { background: #fff; }
-.quiz-list { display: grid; gap: 1rem; margin-top: 1rem; }
-.quiz-question {
-    border: 1px solid rgba(0,0,0,.08);
-    border-radius: .85rem;
-    padding: 1rem;
-    background: #fcfefe;
-}
-.quiz-options { display: grid; gap: .5rem; }
-.quiz-option {
-    display: flex;
-    gap: .5rem;
-    align-items: center;
-    padding: .65rem .75rem;
-    border: 1px solid rgba(0,0,0,.08);
-    border-radius: .75rem;
-    cursor: pointer;
-}
-.quiz-option.is-correct { border-color: #0f8b7d; background: #e8f8f5; }
-.quiz-option.is-wrong { border-color: #d9534f; background: #fff1f0; }
-.quiz-explanation {
-    display: none;
-    margin-top: .75rem;
-    padding-top: .75rem;
-    border-top: 1px dashed rgba(0,0,0,.12);
-}
-.quiz-explanation.is-visible { display: block; }
-.quiz-score { color: #0f8b7d; }
-
-
-.progress-panel {
-    border: 1px solid rgba(0,0,0,.08);
-    border-radius: 1rem;
-    padding: 1rem;
-    background: #f8fbfb;
-}
-.progress-bar-wrap {
-    width: 100%;
-    height: .85rem;
-    border-radius: 999px;
-    background: #e5eeee;
-    overflow: hidden;
-    margin-top: .75rem;
-}
-.progress-bar-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: #0f8b7d;
-}
-.day-progress-box {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    border: 1px solid rgba(0,0,0,.08);
-    border-radius: 1rem;
-    padding: 1rem;
-    background: #fff8f1;
-}
-.day-progress-box.is-complete {
-    background: #eaf8f5;
-    border-color: rgba(15,139,125,.25);
-}
-.quiz-actions {
-    align-items: center;
-    flex-wrap: wrap;
-}
-.quiz-save-form {
-    display: inline-flex;
-}
-.notes-form textarea {
-    width: 100%;
-    margin-top: .5rem;
-    border: 1px solid rgba(0,0,0,.12);
-    border-radius: .75rem;
-    padding: .8rem;
-    resize: vertical;
-}
-
-@media (max-width: 900px) {
-    .anatomy-grid { grid-template-columns: 1fr; }
-}
-
-/* ===== Ruta 10/10 visual premium ===== */
-.route-hero-box { font-size: 1.02rem; }
-.premium-day-card { overflow: hidden; }
-.resource-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.25rem;
-}
-.resource-card,
-.anatomical-panel {
-    border: 1px solid rgba(0,0,0,.08);
-    border-radius: 1.15rem;
-    padding: 1.25rem;
-    background: #fff;
-}
-.audio-card { background: linear-gradient(180deg, #f6fffd 0%, #ffffff 100%); }
-.audio-ready { font-size: 1.05rem; }
-.collapsible-box { display: none; }
-.collapsible-box.is-visible { display: block; }
-.mermaid-shell,
-.route-mermaid {
-    overflow: auto;
-    background: linear-gradient(180deg, #fbfefe 0%, #f4fbfa 100%);
-    border-radius: 1.1rem;
-    padding: 1.2rem;
-    min-height: 520px;
-    border: 1px solid rgba(0,0,0,.06);
-}
-.route-mermaid { min-width: 0 !important; }
-.route-mermaid svg {
-    width: 100% !important;
-    max-width: none !important;
-    height: auto !important;
-    min-height: 520px;
-}
-.anatomy-grid,
-.anatomy-grid-large {
-    display: grid;
-    grid-template-columns: minmax(420px, 1.35fr) minmax(320px, .85fr);
-    gap: 1.25rem;
-}
-.anatomy-board {
-    min-height: 760px !important;
-    overflow: hidden;
-    background: linear-gradient(180deg, #ffffff 0%, #f4fbfa 100%);
-    border: 1px solid rgba(0,0,0,.08);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
-}
-.torso-svg {
-    width: 100%;
-    height: 720px !important;
-    display: block;
-}
-.marker-pin {
-    width: 2.75rem !important;
-    height: 2.75rem !important;
-    border: 3px solid #ffffff !important;
-    font-weight: 800 !important;
-    font-size: 1.08rem !important;
-    z-index: 2;
-}
-.marker-pin:hover {
-    transform: translate(-50%, -50%) scale(1.08);
-}
-.progress-bar-fill { width: 0%; }
-@media (max-width: 980px) {
-    .anatomy-grid,
-    .anatomy-grid-large { grid-template-columns: 1fr; }
-    .anatomy-board { min-height: 560px !important; }
-    .torso-svg { height: 520px !important; }
-}
-@media (max-width: 720px) {
-    .route-mermaid { min-width: 620px; }
-}
-
-
-.visual-modal {
-    position: fixed;
-    inset: 0;
-    display: none;
-    z-index: 9999;
-}
-.visual-modal.is-open {
-    display: block;
-}
-.visual-modal-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(15, 23, 42, .68);
-    backdrop-filter: blur(3px);
-}
-.visual-modal-dialog {
-    position: relative;
-    z-index: 2;
-    width: min(1200px, calc(100vw - 2rem));
-    max-height: calc(100vh - 2rem);
-    margin: 1rem auto;
-    background: #fff;
-    border-radius: 1.2rem;
-    overflow: auto;
-    padding: 1.25rem;
-}
-.visual-modal-body .mermaid-shell,
-.visual-modal-body .route-mermaid {
-    min-height: 78vh;
-}
-.visual-modal-body .route-mermaid {
-    min-width: 1200px;
-}
-.visual-modal-body .route-mermaid svg {
-    min-height: 76vh !important;
-}
-.visual-modal-body .anatomy-board {
-    min-height: 82vh !important;
-}
-.visual-modal-body .torso-svg {
-    height: 78vh !important;
-}
-.visual-modal-close {
-    position: sticky;
-    top: .5rem;
-    margin-left: auto;
-    display: block;
-    width: 2.6rem;
-    height: 2.6rem;
-    border-radius: 999px;
-    border: 1px solid rgba(0,0,0,.1);
-    background: #fff;
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-@media (max-width: 720px) {
-    .route-mermaid { min-width: 780px; }
-    .visual-modal-body .route-mermaid { min-width: 0 !important; }
-}
-
-
-/* ===== FIX VISUAL ESTABLE 10/10 ===== */
-.route-list,
-.route-day-card,
-.premium-day-card {
-    max-width: 100%;
-    overflow: visible;
-}
-
-.resource-grid {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 1rem !important;
-}
-
-.visual-zone {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 1.25rem !important;
-    width: 100% !important;
-}
-
-.visual-card,
-.anatomical-panel,
-.audio-card,
-.quiz-panel,
-.resource-card {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-.mermaid-shell {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 420px !important;
-    max-height: none !important;
-    overflow: auto !important;
-    background: #f8fbfb !important;
-    border-radius: 1rem !important;
-    padding: 1rem !important;
-}
-
-.route-mermaid {
-    width: 100% !important;
-    min-width: 0 !important;
-    min-height: 380px !important;
-    overflow: visible !important;
-}
-
-.route-mermaid svg {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 360px !important;
-}
-
-.anatomy-grid,
-.anatomy-grid-large {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr) !important;
-    gap: 1.25rem !important;
-    align-items: start !important;
-}
-
-.anatomy-board {
-    min-height: 610px !important;
-    height: auto !important;
-    overflow: hidden !important;
-    background: linear-gradient(180deg, #ffffff 0%, #f4fbfa 100%) !important;
-    border: 1px solid rgba(0,0,0,.08) !important;
-    border-radius: 1.1rem !important;
-}
-
-.torso-svg,
-.pelvis-svg {
-    width: 100% !important;
-    height: 590px !important;
-    display: block !important;
-}
-
-.marker-pin {
-    width: 2.6rem !important;
-    height: 2.6rem !important;
-    border: 3px solid #fff !important;
-    font-weight: 800 !important;
-    z-index: 5 !important;
-}
-
-.marker-item {
-    min-height: auto !important;
-}
-
-.visual-modal {
-    position: fixed;
-    inset: 0;
-    display: none;
-    z-index: 9999;
-}
-
-.visual-modal.is-open {
-    display: block;
-}
-
-.visual-modal-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(15, 23, 42, .72);
-    backdrop-filter: blur(3px);
-}
-
-.visual-modal-dialog {
-    position: relative;
-    z-index: 2;
-    width: min(1250px, calc(100vw - 2rem));
-    max-height: calc(100vh - 2rem);
-    margin: 1rem auto;
-    background: #fff;
-    border-radius: 1.2rem;
-    overflow: auto;
-    padding: 1.25rem;
-}
-
-.visual-modal-close {
-    position: sticky;
-    top: .5rem;
-    margin-left: auto;
-    display: block;
-    width: 2.6rem;
-    height: 2.6rem;
-    border-radius: 999px;
-    border: 1px solid rgba(0,0,0,.1);
-    background: #fff;
-    font-size: 1.5rem;
-    cursor: pointer;
-    z-index: 10;
-}
-
-.visual-modal-body .mermaid-shell {
-    min-height: 76vh !important;
-}
-
-.visual-modal-body .route-mermaid svg {
-    min-height: 72vh !important;
-}
-
-.visual-modal-body .anatomy-board {
-    min-height: 78vh !important;
-}
-
-.visual-modal-body .torso-svg,
-.visual-modal-body .pelvis-svg {
-    height: 74vh !important;
-}
-
-@media (max-width: 980px) {
-    .anatomy-grid,
-    .anatomy-grid-large {
-        grid-template-columns: 1fr !important;
+import base64
+import json
+import os
+import re
+import time
+from pathlib import Path
+
+import requests
+
+from django.conf import settings
+from django.utils.text import Truncator
+
+from .models import RutaAprendizaje
+
+
+MAX_CARACTERES_CONTEXTO_MATERIAL = 24000
+MAX_DIAS_PLAN = 21
+
+
+MODALIDADES_VARK = {
+    "visual": "Visual",
+    "auditivo": "Auditivo",
+    "lectura": "Lectura/Escritura",
+    "kinestesico": "Kinestésico",
+}
+
+
+REGLAS_VARK = {
+    "visual": [
+        "mapas conceptuales",
+        "esquemas jerárquicos",
+        "tablas comparativas",
+        "diagramas textuales",
+        "relaciones espaciales",
+        "identificación visual de estructuras",
+    ],
+    "auditivo": [
+        "explicaciones conversacionales",
+        "repaso en voz alta",
+        "guiones para audio",
+        "preguntas orales",
+        "explicación tipo tutor",
+        "resúmenes para escuchar",
+    ],
+    "lectura": [
+        "resúmenes detallados",
+        "glosarios",
+        "listas ordenadas",
+        "cuadros conceptuales escritos",
+        "preguntas de desarrollo",
+        "reformulación con palabras propias",
+    ],
+    "kinestesico": [
+        "casos aplicados",
+        "identificación de estructuras",
+        "ejercicios prácticos",
+        "actividades paso a paso",
+        "preguntas de ubicación y función",
+        "simulacros cortos",
+    ],
+}
+
+
+def generar_ruta_aprendizaje(user, perfil_vark, datos_academicos, materiales):
+    dias_hasta_examen = datos_academicos.dias_restantes
+    dias_planificados = calcular_dias_planificados(dias_hasta_examen)
+
+    contexto_materiales = construir_contexto_materiales(materiales)
+    perfil_vark_detalle = construir_detalle_vark(perfil_vark)
+
+    respuesta = generar_ruta_con_gemini(
+        perfil_vark=perfil_vark,
+        perfil_vark_detalle=perfil_vark_detalle,
+        datos_academicos=datos_academicos,
+        materiales=materiales,
+        contexto_materiales=contexto_materiales,
+        dias_hasta_examen=dias_hasta_examen,
+        dias_planificados=dias_planificados,
+    )
+
+    if not respuesta:
+        respuesta = generar_ruta_respaldo(
+            perfil_vark=perfil_vark,
+            perfil_vark_detalle=perfil_vark_detalle,
+            datos_academicos=datos_academicos,
+            dias_hasta_examen=dias_hasta_examen,
+            dias_planificados=dias_planificados,
+        )
+
+    respuesta = enriquecer_plan_con_imagenes_ia(
+        respuesta=respuesta,
+        user=user,
+        datos_academicos=datos_academicos,
+    )
+
+    ruta, _ = RutaAprendizaje.objects.update_or_create(
+        user=user,
+        defaults={
+            "titulo": respuesta.get("titulo", "Ruta de aprendizaje personalizada"),
+            "resumen_general": respuesta.get("resumen_general", ""),
+            "estilo_vark_usado": perfil_vark.estilo_display,
+            "dias_hasta_examen": dias_hasta_examen,
+            "dias_planificados": dias_planificados,
+            "minutos_por_dia": datos_academicos.minutos_por_dia,
+            "temas_priorizados": "\n".join(respuesta.get("temas_priorizados", [])),
+            "plan_json": respuesta.get("plan_diario", []),
+            "recomendaciones_finales": "\n".join(
+                respuesta.get("recomendaciones_finales", [])
+            ),
+        },
+    )
+
+    ruta.materiales.set(materiales)
+    return ruta
+
+
+def calcular_dias_planificados(dias_hasta_examen):
+    if dias_hasta_examen <= 0:
+        return 1
+    if dias_hasta_examen > MAX_DIAS_PLAN:
+        return MAX_DIAS_PLAN
+    return dias_hasta_examen
+
+
+def construir_detalle_vark(perfil_vark):
+    puntajes = {
+        "visual": perfil_vark.puntaje_visual,
+        "auditivo": perfil_vark.puntaje_auditivo,
+        "lectura": perfil_vark.puntaje_lectura,
+        "kinestesico": perfil_vark.puntaje_kinestesico,
     }
+    total = sum(puntajes.values()) or 1
 
-    .torso-svg,
-    .pelvis-svg {
-        height: 520px !important;
-    }
-
-    .anatomy-board {
-        min-height: 540px !important;
-    }
-}
-
-
-/* ===== premium visual realism ===== */
-.visual-card-premium {
-    background: linear-gradient(180deg, #ffffff 0%, #fbfefe 100%);
-}
-.map-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-.map-helper {
-    margin: 0;
-    color: #4b5f5b;
-}
-.map-outline {
-    background: #f7fbfb;
-    border: 1px solid rgba(15,118,110,.12);
-    border-radius: 1rem;
-    padding: 1rem 1.1rem;
-}
-.mermaid-shell {
-    background: radial-gradient(circle at top, #fcffff 0%, #f4fbfa 100%);
-    border: 1px solid rgba(15,118,110,.10);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 10px 24px rgba(15,118,110,.05);
-    min-height: 520px !important;
-}
-.route-mermaid {
-    min-height: 460px !important;
-}
-.route-mermaid svg {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 440px !important;
-}
-.anatomy-board {
-    background: radial-gradient(circle at top, #fcffff 0%, #f2faf8 100%) !important;
-    min-height: 700px !important;
-}
-.torso-svg, .pelvis-svg, .premium-pelvis {
-    width: 100% !important;
-    height: 670px !important;
-    display: block !important;
-}
-.visual-modal-body .torso-svg,
-.visual-modal-body .pelvis-svg,
-.visual-modal-body .premium-pelvis {
-    height: 82vh !important;
-}
-.anatomy-caption {
-    color: #5a6f6a;
-    font-size: .95rem;
-}
-@media (max-width: 980px) {
-    .map-toolbar { align-items: flex-start; }
-    .mermaid-shell { min-height: 420px !important; }
-    .route-mermaid { min-height: 360px !important; }
-    .route-mermaid svg { min-height: 330px !important; }
-    .anatomy-board { min-height: 560px !important; }
-    .torso-svg, .pelvis-svg, .premium-pelvis { height: 540px !important; }
-}
-
-
-.resource-span-2 {
-    grid-column: 1 / -1;
-}
-.compact-actions { gap: .5rem; }
-.concept-map-card {
-    background: linear-gradient(180deg, #fcffff 0%, #f7fbfb 100%);
-    border: 1px solid rgba(15,118,110,.10);
-    border-radius: 1.25rem;
-    padding: 1rem;
-}
-.concept-map-shell {
-    position: relative;
-    min-height: 560px;
-    background: radial-gradient(circle at center, rgba(203, 241, 234, .25) 0%, rgba(255,255,255,.94) 62%);
-    border-radius: 1.25rem;
-    overflow: hidden;
-    padding: 1.25rem;
-}
-.concept-center-wrap {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-}
-.concept-center-node {
-    width: 220px;
-    height: 220px;
-    border-radius: 999px;
-    background: linear-gradient(180deg, #9be1d5 0%, #76c9bb 100%);
-    color: #103a36;
-    font-size: 2rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 1.25rem;
-    box-shadow: 0 16px 36px rgba(15,118,110,.18);
-    border: 6px solid rgba(255,255,255,.9);
-}
-.concept-branch-grid {
-    position: relative;
-    z-index: 2;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(240px, 1fr));
-    gap: 2rem 3rem;
-    min-height: 520px;
-    align-items: stretch;
-}
-.concept-branch-card {
-    position: relative;
-    background: rgba(255,255,255,.96);
-    border: 1px solid rgba(15,118,110,.12);
-    border-radius: 1.1rem;
-    padding: 1rem 1rem .95rem;
-    box-shadow: 0 14px 30px rgba(15,118,110,.07);
-}
-.concept-branch-card::after {
-    content: '';
-    position: absolute;
-    width: 72px;
-    height: 2px;
-    background: linear-gradient(90deg, #74c8ba 0%, rgba(116,200,186,.05) 100%);
-    top: 50%;
-}
-.concept-branch-card:nth-child(odd)::after { right: -72px; }
-.concept-branch-card:nth-child(even)::after { left: -72px; transform: scaleX(-1); }
-.concept-branch-grid .concept-branch-card:nth-child(1),
-.concept-branch-grid .concept-branch-card:nth-child(2) { align-self: start; }
-.concept-branch-grid .concept-branch-card:nth-child(3),
-.concept-branch-grid .concept-branch-card:nth-child(4) { align-self: end; }
-.concept-branch-tag {
-    display: inline-flex;
-    font-size: .76rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: #0f766e;
-    background: #e9f7f4;
-    border-radius: 999px;
-    padding: .28rem .6rem;
-    margin-bottom: .55rem;
-}
-.concept-branch-card h4 {
-    margin: 0 0 .45rem;
-    font-size: 1.22rem;
-    color: #133c38;
-}
-.concept-branch-card p {
-    margin: 0 0 .5rem;
-    color: #47605c;
-}
-.mini-points { display: grid; gap: .45rem; }
-.premium-pelvis {
-    filter: saturate(1.02) contrast(1.02);
-}
-.anatomy-board {
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 12px 26px rgba(15,118,110,.05);
-}
-.marker-pin {
-    width: 3.1rem;
-    height: 3.1rem;
-    font-size: 1.12rem;
-    border: 4px solid #ffffff;
-    box-shadow: 0 14px 28px rgba(15, 139, 125, .24);
-}
-.marker-item {
-    border-radius: 1rem;
-    box-shadow: 0 8px 18px rgba(15,118,110,.05);
-}
-@media (max-width: 980px) {
-    .concept-map-shell { min-height: auto; }
-    .concept-center-wrap { position: static; pointer-events: auto; margin-bottom: 1rem; }
-    .concept-center-node { width: 100%; max-width: 320px; height: auto; min-height: 150px; margin: 0 auto; font-size: 1.55rem; }
-    .concept-branch-grid { grid-template-columns: 1fr; min-height: auto; gap: 1rem; }
-    .concept-branch-card::after { display: none; }
-}
-
-
-/* ===== FIX 500 SAFE + GRÁFICOS 10/10 ESTABLE ===== */
-.resource-span-2 { grid-column: 1 / -1; }
-.visual-card-premium { width: 100%; overflow: hidden; }
-.concept-map-card, .concept-map-shell, .mermaid-shell, .anatomy-board { max-width: 100%; box-sizing: border-box; }
-.concept-branch-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-@media (max-width: 980px) {
-  .concept-branch-grid { grid-template-columns: 1fr !important; }
-}
-
-
-/* ===== FIX MAPA MENTAL LIMPIO Y LEGIBLE ===== */
-.concept-map-card {
-    background: linear-gradient(180deg, #fbffff 0%, #f6fbfa 100%) !important;
-    border: 1px solid rgba(15, 118, 110, .14) !important;
-    border-radius: 1.15rem !important;
-    padding: 1rem !important;
-}
-.concept-map-shell {
-    position: relative !important;
-    min-height: auto !important;
-    display: grid !important;
-    gap: 1rem !important;
-    padding: 1rem !important;
-    overflow: visible !important;
-    background:
-        radial-gradient(circle at top left, rgba(15, 139, 125, .10), transparent 34%),
-        linear-gradient(180deg, #ffffff 0%, #f7fbfb 100%) !important;
-    border-radius: 1rem !important;
-}
-.concept-center-wrap {
-    position: static !important;
-    inset: auto !important;
-    display: block !important;
-    pointer-events: auto !important;
-    margin: 0 !important;
-}
-.concept-center-node {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: auto !important;
-    border-radius: 1rem !important;
-    display: block !important;
-    text-align: left !important;
-    padding: 1rem 1.15rem !important;
-    font-size: 1.45rem !important;
-    line-height: 1.25 !important;
-    color: #083b37 !important;
-    background: linear-gradient(135deg, #dff7f3 0%, #bcece3 100%) !important;
-    border: 1px solid rgba(15, 118, 110, .20) !important;
-    border-left: .55rem solid #0f8b7d !important;
-    box-shadow: 0 10px 24px rgba(15, 118, 110, .10) !important;
-}
-.concept-center-node::before {
-    content: 'TEMA CENTRAL';
-    display: block;
-    width: max-content;
-    max-width: 100%;
-    margin-bottom: .45rem;
-    padding: .22rem .55rem;
-    border-radius: 999px;
-    background: rgba(255,255,255,.72);
-    color: #0f766e;
-    font-size: .72rem;
-    font-weight: 800;
-    letter-spacing: .08em;
-}
-.concept-branch-grid {
-    position: static !important;
-    z-index: 1 !important;
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)) !important;
-    gap: 1rem !important;
-    min-height: auto !important;
-    align-items: stretch !important;
-}
-.concept-branch-card {
-    min-height: 100% !important;
-    border-radius: 1rem !important;
-    padding: 1rem !important;
-    background: #ffffff !important;
-    border: 1px solid rgba(15, 118, 110, .13) !important;
-    box-shadow: 0 10px 22px rgba(15, 118, 110, .06) !important;
-}
-.concept-branch-card::after {
-    display: none !important;
-}
-.concept-branch-tag {
-    background: #e5f7f4 !important;
-    color: #08756d !important;
-}
-.concept-branch-card h4 {
-    font-size: 1.08rem !important;
-    line-height: 1.25 !important;
-}
-.mini-points li {
-    align-items: flex-start !important;
-}
-@media (max-width: 720px) {
-    .concept-center-node { font-size: 1.2rem !important; }
-    .concept-branch-grid { grid-template-columns: 1fr !important; }
-}
-
-
-.study-generated-image {
-    width: 100%;
-    max-width: 100%;
-    display: block;
-    border-radius: 22px;
-    border: 1px solid #d9ece8;
-    box-shadow: 0 18px 40px rgba(15, 118, 110, 0.12);
-    background: #f8fbfb;
-}
-
-.generated-visual-card,
-.generated-anatomy-card {
-    background: linear-gradient(180deg, #ffffff 0%, #f7fbfa 100%);
-    border: 1px solid #dcefeb;
-    border-radius: 24px;
-    padding: 16px;
-}
-
-.image-pending-box {
-    border: 1px dashed #7bbdb5;
-    background: #f5fbfa;
-    color: #23423f;
-    border-radius: 18px;
-    padding: 18px;
-}
-
-.image-pending-box p {
-    margin: .4rem 0 0;
-    color: #4b5563;
-}
-
-.visual-modal-source {
-    display: none;
-}
-
-.visual-modal-body .study-generated-image {
-    max-height: 82vh;
-    object-fit: contain;
-}
-
-
-
-/* ===== MAPA MENTAL 100/10: texto real, limpio y sin imágenes deformes ===== */
-.mindmap-pro {
-    position: relative;
-    overflow: hidden;
-    border-radius: 28px;
-    padding: 24px;
-    background:
-        radial-gradient(circle at 10% 10%, rgba(20, 184, 166, .16), transparent 28%),
-        radial-gradient(circle at 90% 20%, rgba(45, 212, 191, .12), transparent 28%),
-        linear-gradient(135deg, #f8fffe 0%, #eefbf8 100%);
-    border: 1px solid rgba(15, 118, 110, .18);
-    box-shadow: 0 18px 45px rgba(15, 118, 110, .08);
-}
-.mindmap-pro::before {
-    content: '';
-    position: absolute;
-    inset: 22px;
-    border-radius: 22px;
-    border: 1px dashed rgba(15, 118, 110, .18);
-    pointer-events: none;
-}
-.mindmap-core {
-    position: relative;
-    z-index: 2;
-    max-width: 760px;
-    margin: 0 auto 22px;
-    padding: 20px 24px;
-    border-radius: 24px;
-    text-align: center;
-    color: #052f2b;
-    background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
-    border: 1px solid rgba(15, 118, 110, .24);
-    box-shadow: 0 16px 35px rgba(15, 118, 110, .16);
-}
-.mindmap-kicker {
-    display: inline-flex;
-    padding: .24rem .7rem;
-    border-radius: 999px;
-    background: rgba(255,255,255,.75);
-    color: #0f766e;
-    font-size: .74rem;
-    font-weight: 900;
-    letter-spacing: .09em;
-    text-transform: uppercase;
-    margin-bottom: .55rem;
-}
-.mindmap-core strong {
-    display: block;
-    font-size: clamp(1.55rem, 3vw, 2.55rem);
-    line-height: 1.05;
-    letter-spacing: -.04em;
-}
-.mindmap-core small {
-    display: block;
-    margin-top: .45rem;
-    color: #27645d;
-    font-weight: 700;
-}
-.mindmap-branches {
-    position: relative;
-    z-index: 2;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-}
-.mindmap-branch {
-    position: relative;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 14px;
-    align-items: flex-start;
-    min-height: 172px;
-    padding: 18px;
-    border-radius: 22px;
-    background: rgba(255,255,255,.88);
-    border: 1px solid rgba(15, 118, 110, .14);
-    box-shadow: 0 14px 30px rgba(15, 118, 110, .08);
-}
-.branch-number {
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    color: #fff;
-    background: #0f766e;
-    font-weight: 900;
-    box-shadow: 0 10px 18px rgba(15, 118, 110, .24);
-}
-.branch-label {
-    display: inline-flex;
-    margin-bottom: .35rem;
-    padding: .18rem .55rem;
-    border-radius: 999px;
-    background: #e6fffb;
-    color: #0f766e;
-    font-size: .72rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: .07em;
-}
-.mindmap-branch h4 {
-    margin: 0 0 .45rem;
-    font-size: 1.18rem;
-    color: #062f2c;
-    line-height: 1.15;
-}
-.mindmap-branch p {
-    margin: 0 0 .6rem;
-    color: #365a56;
-}
-.mindmap-branch ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: grid;
-    gap: .38rem;
-}
-.mindmap-branch li {
-    position: relative;
-    padding-left: 1.35rem;
-    color: #143b37;
-}
-.mindmap-branch li::before {
-    content: '✓';
-    position: absolute;
-    left: 0;
-    top: 0;
-    color: #0f766e;
-    font-weight: 900;
-}
-.branch-1 { border-left: 6px solid #0f766e; }
-.branch-2 { border-left: 6px solid #0891b2; }
-.branch-3 { border-left: 6px solid #7c3aed; }
-.branch-4 { border-left: 6px solid #f59e0b; }
-
-.anatomy-image-wrap {
-    position: relative;
-    overflow: hidden;
-    border-radius: 22px;
-}
-.anatomy-marker {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    border: 3px solid #ffffff;
-    background: #0f8b7d;
-    color: #ffffff;
-    font-weight: 900;
-    display: grid;
-    place-items: center;
-    box-shadow: 0 10px 22px rgba(15, 118, 110, .35);
-    cursor: help;
-    z-index: 3;
-}
-.marker-legend-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: .75rem;
-}
-.marker-study-card {
-    border: 1px solid rgba(15, 118, 110, .14);
-    border-radius: 16px;
-    padding: .85rem;
-    background: #f8fffe;
-}
-.marker-study-card summary {
-    cursor: pointer;
-    font-weight: 800;
-    color: #0b3b37;
-}
-.marker-dot-mini {
-    display: inline-grid;
-    place-items: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: #0f766e;
-    color: #fff;
-    margin-right: .35rem;
-    font-size: .8rem;
-}
-@media (max-width: 820px) {
-    .mindmap-branches { grid-template-columns: 1fr; }
-    .mindmap-pro { padding: 16px; }
-}
-
-</style>
-
-<script type="module">
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', theme: 'base', themeVariables: { primaryColor: '#e8f7f3', primaryTextColor: '#153b38', primaryBorderColor: '#0f766e', lineColor: '#27645d', secondaryColor: '#f2fbf9', tertiaryColor: '#ffffff', fontSize: '22px', clusterBkg: '#f7fbfb', clusterBorder: '#0f766e' }, flowchart: { curve: 'basis', useMaxWidth: true, htmlLabels: true }, mindmap: { padding: 18 } });
-</script>
-
-<script>
-    let activeUtterance = null;
-
-    window.playStudyAudio = function(text) {
-        if (!('speechSynthesis' in window)) {
-            alert('Tu navegador no soporta audio por voz.');
-            return;
-        }
-        stopStudyAudio();
-        activeUtterance = new SpeechSynthesisUtterance(text);
-        activeUtterance.lang = 'es-ES';
-        activeUtterance.rate = 0.95;
-        activeUtterance.pitch = 1;
-        window.speechSynthesis.speak(activeUtterance);
-    }
-
-    window.stopStudyAudio = function() {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-        }
-        activeUtterance = null;
-    }
-
-
-
-    window.gradeQuiz = function(button) {
-        const panel = button.closest('.quiz-panel');
-        if (!panel) return;
-
-        const questions = panel.querySelectorAll('[data-question]');
-        let correct = 0;
-        let answered = 0;
-
-        questions.forEach((question) => {
-            const options = question.querySelectorAll('.quiz-option');
-            const selected = question.querySelector('input[type="radio"]:checked');
-            const explanation = question.querySelector('.quiz-explanation');
-
-            options.forEach((label) => label.classList.remove('is-correct', 'is-wrong'));
-
-            if (selected) {
-                answered += 1;
-                const selectedLabel = selected.closest('.quiz-option');
-                if (selected.dataset.correct === 'true') {
-                    correct += 1;
-                    selectedLabel.classList.add('is-correct');
-                } else {
-                    selectedLabel.classList.add('is-wrong');
-                }
+    modalidades = []
+    for clave, puntaje in puntajes.items():
+        porcentaje = round((puntaje / total) * 100)
+        modalidades.append(
+            {
+                "clave": clave,
+                "nombre": MODALIDADES_VARK[clave],
+                "puntaje": puntaje,
+                "porcentaje": porcentaje,
+                "reglas": REGLAS_VARK[clave],
             }
+        )
 
-            options.forEach((label) => {
-                const input = label.querySelector('input');
-                if (input && input.dataset.correct === 'true') {
-                    label.classList.add('is-correct');
-                }
-            });
+    modalidades_ordenadas = sorted(modalidades, key=lambda item: item["puntaje"], reverse=True)
+    dominante = MODALIDADES_VARK.get(perfil_vark.estilo_principal, perfil_vark.estilo_display)
+    activas = [item for item in modalidades_ordenadas if item["puntaje"] > 0]
+    secundarias = [item for item in activas if item["clave"] != perfil_vark.estilo_principal]
 
-            if (explanation) explanation.classList.add('is-visible');
-        });
+    mezcla = ", ".join(
+        f"{item['nombre']} {item['porcentaje']}%" for item in activas
+    ) or f"{dominante} como perfil principal"
 
-        const score = panel.querySelector('.quiz-score');
-        if (score) {
-            score.textContent = `Resultado: ${correct}/${questions.length} correctas (${answered}/${questions.length} respondidas)`;
-        }
+    reglas_activas = [
+        f"{item['nombre']} ({item['porcentaje']}%): " + ", ".join(item["reglas"][:4])
+        for item in activas
+    ]
 
-        const puntajeInput = panel.querySelector('input[name="quiz_puntaje"]');
-        const totalInput = panel.querySelector('input[name="quiz_total"]');
-        if (puntajeInput && totalInput) {
-            puntajeInput.value = correct;
-            totalInput.value = questions.length;
-        }
+    return {
+        "puntajes": puntajes,
+        "modalidades": modalidades_ordenadas,
+        "dominante": dominante,
+        "secundarias": secundarias,
+        "mezcla": mezcla,
+        "reglas_activas": reglas_activas,
     }
 
-    window.toggleMarkerDetail = function(id) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.classList.toggle('is-visible');
-        }
+
+def construir_contexto_materiales(materiales):
+    partes = []
+    for material in materiales:
+        partes.append(f"Material: {material.titulo}")
+        partes.append(f"Tema general: {material.tema or 'No especificado'}")
+        if material.temario_examen:
+            partes.append("Temario del examen:")
+            partes.append(material.temario_examen)
+        if material.resumen_ia:
+            partes.append("Resumen IA:")
+            partes.append(material.resumen_ia)
+        if material.temas_clave_ia:
+            partes.append("Temas clave IA:")
+            partes.append(material.temas_clave_ia)
+        if material.preguntas_sugeridas_ia:
+            partes.append("Preguntas sugeridas IA:")
+            partes.append(material.preguntas_sugeridas_ia)
+        if material.recomendacion_ia:
+            partes.append("Recomendación IA:")
+            partes.append(material.recomendacion_ia)
+        if material.texto_extraido:
+            texto_recortado = Truncator(material.texto_extraido).chars(9000)
+            partes.append("Texto extraído parcial:")
+            partes.append(texto_recortado)
+        partes.append("\n---\n")
+
+    contexto = "\n".join(partes).strip()
+    return Truncator(contexto).chars(MAX_CARACTERES_CONTEXTO_MATERIAL)
+
+
+def generar_ruta_con_gemini(
+    perfil_vark,
+    perfil_vark_detalle,
+    datos_academicos,
+    materiales,
+    contexto_materiales,
+    dias_hasta_examen,
+    dias_planificados,
+):
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return {}
+    if os.getenv("LLM_PROVIDER", "gemini").strip().lower() != "gemini":
+        return {}
+
+    try:
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=api_key)
+        model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite").strip()
+
+        temarios = [material.temario_examen for material in materiales if material.temario_examen]
+        temario_unificado = "\n".join(temarios).strip()
+        origen_contexto = (
+            "dataset interno de Anatomía I + materiales procesados del estudiante"
+            if materiales else
+            "dataset interno de Anatomía I sin materiales adicionales"
+        )
+        reglas_vark_texto = "\n".join(f"- {regla}" for regla in perfil_vark_detalle["reglas_activas"])
+
+        prompt = f'''
+Actúa como tutor experto de Anatomía I. Debes generar una ruta multirecurso, concreta y muy accionable.
+
+OBJETIVO CENTRAL:
+La ruta debe ayudar a aprender de verdad. No debe ser solo texto. Cada día debe incluir recursos concretos que el estudiante pueda usar directamente: audio, mapa mental, ejercicio práctico e imagen anatómica guiada cuando aplique.
+
+BASE OBLIGATORIA:
+- Libro base del dataset: Rouvière y Delmas, Anatomía Humana descriptiva, topográfica y funcional. Tomo 2: Tronco.
+- El tema y el punto específico fueron seleccionados desde un dataset interno del libro.
+- La ruta debe generarse incluso si no hay materiales subidos.
+- Los materiales subidos son opcionales y solo enriquecen el contexto.
+- Origen del contexto actual: {origen_contexto}.
+
+DATOS DEL ESTUDIANTE:
+- Estilo VARK principal: {perfil_vark.estilo_display}
+- Distribución VARK real: {perfil_vark_detalle['mezcla']}
+- Puntaje visual: {perfil_vark.puntaje_visual}
+- Puntaje auditivo: {perfil_vark.puntaje_auditivo}
+- Puntaje lectura/escritura: {perfil_vark.puntaje_lectura}
+- Puntaje kinestésico: {perfil_vark.puntaje_kinestesico}
+
+REGLAS DE ADAPTACIÓN VARK:
+{reglas_vark_texto}
+
+INTERPRETACIÓN OBLIGATORIA DEL PERFIL:
+- No basta con nombrar el estilo principal.
+- Convierte la distribución VARK en recursos reales.
+- Si Auditivo tiene el mayor puntaje, cada día debe incluir un guion de audio breve, natural, conversacional y escuchable; no debe parecer un texto académico largo. Debe sonar como una explicación docente clara y motivadora.
+- Si Visual tiene puntaje positivo, cada día debe incluir un recurso visual y una imagen anatómica guiada o señalada.
+- Si Kinestésico tiene puntaje positivo, cada día debe incluir un ejercicio práctico de identificación o aplicación.
+- Si Lectura/Escritura tiene puntaje positivo, incluye un resumen o glosario.
+- Si una modalidad tiene 0 puntos, no la priorices.
+- Ejemplo: Auditivo 50%, Visual 30%, Kinestésico 20%, Lectura 0% debe producir una ruta principalmente auditiva, con apoyo visual, imagen anatómica guiada y práctica kinestésica.
+
+DATOS ACADÉMICOS:
+- Materia: {datos_academicos.materia}
+- Tema actual seleccionado: {datos_academicos.tema_actual}
+- Punto específico difícil: {datos_academicos.temas_dificiles or 'No especificado'}
+- Fecha de examen: {datos_academicos.fecha_examen_formateada}
+- Días hasta el examen: {dias_hasta_examen}
+- Días a planificar ahora: {dias_planificados}
+- Minutos por día: {datos_academicos.minutos_por_dia}
+- Tipo de examen: {datos_academicos.get_tipo_examen_display()}
+- Objetivo de estudio: {datos_academicos.objetivo_estudio or 'No especificado'}
+
+TEMARIO EXTRAÍDO DE MATERIALES SI EXISTE:
+"""
+{temario_unificado or 'No hay temario adicional cargado por materiales.'}
+"""
+
+CONTEXTO DE MATERIALES ANALIZADOS SI EXISTE:
+"""
+{contexto_materiales or 'No hay materiales subidos. Usa el dataset interno y el tema seleccionado para crear la ruta.'}
+"""
+
+Devuelve únicamente JSON válido con esta estructura exacta:
+{{
+  "titulo": "Título de la ruta",
+  "resumen_general": "Resumen breve de la estrategia",
+  "temas_priorizados": ["Tema 1", "Tema 2", "Tema 3"],
+  "plan_diario": [
+    {{
+      "dia": 1,
+      "titulo": "Título del día",
+      "tema_principal": "Tema del día",
+      "objetivo": "Objetivo concreto",
+      "minutos": 15,
+      "enfoque_vark": "Cómo se mezcla VARK hoy",
+      "recurso_vark": "Recurso dominante del día",
+      "uso_materiales": "Dataset base o dataset + materiales",
+      "actividades": ["Actividad 1", "Actividad 2", "Actividad 3"],
+      "autoevaluacion": ["Pregunta 1", "Pregunta 2"],
+      "producto_esperado": "Resultado esperado del día",
+      "mini_quiz": [
+        {{
+          "pregunta": "Pregunta evaluable del día",
+          "opciones": ["Opción A", "Opción B", "Opción C", "Opción D"],
+          "respuesta_correcta": "Opción A",
+          "explicacion": "Explicación breve de por qué esa respuesta es correcta"
+        }}
+      ],
+      "recursos": {{
+        "audio": {{
+          "habilitado": true,
+          "titulo": "Audio del día",
+          "guion": "Guion claro para ser escuchado en voz alta, de 90 a 180 palabras",
+          "pasos_clave": ["Punto 1", "Punto 2", "Punto 3"]
+        }},
+        "visual": {{
+          "habilitado": true,
+          "titulo": "Mapa mental del tema",
+          "tipo": "mapa_mental_html",
+          "descripcion": "Descripción breve del mapa mental",
+          "nodo_central": "Tema central en máximo 4 palabras",
+          "ramas": [
+            {{"titulo": "Rama 1", "detalle": "Explicación breve", "subpuntos": ["Subpunto 1", "Subpunto 2"]}},
+            {{"titulo": "Rama 2", "detalle": "Explicación breve", "subpuntos": ["Subpunto 1", "Subpunto 2"]}},
+            {{"titulo": "Rama 3", "detalle": "Explicación breve", "subpuntos": ["Subpunto 1", "Subpunto 2"]}},
+            {{"titulo": "Rama 4", "detalle": "Explicación breve", "subpuntos": ["Subpunto 1", "Subpunto 2"]}}
+          ],
+          "apoyo_visual": ["Idea visual 1", "Idea visual 2", "Idea visual 3"]
+        }},
+        "kinestesico": {{
+          "habilitado": true,
+          "titulo": "Ejercicio práctico",
+          "instrucciones": "Instrucciones del ejercicio práctico",
+          "preguntas": ["Pregunta práctica 1", "Pregunta práctica 2"]
+        }},
+        "lectura": {{
+          "habilitado": false,
+          "titulo": "Resumen de lectura",
+          "resumen": "Resumen corto si esta modalidad tiene puntaje positivo",
+          "glosario": ["Término: definición breve"]
+        }},
+        "imagen_anatomica": {{
+          "habilitado": true,
+          "titulo": "Lámina anatómica generada por IA",
+          "tipo_vista": "superior/anterior/lateral según corresponda",
+          "descripcion": "Descripción breve de la lámina anatómica que debe observar el estudiante",
+          "prompt_imagen": "Prompt detallado en español para crear una ilustración anatómica educativa estilo atlas médico sobre el tema del día",
+          "preguntas": ["¿Qué estructura principal observas?", "¿Qué relación anatómica debes identificar?"],
+          "modo_practica": "Primero observar la imagen sin leer respuestas y luego responder las preguntas"
+        }}
+      }}
+    }}
+  ],
+  "recomendaciones_finales": ["Recomendación 1", "Recomendación 2", "Recomendación 3"]
+}}
+
+REGLAS OBLIGATORIAS:
+- Escribe en español.
+- plan_diario debe tener exactamente {dias_planificados} elementos.
+- Cada día debe usar como máximo {datos_academicos.minutos_por_dia} minutos.
+- Enfoca la ruta en el tema actual y el punto específico difícil.
+- Si Auditivo > 0, genera audio.habilitado=true.
+- Si Visual > 0, genera visual.habilitado=true. Debe incluir nodo_central y exactamente 4 ramas. Cada rama debe tener titulo, detalle y 2 o 3 subpuntos. NO generes imagen para el mapa mental; el sistema lo dibujará como HTML/SVG limpio.
+- Si Visual > 0 o Kinestésico > 0, genera imagen_anatomica.habilitado=true. Debe incluir descripcion, preguntas, modo_practica y, si es posible, marcadores sugeridos con nombre, pista y detalle. El sistema construirá un prompt visual controlado por tema.
+- No uses Mermaid como recurso principal.
+- No uses texto dentro de imágenes generadas. El sistema añadirá textos, preguntas y marcadores fuera o encima de la imagen.
+- Si Kinestésico > 0, genera kinestesico.habilitado=true.
+- Si Lectura/Escritura > 0, genera lectura.habilitado=true; si es 0, puede quedar false.
+- No inventes detalles anatómicos ultraespecíficos fuera del contexto; si falta precisión, enfoca la lámina en relaciones generales del tema y subtema, priorizando una vista anatómica realista y coherente.
+- Cada día debe incluir mini_quiz con 3 preguntas evaluables.
+- Cada pregunta del mini_quiz debe tener exactamente 4 opciones y una respuesta_correcta que coincida exactamente con una opción.
+- Las preguntas deben evaluar el tema del día, la lámina, el audio o el ejercicio práctico.
+- No uses markdown fuera del string mermaid.
+- No agregues texto fuera del JSON.
+'''
+
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.35,
+            ),
+        )
+
+        contenido = limpiar_json(response.text)
+        data = json.loads(contenido)
+        return validar_respuesta_ruta(data, dias_planificados, datos_academicos.minutos_por_dia)
+
+    except Exception as error:
+        print("Error generando ruta con Gemini:", error)
+        return {}
+
+
+def validar_respuesta_ruta(data, dias_planificados, minutos_maximos):
+    if not isinstance(data, dict):
+        return {}
+
+    plan_diario = data.get("plan_diario", [])
+    if not isinstance(plan_diario, list):
+        plan_diario = []
+
+    plan_limpio = []
+    for index, dia in enumerate(plan_diario[:dias_planificados], start=1):
+        if not isinstance(dia, dict):
+            continue
+
+        minutos = int(dia.get("minutos") or minutos_maximos)
+        minutos = max(5, min(minutos, minutos_maximos))
+        recursos = dia.get("recursos") if isinstance(dia.get("recursos"), dict) else {}
+
+        plan_limpio.append(
+            {
+                "dia": int(dia.get("dia") or index),
+                "titulo": str(dia.get("titulo", f"Día {index}")).strip(),
+                "tema_principal": str(dia.get("tema_principal", "")).strip(),
+                "objetivo": str(dia.get("objetivo", "")).strip(),
+                "minutos": minutos,
+                "enfoque_vark": str(dia.get("enfoque_vark", "")).strip(),
+                "recurso_vark": str(dia.get("recurso_vark", "")).strip(),
+                "uso_materiales": str(dia.get("uso_materiales", "")).strip(),
+                "actividades": normalizar_lista(dia.get("actividades", [])),
+                "autoevaluacion": normalizar_lista(dia.get("autoevaluacion", [])),
+                "producto_esperado": str(dia.get("producto_esperado", "")).strip(),
+                "mini_quiz": normalizar_mini_quiz(dia.get("mini_quiz", [])),
+                "recursos": {
+                    "audio": normalizar_audio(recursos.get("audio", {})),
+                    "visual": normalizar_visual(recursos.get("visual", {})),
+                    "kinestesico": normalizar_kinestesico(recursos.get("kinestesico", {})),
+                    "lectura": normalizar_lectura(recursos.get("lectura", {})),
+                    "imagen_anatomica": normalizar_imagen_anatomica(recursos.get("imagen_anatomica", {})),
+                },
+            }
+        )
+
+    if not plan_limpio:
+        return {}
+
+    return {
+        "titulo": str(data.get("titulo", "Ruta de aprendizaje personalizada")).strip(),
+        "resumen_general": str(data.get("resumen_general", "")).strip(),
+        "temas_priorizados": normalizar_lista(data.get("temas_priorizados", [])),
+        "plan_diario": plan_limpio,
+        "recomendaciones_finales": normalizar_lista(data.get("recomendaciones_finales", [])),
     }
 
-    document.addEventListener("DOMContentLoaded", function () {
-        document.querySelectorAll(".progress-bar-fill").forEach(function (bar) {
-            const progress = bar.dataset.progress || "0";
-            bar.style.width = progress + "%";
-        });
 
-        document.querySelectorAll(".marker-pin").forEach(function (pin) {
-            const x = pin.dataset.x || "50";
-            const y = pin.dataset.y || "50";
-            pin.style.left = x + "%";
-            pin.style.top = y + "%";
+def generar_ruta_respaldo(
+    perfil_vark,
+    perfil_vark_detalle,
+    datos_academicos,
+    dias_hasta_examen,
+    dias_planificados,
+):
+    temas_base = []
+    if datos_academicos.tema_actual:
+        temas_base.append(datos_academicos.tema_actual)
+    if datos_academicos.temas_dificiles:
+        temas_base.append(datos_academicos.temas_dificiles)
+    temas_base.extend(["Repaso guiado", "Autoevaluación", "Refuerzo final"])
 
-            pin.addEventListener("click", function () {
-                const targetId = pin.dataset.target;
-                const target = document.getElementById(targetId);
-                if (target) target.classList.toggle("is-visible");
-            });
-        });
+    mezcla = perfil_vark_detalle["mezcla"]
+    tiene_visual = perfil_vark.puntaje_visual > 0
+    tiene_audio = perfil_vark.puntaje_auditivo > 0
+    tiene_lectura = perfil_vark.puntaje_lectura > 0
+    tiene_kin = perfil_vark.puntaje_kinestesico > 0
 
-        document.querySelectorAll(".anatomy-marker").forEach(function (marker) {
-            const x = marker.dataset.x || "50";
-            const y = marker.dataset.y || "50";
-            marker.style.left = x + "%";
-            marker.style.top = y + "%";
-        });
+    plan = []
+    for dia in range(1, dias_planificados + 1):
+        tema = temas_base[(dia - 1) % len(temas_base)]
+        audio_habilitado = tiene_audio
+        visual_habilitado = tiene_visual
+        kin_habilitado = tiene_kin
+        lectura_habilitada = tiene_lectura
+        imagen_habilitada = tiene_visual or tiene_kin
 
-        document.querySelectorAll("[data-toggle-target]").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-                const target = document.getElementById(btn.dataset.toggleTarget);
-                if (target) target.classList.toggle("is-visible");
-            });
-        });
+        mermaid = (
+            f"mindmap\n"
+            f"  root(({tema}))\n"
+            f"    Definición\n"
+            f"    Ubicación\n"
+            f"    Relaciones\n"
+            f"    Punto difícil\n"
+            f"      {datos_academicos.temas_dificiles or 'Repasar'}"
+        )
 
-        const modal = document.getElementById('visual-modal');
-        const modalBody = document.getElementById('visual-modal-body');
+        marcadores = [
+            {
+                "id": 1,
+                "nombre": tema,
+                "x": 50,
+                "y": 28,
+                "pista": "Ubica la región o estructura principal del tema.",
+                "detalle": f"Reconoce la idea principal relacionada con {tema}.",
+            },
+            {
+                "id": 2,
+                "nombre": datos_academicos.temas_dificiles or "Punto difícil",
+                "x": 52,
+                "y": 60,
+                "pista": "Este es el punto específico que debes reforzar.",
+                "detalle": "Relaciónalo con el tema principal del día.",
+            },
+        ]
 
-        document.querySelectorAll('[data-open-visual]').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                let source = null;
-                const key = btn.dataset.openVisual || '';
-                const directSource = document.getElementById(key);
+        plan.append(
+            {
+                "dia": dia,
+                "titulo": f"Día {dia}: {tema}",
+                "tema_principal": tema,
+                "objetivo": f"Comprender y repasar {tema} usando una mezcla VARK adaptada a {mezcla}.",
+                "minutos": datos_academicos.minutos_por_dia,
+                "enfoque_vark": (
+                    f"Se prioriza {perfil_vark.estilo_display}. También se incorporan apoyos de {mezcla}."
+                ),
+                "recurso_vark": "Ruta multirecurso con audio, mapa, lámina anatómica y ejercicio práctico.",
+                "uso_materiales": "Dataset base de Anatomía I. Puedes subir materiales para enriquecer esta ruta.",
+                "actividades": [
+                    f"Repasa el tema {tema} durante 5 minutos.",
+                    "Escucha el guion generado y repítelo en voz alta.",
+                    "Observa el mapa mental y la lámina anatómica con marcadores.",
+                    "Resuelve el ejercicio práctico de identificación.",
+                ],
+                "autoevaluacion": [
+                    f"Explica con tus palabras qué es {tema}.",
+                    "Menciona dos relaciones anatómicas importantes.",
+                    "Identifica el marcador 1 y el marcador 2 antes de revelar la respuesta.",
+                ],
+                "producto_esperado": "Un repaso activo con audio, esquema visual, lámina señalada, ejercicio práctico y mini quiz completado.",
+                "mini_quiz": [
+                    {
+                        "pregunta": f"¿Cuál es el tema principal del día {dia}?",
+                        "opciones": [tema, "Sistema nervioso central", "Miembro superior", "Neurocráneo"],
+                        "respuesta_correcta": tema,
+                        "explicacion": f"El día {dia} está centrado en {tema}, seleccionado desde tus datos académicos o el dataset.",
+                    },
+                    {
+                        "pregunta": "¿Qué debes hacer primero en la lámina anatómica guiada?",
+                        "opciones": [
+                            "Identificar los marcadores antes de revelar la respuesta",
+                            "Copiar todo el texto sin observar la imagen",
+                            "Ignorar el punto difícil",
+                            "Saltar directamente al examen final",
+                        ],
+                        "respuesta_correcta": "Identificar los marcadores antes de revelar la respuesta",
+                        "explicacion": "La práctica visual y kinestésica mejora cuando intentas reconocer primero y luego verificas.",
+                    },
+                    {
+                        "pregunta": f"¿Qué punto debes priorizar durante el repaso de {tema}?",
+                        "opciones": [
+                            datos_academicos.temas_dificiles or "El punto difícil seleccionado",
+                            "Un tema no relacionado",
+                            "Solo la decoración del mapa",
+                            "Ningún punto específico",
+                        ],
+                        "respuesta_correcta": datos_academicos.temas_dificiles or "El punto difícil seleccionado",
+                        "explicacion": "La ruta prioriza el punto específico que marcaste como más difícil.",
+                    },
+                ],
+                "recursos": {
+                    "audio": {
+                        "habilitado": audio_habilitado,
+                        "titulo": f"Audio: resumen de {tema}",
+                        "guion": (
+                            f"Hoy estudiarás {tema}. Primero comprende su idea general, su ubicación anatómica y su relación con "
+                            f"el punto que más te cuesta: {datos_academicos.temas_dificiles or 'el subtema seleccionado'}. "
+                            f"Repite en voz alta las ideas principales y trata de explicarlas como si enseñaras a otra persona."
+                        ),
+                        "pasos_clave": [
+                            "Definir el tema con una frase clara.",
+                            "Ubicarlo dentro del tronco.",
+                            "Relacionarlo con el punto difícil seleccionado.",
+                        ],
+                    },
+                    "visual": {
+                        "habilitado": visual_habilitado,
+                        "titulo": f"Mapa mental de {tema}",
+                        "tipo": "mapa_mental",
+                        "nodo_central": tema,
+                        "ramas": [
+                            {
+                                "titulo": "Definición",
+                                "detalle": f"Idea central de {tema} explicada con palabras simples.",
+                                "subpuntos": ["Concepto base", "Función o importancia"],
+                            },
+                            {
+                                "titulo": "Ubicación",
+                                "detalle": "Dónde se reconoce dentro del tema anatómico seleccionado.",
+                                "subpuntos": ["Región principal", "Referencia espacial"],
+                            },
+                            {
+                                "titulo": "Relaciones",
+                                "detalle": "Estructuras o conceptos que debes conectar para comprenderlo mejor.",
+                                "subpuntos": ["Relación cercana", "Límite o conexión"],
+                            },
+                            {
+                                "titulo": "Punto difícil",
+                                "detalle": datos_academicos.temas_dificiles or "Subtema que debes reforzar durante el repaso.",
+                                "subpuntos": ["Identificar", "Explicar sin mirar"],
+                            },
+                        ],
+                        "mermaid": mermaid,
+                        "apoyo_visual": [
+                            "Ubicación general",
+                            "Relaciones anatómicas",
+                            datos_academicos.temas_dificiles or "Punto difícil",
+                        ],
+                    },
+                    "kinestesico": {
+                        "habilitado": kin_habilitado,
+                        "titulo": f"Ejercicio práctico sobre {tema}",
+                        "instrucciones": (
+                            f"Sin mirar tus apuntes, identifica tres ideas principales de {tema} y compáralas con el punto difícil seleccionado."
+                        ),
+                        "preguntas": [
+                            f"¿Cómo se relaciona {tema} con {datos_academicos.temas_dificiles or 'el punto difícil'}?",
+                            f"¿Qué estructura o concepto debes reconocer primero en {tema}?",
+                            "¿Qué volverías a practicar para fijar mejor el aprendizaje?",
+                        ],
+                    },
+                    "lectura": {
+                        "habilitado": lectura_habilitada,
+                        "titulo": f"Resumen escrito de {tema}",
+                        "resumen": (
+                            f"Resume {tema} en 4 o 5 líneas, enfocándote en definición, ubicación, relaciones y el punto difícil elegido."
+                        ),
+                        "glosario": [
+                            f"{tema}: concepto principal del día.",
+                            f"{datos_academicos.temas_dificiles or 'Punto difícil'}: subtema a reforzar.",
+                        ],
+                    },
+                    "imagen_anatomica": {
+                        "habilitado": imagen_habilitada,
+                        "titulo": f"Lámina anatómica guiada de {tema}",
+                        "tipo_vista": "superior",
+                        "descripcion": (
+                            f"Observa la silueta del tronco y trata de identificar primero el tema principal y luego el punto difícil: "
+                            f"{datos_academicos.temas_dificiles or 'subtema seleccionado'}."
+                        ),
+                        "marcadores": marcadores,
+                        "preguntas": [
+                            "¿Qué estructura representa el marcador 1?",
+                            "¿Qué representa el marcador 2 y cómo se relaciona con el tema principal?",
+                        ],
+                        "modo_practica": "Primero intenta identificar sin ver la respuesta y luego revela el nombre de cada marcador.",
+                    },
+                },
+            }
+        )
 
-                if (directSource && directSource.classList.contains('visual-modal-source')) {
-                    source = directSource;
-                } else if (key.startsWith('visual-map-')) {
-                    source = document.getElementById(key)?.closest('.visual-card-premium') || document.getElementById(key)?.closest('.resource-card');
-                } else if (key.startsWith('anatomy-visual-')) {
-                    source = btn.closest('.anatomical-panel');
+    return {
+        "titulo": "Ruta de aprendizaje 10/10 con VARK, láminas y ejercicios",
+        "resumen_general": (
+            "Esta ruta combina tu distribución VARK con el dataset interno de Anatomía I. "
+            "Cada día puede incluir audio, mapa mental, lámina anatómica guiada, ejercicio práctico y apoyo de lectura según tus puntajes."
+        ),
+        "temas_priorizados": temas_base[:5],
+        "plan_diario": plan,
+        "recomendaciones_finales": [
+            "Escucha el audio de cada día al menos dos veces.",
+            "Usa la lámina anatómica para identificar sin mirar primero y revelar después.",
+            "Si subes materiales, regenera la ruta para obtener actividades y marcadores más precisos.",
+        ],
+    }
+
+
+
+def detectar_categoria_tema(tema: str, punto_dificil: str = "") -> str:
+    t = f"{tema or ''} {punto_dificil or ''}".strip().lower()
+
+    if any(pal in t for pal in ["pelvis", "coxal", "sacro", "cóccix", "coccix", "pubis", "isquion", "ilion"]):
+        if any(pal in t for pal in ["órgano", "organo", "útero", "utero", "vejiga", "recto", "vagina", "periné", "perine"]):
+            return "pelvis_visceral"
+        return "pelvis_osea"
+    if any(pal in t for pal in ["esqueleto", "hueso", "óseo", "oseo", "columna", "vértebra", "vertebra", "tórax", "torax"]):
+        return "oseo"
+    if any(pal in t for pal in ["articulación", "articulacion", "articulaciones", "ligamento"]):
+        return "articular"
+    if any(pal in t for pal in ["músculo", "musculo", "músculos", "musculos", "diafragma"]):
+        return "muscular"
+    if any(pal in t for pal in ["órgano", "organo", "órganos", "organos", "abdomen", "corazón", "corazon"]):
+        return "visceral"
+    if any(pal in t for pal in ["nervio", "nervios"]):
+        return "nervioso"
+    if any(pal in t for pal in ["vaso", "vasos", "arteria", "vena"]):
+        return "vascular"
+    if any(pal in t for pal in ["linfático", "linfatico", "linfáticos", "linfaticos", "linfa"]):
+        return "linfatico"
+    if any(pal in t for pal in ["periné", "perine"]):
+        return "perine"
+    return "general"
+
+
+def construir_prompt_visual_controlado(tema: str, datos_academicos, anatomica=None) -> tuple[str, str, str]:
+    """Devuelve (prompt_positivo, prompt_negativo, categoria) para ComfyUI.
+    Evita prompts libres del LLM porque generan cráneos, pósters, texto falso o anatomía incoherente.
+    """
+    anatomica = anatomica or {}
+    punto = datos_academicos.temas_dificiles or ""
+    categoria = detectar_categoria_tema(tema, punto)
+    contexto = f"Topic: {tema}. Focus: {punto or 'general anatomy review'}. "
+
+    negative_base = (
+        "text, labels, letters, words, watermark, logo, blurry, low quality, low resolution, "
+        "bad anatomy, deformed anatomy, malformed structures, extra bones, wrong body part, "
+        "messy composition, vintage poster, old paper, infographic, fake writing, unreadable text, "
+        "surgery, blood, gore"
+    )
+
+    if categoria == "pelvis_osea":
+        positive = (
+            contexto +
+            "professional medical atlas illustration of the HUMAN BONY PELVIS ONLY, isolated pelvis bone, "
+            "front anterior view or slight superior view, clearly visible iliac bones, sacrum, coccyx, pubis, ischium, pubic symphysis, "
+            "realistic bone texture, clean white background, centered composition, textbook anatomy plate, high detail, no text, no labels"
+        )
+        negative = negative_base + ", skull, cranium, head, face, teeth, jaw, mandible, eyes, nose, ribs, chest, full skeleton, full body, skin, muscles, organs"
+    elif categoria == "pelvis_visceral":
+        positive = (
+            contexto +
+            "educational medical atlas cutaway illustration of the pelvis minor with internal pelvic organs, "
+            "clear pelvic cavity, bladder, rectum, uterus and vagina when female anatomy applies, spatial relationships visible, "
+            "clean modern medical teaching style, centered composition, high detail, no text, no labels"
+        )
+        negative = negative_base + ", skull, head, face, erotic, sexualized, explicit nudity, full body glamour, poster, random torso, unrelated limbs"
+    elif categoria == "oseo":
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on the selected bony anatomical region only, "
+            "isolated skeletal structure, realistic bone texture, clean white background, textbook style, high detail, no text, no labels"
+        )
+        negative = negative_base + ", skull if not requested, face, skin, muscles, organs, full body"
+    elif categoria == "articular":
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on joints and ligaments, close-up anatomical view, "
+            "clear articulation surfaces and stabilizing ligaments, clean white background, high detail, no text, no labels"
+        )
+        negative = negative_base + ", face, full body, unrelated organs, fashion pose"
+    elif categoria == "muscular":
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on muscular anatomy, clear layered muscle groups, "
+            "teaching anatomy plate, neutral background, centered composition, high detail, no text, no labels"
+        )
+        negative = negative_base + ", bones only, organs only, glamour, erotic, face closeup"
+    elif categoria == "visceral":
+        positive = (
+            contexto +
+            "professional medical atlas cutaway illustration focused on internal organs, clear anatomical relationships, "
+            "clean educational medical style, centered composition, high detail, no text, no labels"
+        )
+        negative = negative_base + ", erotic, sexualized, glamour, unrelated limbs, full body poster"
+    elif categoria == "nervioso":
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on nerves and nerve pathways, clear anatomical course, "
+            "clean white background, high detail, no text, no labels"
+        )
+        negative = negative_base + ", random colors, organs emphasis only, poster"
+    elif categoria == "vascular":
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on arteries and veins, clear vascular pathways, "
+            "clean educational composition, high detail, no text, no labels"
+        )
+        negative = negative_base + ", nerves only, muscles only, poster, fake labels"
+    elif categoria == "linfatico":
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on lymph nodes and lymphatic vessels, clear distribution, "
+            "clean educational composition, high detail, no text, no labels"
+        )
+        negative = negative_base + ", random infographic, full body glamour, fake text"
+    elif categoria == "perine":
+        positive = (
+            contexto +
+            "professional educational anatomical cutaway illustration of the perineal region, respectful medical presentation, "
+            "clear anatomical relationships, clean background, high detail, no text, no labels"
+        )
+        negative = negative_base + ", erotic, sexualized, glamour, explicit sexual content, fake labels"
+    else:
+        positive = (
+            contexto +
+            "professional educational medical atlas illustration of the selected anatomy topic, clean composition, "
+            "white background, centered, high detail, no text, no labels"
+        )
+        negative = negative_base
+
+    return positive, negative, categoria
+
+
+def marcadores_sugeridos_por_categoria(categoria: str):
+    if categoria == "pelvis_osea":
+        return [
+            {"id": 1, "nombre": "Sacro", "x": 50, "y": 24, "pista": "Estructura posterior central.", "detalle": "Forma la pared posterior de la pelvis ósea."},
+            {"id": 2, "nombre": "Ilion", "x": 24, "y": 43, "pista": "Ala ósea amplia lateral.", "detalle": "Contribuye a la cintura pélvica y al límite lateral."},
+            {"id": 3, "nombre": "Pubis", "x": 50, "y": 75, "pista": "Región anterior inferior.", "detalle": "Participa en la sínfisis púbica y el arco púbico."},
+            {"id": 4, "nombre": "Isquion", "x": 74, "y": 68, "pista": "Porción posteroinferior del coxal.", "detalle": "Relacionado con la tuberosidad isquiática."},
+        ]
+    if categoria == "pelvis_visceral":
+        return [
+            {"id": 1, "nombre": "Vejiga", "x": 50, "y": 42, "pista": "Órgano anterior de la pelvis menor.", "detalle": "Se ubica por delante del recto."},
+            {"id": 2, "nombre": "Útero / región reproductora", "x": 50, "y": 55, "pista": "Estructura central si aplica anatomía femenina.", "detalle": "Se relaciona con vejiga anteriormente y recto posteriormente."},
+            {"id": 3, "nombre": "Recto", "x": 50, "y": 70, "pista": "Estructura posterior.", "detalle": "Ocupa la región posterior de la pelvis menor."},
+            {"id": 4, "nombre": "Pared pélvica", "x": 25, "y": 52, "pista": "Límite lateral de la cavidad.", "detalle": "Sirve como referencia espacial para órganos y vasos."},
+        ]
+    return [
+        {"id": 1, "nombre": "Estructura clave", "x": 50, "y": 35, "pista": "Observa el elemento central.", "detalle": "Relaciona esta estructura con el objetivo del día."},
+        {"id": 2, "nombre": "Relación anatómica", "x": 32, "y": 55, "pista": "Compara posición y vecindad.", "detalle": "Describe qué estructura está medial, lateral, anterior o posterior."},
+        {"id": 3, "nombre": "Límite o referencia", "x": 68, "y": 55, "pista": "Busca el borde o zona de transición.", "detalle": "Úsalo para ubicar el tema en el cuerpo."},
+    ]
+
+
+def mejorar_visual_para_mapa_html(visual: dict, tema: str):
+    if not isinstance(visual, dict):
+        return visual
+    visual["image_url"] = ""
+    visual["image_error"] = ""
+    visual["tipo"] = "mapa_mental_html"
+    visual.setdefault("nodo_central", tema)
+    ramas = visual.get("ramas") or []
+    apoyo = visual.get("apoyo_visual") or []
+    if not ramas and apoyo:
+        ramas = []
+        for idx, item in enumerate(apoyo[:4], start=1):
+            texto = str(item)
+            if ":" in texto:
+                titulo, detalle = texto.split(":", 1)
+            else:
+                titulo, detalle = texto, "Idea clave del tema."
+            ramas.append({"titulo": titulo.strip(), "detalle": detalle.strip(), "subpuntos": []})
+    visual["ramas"] = ramas[:4]
+    return visual
+
+def imagen_necesita_regeneracion(image_url):
+    """
+    True si la imagen no está guardada como base64.
+
+    Motivo: si se guarda como /media/... o como URL de Cloudflare,
+    se rompe cuando Render reinicia o cuando apagas tu PC/túnel.
+    Las nuevas imágenes deben quedar como data:image/...;base64,... dentro del plan_json.
+    """
+    image_url = str(image_url or "").strip()
+    if not image_url:
+        return True
+    if image_url.startswith("data:image/"):
+        return False
+    return True
+
+
+def imagen_bytes_a_data_url(content, content_type="image/png"):
+    """Convierte bytes de imagen a data URL para persistirla en plan_json/PostgreSQL."""
+    content_type = str(content_type or "image/png").split(";")[0].strip()
+    if "image" not in content_type:
+        content_type = "image/png"
+    encoded = base64.b64encode(content).decode("utf-8")
+    return f"data:{content_type};base64,{encoded}"
+
+
+def enriquecer_plan_con_imagenes_ia(respuesta, user, datos_academicos):
+    """Genera SOLO las láminas anatómicas con ComfyUI/Gemini.
+    El mapa mental se mantiene como HTML limpio para evitar texto falso o imágenes incoherentes.
+    """
+    if not isinstance(respuesta, dict):
+        return respuesta
+
+    plan = respuesta.get("plan_diario", [])
+    if not isinstance(plan, list):
+        return respuesta
+
+    try:
+        max_imagenes = int(os.getenv("MAX_IMAGENES_RUTA", "2"))
+    except ValueError:
+        max_imagenes = 2
+
+    generar_imagenes = os.getenv("GENERAR_IMAGENES_RUTA", "true").strip().lower() in ["1", "true", "yes", "si", "sí"]
+    imagenes_generadas = 0
+
+    for dia in plan:
+        if not isinstance(dia, dict):
+            continue
+
+        recursos = dia.get("recursos", {})
+        if not isinstance(recursos, dict):
+            continue
+
+        numero_dia = dia.get("dia") or 1
+        tema = dia.get("tema_principal") or datos_academicos.tema_actual or "Anatomía I"
+
+        visual = recursos.get("visual", {})
+        if isinstance(visual, dict) and visual.get("habilitado"):
+            recursos["visual"] = mejorar_visual_para_mapa_html(visual, tema)
+
+        anatomica = recursos.get("imagen_anatomica", {})
+        if not (isinstance(anatomica, dict) and anatomica.get("habilitado")):
+            continue
+
+        prompt_controlado, negative_controlado, categoria = construir_prompt_visual_controlado(
+            tema=tema,
+            datos_academicos=datos_academicos,
+            anatomica=anatomica,
+        )
+        anatomica["prompt_imagen"] = prompt_controlado
+        anatomica["negative_prompt"] = negative_controlado
+        anatomica["categoria_visual"] = categoria
+
+        if not anatomica.get("marcadores"):
+            anatomica["marcadores"] = marcadores_sugeridos_por_categoria(categoria)
+
+        if generar_imagenes and imagenes_generadas < max_imagenes and imagen_necesita_regeneracion(anatomica.get("image_url")):
+            image_url, image_error = generar_y_guardar_imagen_gemini(
+                prompt=prompt_controlado,
+                carpeta="laminas",
+                nombre_archivo=f"user_{user.id}_dia_{numero_dia}_lamina.png",
+                aspect_ratio="4:3",
+                negative_prompt=negative_controlado,
+            )
+            if image_url:
+                anatomica["image_url"] = image_url
+                anatomica["image_error"] = ""
+                anatomica["historial_generacion"] = {
+                    "proveedor": os.getenv("IMAGE_PROVIDER", "local"),
+                    "persistencia": "base64_en_plan_json",
+                    "categoria": categoria,
+                    "estado": "ok",
+                }
+                imagenes_generadas += 1
+            elif image_error:
+                anatomica["image_error"] = image_error
+                anatomica["historial_generacion"] = {
+                    "proveedor": os.getenv("IMAGE_PROVIDER", "local"),
+                    "persistencia": "sin_imagen",
+                    "categoria": categoria,
+                    "estado": "error",
+                    "detalle": image_error,
                 }
 
-                if (source && modal && modalBody) {
-                    modalBody.innerHTML = source.classList.contains('visual-modal-source') ? source.innerHTML : source.outerHTML;
-                    modal.classList.add('is-open');
-                    if (window.lucide) { lucide.createIcons(); }
+    return respuesta
+
+
+def construir_prompt_mapa_mental(tema, datos_academicos, visual):
+    apoyo = visual.get("apoyo_visual", [])
+    if isinstance(apoyo, list):
+        apoyo_texto = ", ".join(str(item) for item in apoyo[:6])
+    else:
+        apoyo_texto = str(apoyo or "")
+
+    return f"""
+Crea una imagen educativa tipo mapa mental premium sobre Anatomía I.
+
+Tema central: {tema}
+Materia: {datos_academicos.materia}
+Punto específico difícil: {datos_academicos.temas_dificiles or "No especificado"}
+Ideas de apoyo: {apoyo_texto}
+
+Requisitos visuales obligatorios:
+- Formato horizontal 16:9.
+- Estilo moderno, limpio, universitario y profesional.
+- Fondo claro, con colores suaves tipo médico/anatómico.
+- Nodo central grande, legible y centrado.
+- 4 ramas principales bien distribuidas alrededor del nodo central.
+- Cada rama debe tener texto corto en español.
+- Usar conectores visuales claros.
+- Debe verse como un recurso de estudio, no como decoración.
+- Evitar errores ortográficos.
+- Evitar exceso de texto.
+- No usar logotipos, marcas de agua ni nombres de instituciones.
+""".strip()
+
+
+def construir_prompt_lamina_anatomica(tema, datos_academicos, anatomica):
+    descripcion = anatomica.get("descripcion", "")
+
+    return f"""
+Crea una ilustración anatómica educativa estilo atlas médico para estudiantes universitarios.
+
+Tema anatómico: {tema}
+Materia: {datos_academicos.materia}
+Punto específico difícil: {datos_academicos.temas_dificiles or "No especificado"}
+Descripción didáctica: {descripcion}
+
+Requisitos visuales obligatorios:
+- Imagen anatómica clara, detallada y educativa.
+- Estilo lámina de estudio universitario, no fotografía quirúrgica.
+- Fondo claro.
+- Vista anatómica coherente con el tema.
+- Estructuras principales visibles y diferenciadas con colores suaves.
+- Incluir etiquetas breves en español cuando ayuden a estudiar.
+- Debe parecer una lámina anatómica real de repaso.
+- No mostrar sangre, heridas, cirugía ni contenido gráfico.
+- No usar marcas de agua, logotipos ni nombres de instituciones.
+- Evitar texto excesivo.
+""".strip()
+
+
+def generar_y_guardar_imagen_gemini(prompt, carpeta, nombre_archivo, aspect_ratio="1:1", negative_prompt=None):
+    """
+    Punto único de generación de imágenes.
+    - Si IMAGE_PROVIDER=local: usa tu PC por Cloudflare Tunnel + ComfyUI.
+    - Si no: intenta Gemini Image como respaldo.
+    Devuelve una tupla: (image_url, image_error)
+    """
+    provider = os.getenv("IMAGE_PROVIDER", "gemini").strip().lower()
+    if provider == "local":
+        return generar_y_guardar_imagen_local(prompt, carpeta, nombre_archivo, aspect_ratio, negative_prompt=negative_prompt)
+    return generar_y_guardar_imagen_gemini_api(prompt, carpeta, nombre_archivo, aspect_ratio)
+
+
+def generar_y_guardar_imagen_local(prompt, carpeta, nombre_archivo, aspect_ratio="1:1", negative_prompt=None):
+    """
+    Llama al servidor local de imágenes expuesto con Cloudflare Tunnel.
+    Devuelve data:image/...;base64,... para que la imagen quede persistida en plan_json.
+
+    Variables necesarias en Render:
+    IMAGE_PROVIDER=local
+    LOCAL_IMAGE_API_URL=https://TU-TUNEL.trycloudflare.com/generate-anatomy
+    LOCAL_IMAGE_JOB_BASE_URL=https://TU-TUNEL.trycloudflare.com
+    """
+    api_url = os.getenv("LOCAL_IMAGE_API_URL", "").strip().rstrip("/")
+    job_base_url = os.getenv("LOCAL_IMAGE_JOB_BASE_URL", "").strip().rstrip("/")
+
+    if not api_url:
+        return "", "Falta LOCAL_IMAGE_API_URL en Render."
+    if not job_base_url:
+        # Si no lo pusiste, lo inferimos quitando /generate-anatomy.
+        job_base_url = api_url.replace("/generate-anatomy", "").rstrip("/")
+
+    ruta_relativa = f"rutas_generadas/{carpeta}/{limpiar_nombre_archivo(nombre_archivo)}"
+    ruta_absoluta = Path(settings.MEDIA_ROOT) / ruta_relativa
+    ruta_absoluta.parent.mkdir(parents=True, exist_ok=True)
+
+    # Ajustes de tamaño. Para demo conviene 1024x1024 o 1024x768.
+    if aspect_ratio == "16:9":
+        width, height = 1024, 768
+    elif aspect_ratio == "4:3":
+        width, height = 1024, 768
+    else:
+        width, height = 1024, 1024
+
+    if not negative_prompt:
+        negative_prompt = (
+            "text, labels, letters, words, watermark, logo, blurry, low quality, "
+            "distorted anatomy, deformed structures, extra bones, malformed bones, blood, gore, "
+            "surgery, cartoon, messy composition, bad proportions, skull, head, face, teeth"
+        )
+
+    payload = {
+        "prompt": prompt,
+        "negative_prompt": negative_prompt,
+        "width": width,
+        "height": height,
+    }
+
+    try:
+        start_response = requests.post(
+            api_url,
+            json=payload,
+            timeout=int(os.getenv("LOCAL_IMAGE_START_TIMEOUT", "30")),
+        )
+        start_response.raise_for_status()
+        start_data = start_response.json()
+        job_id = start_data.get("job_id")
+
+        if not job_id:
+            return "", f"La API local no devolvió job_id. Respuesta: {start_data}"
+
+        max_wait = int(os.getenv("LOCAL_IMAGE_MAX_WAIT", "150"))
+        poll_interval = int(os.getenv("LOCAL_IMAGE_POLL_INTERVAL", "5"))
+        deadline = time.time() + max_wait
+        last_status = "queued"
+        last_error = ""
+
+        while time.time() < deadline:
+            time.sleep(poll_interval)
+            job_response = requests.get(
+                f"{job_base_url}/job/{job_id}",
+                timeout=int(os.getenv("LOCAL_IMAGE_JOB_TIMEOUT", "30")),
+            )
+            job_response.raise_for_status()
+            job_data = job_response.json()
+            last_status = job_data.get("status", "")
+            last_error = job_data.get("error", "")
+
+            if last_status == "done":
+                download_url = job_data.get("download_url")
+                if not download_url:
+                    return "", f"Job terminado, pero sin download_url. Respuesta: {job_data}"
+
+                if download_url.startswith("http"):
+                    image_url = download_url
+                else:
+                    image_url = f"{job_base_url}{download_url}"
+
+                image_response = requests.get(image_url, timeout=90)
+                image_response.raise_for_status()
+
+                # Guardado clave para la demo:
+                # La imagen se convierte a Base64 y se guarda dentro del plan_json.
+                # Así no depende del túnel de Cloudflare ni del filesystem efímero de Render.
+                data_url = imagen_bytes_a_data_url(
+                    image_response.content,
+                    image_response.headers.get("content-type", "image/png"),
+                )
+
+                # Copia local opcional solo para depuración cuando MEDIA_ROOT exista.
+                try:
+                    ruta_absoluta.write_bytes(image_response.content)
+                except Exception:
+                    pass
+
+                return data_url, ""
+
+            if last_status == "error":
+                return "", f"La API local devolvió error: {last_error or job_data}"
+
+        return "", f"Timeout esperando imagen local. Último estado: {last_status}. Último error: {last_error}"
+
+    except Exception as error:
+        return "", f"Error llamando API local de imágenes: {error}"
+
+
+def generar_y_guardar_imagen_gemini_api(prompt, carpeta, nombre_archivo, aspect_ratio="1:1"):
+    """
+    Genera una imagen con Gemini Image y la guarda en media/rutas_generadas/.
+    Devuelve una tupla: (image_url, image_error)
+    """
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return "", "Falta la variable GEMINI_API_KEY en Render."
+
+    try:
+        from google import genai
+        from google.genai import types
+    except Exception as error:
+        return "", f"No se pudo importar google-genai: {error}"
+
+    model_candidates = []
+    env_model = os.getenv("GEMINI_IMAGE_MODEL", "").strip()
+    if env_model:
+        model_candidates.append(env_model)
+    # Fallbacks seguros
+    for candidate in ["gemini-3.1-flash-image", "gemini-2.5-flash-image", "gemini-3-pro-image"]:
+        if candidate not in model_candidates:
+            model_candidates.append(candidate)
+
+    image_size = os.getenv("GEMINI_IMAGE_SIZE", "1K").strip() or "1K"
+    last_error = ""
+
+    try:
+        client = genai.Client(api_key=api_key)
+    except Exception as error:
+        return "", f"No se pudo crear el cliente Gemini: {error}"
+
+    ruta_relativa = f"rutas_generadas/{carpeta}/{limpiar_nombre_archivo(nombre_archivo)}"
+    ruta_absoluta = Path(settings.MEDIA_ROOT) / ruta_relativa
+    ruta_absoluta.parent.mkdir(parents=True, exist_ok=True)
+
+    for model in model_candidates:
+        try:
+            config = types.GenerateContentConfig(
+                response_modalities=["TEXT", "IMAGE"],
+                image_config=types.ImageConfig(
+                    aspect_ratio=aspect_ratio,
+                    image_size=image_size,
+                ),
+            )
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config=config,
+            )
+
+            for part in obtener_partes_respuesta(response):
+                if guardar_parte_imagen(part, ruta_absoluta):
+                    return settings.MEDIA_URL + ruta_relativa.replace("\\", "/"), ""
+
+            # Segundo intento simple, sin config, por compatibilidad SDK/modelo
+            response = client.models.generate_content(
+                model=model,
+                contents=[prompt],
+            )
+            for part in obtener_partes_respuesta(response):
+                if guardar_parte_imagen(part, ruta_absoluta):
+                    return settings.MEDIA_URL + ruta_relativa.replace("\\", "/"), ""
+
+            last_error = f"El modelo {model} respondió, pero no devolvió imagen utilizable."
+
+        except Exception as error:
+            last_error = f"{model}: {error}"
+            print("Error generando imagen con Gemini:", last_error)
+            continue
+
+    return "", last_error or "No fue posible generar la imagen con Gemini."
+
+
+def obtener_partes_respuesta(response):
+    partes = []
+
+    direct_parts = getattr(response, "parts", None)
+    if direct_parts:
+        partes.extend(direct_parts)
+
+    candidates = getattr(response, "candidates", None) or []
+    for candidate in candidates:
+        content = getattr(candidate, "content", None)
+        candidate_parts = getattr(content, "parts", None) if content else None
+        if candidate_parts:
+            partes.extend(candidate_parts)
+
+    return partes
+
+
+def guardar_parte_imagen(part, ruta_absoluta):
+    """
+    Soporta respuestas de imagen como:
+    - part.as_image()
+    - part.inline_data.data en base64
+    - part.inline_data.data como bytes
+    """
+    try:
+        if hasattr(part, "as_image"):
+            image = part.as_image()
+            if image:
+                image.save(ruta_absoluta)
+                return True
+    except Exception:
+        pass
+
+    inline_data = getattr(part, "inline_data", None) or getattr(part, "inlineData", None)
+    if not inline_data:
+        return False
+
+    data = getattr(inline_data, "data", None)
+    if not data:
+        return False
+
+    try:
+        if isinstance(data, bytes):
+            ruta_absoluta.write_bytes(data)
+        else:
+            ruta_absoluta.write_bytes(base64.b64decode(data))
+        return True
+    except Exception as error:
+        print("No se pudo guardar la imagen generada:", error)
+        return False
+
+
+def limpiar_nombre_archivo(nombre):
+    nombre = str(nombre or "imagen.png").strip()
+    nombre = re.sub(r"[^a-zA-Z0-9_.-]", "_", nombre)
+    if not nombre.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+        nombre += ".png"
+    return nombre
+
+
+def normalizar_mini_quiz(valor):
+    if not isinstance(valor, list):
+        return []
+
+    preguntas_limpias = []
+    for item in valor[:5]:
+        if not isinstance(item, dict):
+            continue
+
+        opciones = normalizar_lista(item.get("opciones", []))[:4]
+        if len(opciones) < 2:
+            continue
+
+        respuesta_correcta = str(item.get("respuesta_correcta", "")).strip()
+        if respuesta_correcta not in opciones:
+            respuesta_correcta = opciones[0]
+
+        preguntas_limpias.append(
+            {
+                "pregunta": str(item.get("pregunta", "")).strip(),
+                "opciones": opciones,
+                "respuesta_correcta": respuesta_correcta,
+                "explicacion": str(item.get("explicacion", "")).strip(),
+            }
+        )
+
+    return preguntas_limpias
+
+
+def normalizar_audio(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+    return {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": str(valor.get("titulo", "Audio de estudio")).strip(),
+        "guion": str(valor.get("guion", "")).strip(),
+        "pasos_clave": normalizar_lista(valor.get("pasos_clave", [])),
+    }
+
+
+
+def normalizar_visual(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+
+    apoyo_visual = normalizar_lista(valor.get("apoyo_visual", []))
+    ramas = []
+    valor_ramas = valor.get("ramas", [])
+
+    if isinstance(valor_ramas, list):
+        for rama in valor_ramas[:4]:
+            if not isinstance(rama, dict):
+                continue
+
+            titulo = str(rama.get("titulo", "")).strip()
+            detalle = str(rama.get("detalle", "")).strip()
+            subpuntos = normalizar_lista(rama.get("subpuntos", []))[:3]
+
+            if titulo or detalle or subpuntos:
+                ramas.append({
+                    "titulo": titulo or "Idea clave",
+                    "detalle": detalle,
+                    "subpuntos": subpuntos,
+                })
+
+    if not ramas and apoyo_visual:
+        for item in apoyo_visual[:4]:
+            texto = str(item).strip()
+            if not texto:
+                continue
+
+            if ":" in texto:
+                titulo, detalle = texto.split(":", 1)
+                titulo = titulo.strip()
+                detalle = detalle.strip()
+            else:
+                titulo = texto
+                detalle = "Concepto clave para conectar con el tema central."
+
+            ramas.append({
+                "titulo": titulo or "Idea clave",
+                "detalle": detalle,
+                "subpuntos": [],
+            })
+
+    return {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": str(valor.get("titulo", "Mapa visual generado por IA")).strip(),
+        "tipo": str(valor.get("tipo", "mapa_mental")).strip(),
+        "descripcion": str(valor.get("descripcion", "")).strip(),
+        "nodo_central": str(valor.get("nodo_central", "Tema central")).strip(),
+        "ramas": ramas,
+        "mermaid": str(valor.get("mermaid", "")).strip(),
+        "apoyo_visual": apoyo_visual,
+        "prompt_imagen": str(valor.get("prompt_imagen", "")).strip(),
+        "negative_prompt": str(valor.get("negative_prompt", "")).strip(),
+        "categoria_visual": str(valor.get("categoria_visual", "")).strip(),
+        "image_url": str(valor.get("image_url", "")).strip(),
+        "image_error": str(valor.get("image_error", "")).strip(),
+    }
+
+
+def normalizar_kinestesico(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+    return {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": str(valor.get("titulo", "Ejercicio práctico")).strip(),
+        "instrucciones": str(valor.get("instrucciones", "")).strip(),
+        "preguntas": normalizar_lista(valor.get("preguntas", [])),
+    }
+
+
+def normalizar_lectura(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+    return {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": str(valor.get("titulo", "Apoyo de lectura")).strip(),
+        "resumen": str(valor.get("resumen", "")).strip(),
+        "glosario": normalizar_lista(valor.get("glosario", [])),
+    }
+
+
+
+def normalizar_imagen_anatomica(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+
+    marcadores = valor.get("marcadores", [])
+    marcadores_limpios = []
+
+    if isinstance(marcadores, list):
+        for idx, item in enumerate(marcadores, start=1):
+            if not isinstance(item, dict):
+                continue
+
+            try:
+                x = max(10, min(int(item.get("x") or 50), 90))
+                y = max(10, min(int(item.get("y") or 50), 90))
+            except (TypeError, ValueError):
+                x = 50
+                y = 50
+
+            marcadores_limpios.append(
+                {
+                    "id": int(item.get("id") or idx),
+                    "nombre": str(item.get("nombre", f"Estructura {idx}")).strip(),
+                    "x": x,
+                    "y": y,
+                    "pista": str(item.get("pista", "")).strip(),
+                    "detalle": str(item.get("detalle", "")).strip(),
                 }
-            });
-        });
+            )
 
-        document.querySelectorAll('[data-close-visual]').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                if (modal && modalBody) {
-                    modal.classList.remove('is-open');
-                    modalBody.innerHTML = '';
-                }
-            });
-        });
-    });
+    return {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": str(valor.get("titulo", "Lámina anatómica generada por IA")).strip(),
+        "tipo_vista": str(valor.get("tipo_vista", "superior")).strip(),
+        "descripcion": str(valor.get("descripcion", "")).strip(),
+        "marcadores": marcadores_limpios,
+        "preguntas": normalizar_lista(valor.get("preguntas", [])),
+        "modo_practica": str(valor.get("modo_practica", "")).strip(),
+        "prompt_imagen": str(valor.get("prompt_imagen", "")).strip(),
+        "negative_prompt": str(valor.get("negative_prompt", "")).strip(),
+        "categoria_visual": str(valor.get("categoria_visual", "")).strip(),
+        "image_url": str(valor.get("image_url", "")).strip(),
+        "image_error": str(valor.get("image_error", "")).strip(),
+    }
 
-</script>
 
-{% if ruta %}
-<div class="visual-modal" id="visual-modal">
-    <div class="visual-modal-backdrop" data-close-visual></div>
-    <div class="visual-modal-dialog">
-        <button type="button" class="visual-modal-close" data-close-visual>&times;</button>
-        <div class="visual-modal-body" id="visual-modal-body"></div>
-    </div>
-</div>
-{% endif %}
+def normalizar_lista(valor):
+    if isinstance(valor, list):
+        return [str(item).strip() for item in valor if str(item).strip()]
+    if isinstance(valor, str):
+        return [linea.strip() for linea in valor.splitlines() if linea.strip()]
+    return []
 
-{% endblock %}
+
+def limpiar_json(texto):
+    texto = str(texto or "").strip()
+    if texto.startswith("```json"):
+        texto = texto.replace("```json", "", 1).strip()
+    if texto.startswith("```"):
+        texto = texto.replace("```", "", 1).strip()
+    if texto.endswith("```"):
+        texto = texto[:-3].strip()
+    return texto
