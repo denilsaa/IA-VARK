@@ -8,6 +8,7 @@ from pathlib import Path
 import requests
 
 from django.conf import settings
+from django.utils import timezone
 from django.utils.text import Truncator
 
 from .models import RutaAprendizaje
@@ -896,6 +897,62 @@ def imagen_bytes_a_data_url(content, content_type="image/png"):
     return f"data:{content_type};base64,{encoded}"
 
 
+
+def crear_historial_generacion_visual(
+    *,
+    estado,
+    tema,
+    numero_dia,
+    categoria,
+    prompt,
+    negative_prompt,
+    image_url="",
+    detalle="",
+):
+    """Registra evidencia técnica de la generación visual dentro del plan_json.
+
+    Este historial sirve para defensa y pruebas: demuestra que la imagen fue generada por
+    el pipeline IA y que quedó persistida como base64 dentro de la ruta.
+    """
+    provider = os.getenv("IMAGE_PROVIDER", "local").strip().lower() or "local"
+    if provider == "local":
+        motor = "ComfyUI local + RTX 3080 Ti"
+        endpoint = os.getenv("LOCAL_IMAGE_API_URL", "").strip()
+    else:
+        motor = "Gemini Image"
+        endpoint = os.getenv("GEMINI_IMAGE_MODEL", "").strip()
+
+    image_url = str(image_url or "")
+    if image_url.startswith("data:image/"):
+        persistencia = "base64_en_plan_json"
+        dependencia_runtime = "No depende de Cloudflare ni de la PC después de generarse"
+    elif image_url.startswith("http"):
+        persistencia = "url_externa_temporal"
+        dependencia_runtime = "Depende de que la URL externa siga activa"
+    elif image_url:
+        persistencia = "archivo_media"
+        dependencia_runtime = "Depende del almacenamiento del servidor"
+    else:
+        persistencia = "sin_imagen"
+        dependencia_runtime = "No se generó imagen"
+
+    return {
+        "estado": estado,
+        "tipo_recurso": "lamina_anatomica",
+        "tema": str(tema or ""),
+        "dia": numero_dia,
+        "categoria": categoria,
+        "proveedor": provider,
+        "motor": motor,
+        "endpoint": endpoint,
+        "persistencia": persistencia,
+        "dependencia_runtime": dependencia_runtime,
+        "generado_en": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "prompt_resumen": Truncator(str(prompt or "")).chars(260),
+        "negative_prompt_resumen": Truncator(str(negative_prompt or "")).chars(180),
+        "detalle": str(detalle or ""),
+    }
+
 def enriquecer_plan_con_imagenes_ia(respuesta, user, datos_academicos):
     """Genera SOLO las láminas anatómicas con ComfyUI/Gemini.
     El mapa mental se mantiene como HTML limpio para evitar texto falso o imágenes incoherentes.
@@ -957,22 +1014,29 @@ def enriquecer_plan_con_imagenes_ia(respuesta, user, datos_academicos):
             if image_url:
                 anatomica["image_url"] = image_url
                 anatomica["image_error"] = ""
-                anatomica["historial_generacion"] = {
-                    "proveedor": os.getenv("IMAGE_PROVIDER", "local"),
-                    "persistencia": "base64_en_plan_json",
-                    "categoria": categoria,
-                    "estado": "ok",
-                }
+                anatomica["historial_generacion"] = crear_historial_generacion_visual(
+                    estado="ok",
+                    tema=tema,
+                    numero_dia=numero_dia,
+                    categoria=categoria,
+                    prompt=prompt_controlado,
+                    negative_prompt=negative_controlado,
+                    image_url=image_url,
+                    detalle="Imagen generada correctamente y guardada dentro del plan_json.",
+                )
                 imagenes_generadas += 1
             elif image_error:
                 anatomica["image_error"] = image_error
-                anatomica["historial_generacion"] = {
-                    "proveedor": os.getenv("IMAGE_PROVIDER", "local"),
-                    "persistencia": "sin_imagen",
-                    "categoria": categoria,
-                    "estado": "error",
-                    "detalle": image_error,
-                }
+                anatomica["historial_generacion"] = crear_historial_generacion_visual(
+                    estado="error",
+                    tema=tema,
+                    numero_dia=numero_dia,
+                    categoria=categoria,
+                    prompt=prompt_controlado,
+                    negative_prompt=negative_controlado,
+                    image_url="",
+                    detalle=image_error,
+                )
 
     return respuesta
 

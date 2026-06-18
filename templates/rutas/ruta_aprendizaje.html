@@ -464,6 +464,35 @@
                                             {% endfor %}
                                         </div>
                                     </div>
+
+                                    {% if dia.recursos.imagen_anatomica.historial_generacion %}
+                                        <details class="generation-history-card mt-3">
+                                            <summary>
+                                                <span><i data-lucide="history"></i> Historial de generación IA</span>
+                                                <small>{{ dia.recursos.imagen_anatomica.historial_generacion.estado|upper }}</small>
+                                            </summary>
+                                            <div class="generation-history-grid">
+                                                <div><strong>Proveedor</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.proveedor }}</span></div>
+                                                <div><strong>Motor</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.motor }}</span></div>
+                                                <div><strong>Categoría detectada</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.categoria }}</span></div>
+                                                <div><strong>Persistencia</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.persistencia }}</span></div>
+                                                <div><strong>Generado en</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.generado_en }}</span></div>
+                                                <div><strong>Dependencia</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.dependencia_runtime }}</span></div>
+                                            </div>
+                                            {% if dia.recursos.imagen_anatomica.historial_generacion.prompt_resumen %}
+                                                <div class="generation-prompt-box mt-3">
+                                                    <strong>Prompt controlado usado</strong>
+                                                    <p>{{ dia.recursos.imagen_anatomica.historial_generacion.prompt_resumen }}</p>
+                                                </div>
+                                            {% endif %}
+                                            {% if dia.recursos.imagen_anatomica.historial_generacion.detalle %}
+                                                <div class="generation-detail-box mt-2">
+                                                    <strong>Detalle</strong>
+                                                    <p>{{ dia.recursos.imagen_anatomica.historial_generacion.detalle }}</p>
+                                                </div>
+                                            {% endif %}
+                                        </details>
+                                    {% endif %}
                                 {% else %}
                                     <div class="image-pending-box mt-3">
                                         <strong>Lámina pendiente de generación</strong>
@@ -2057,6 +2086,83 @@
     .practice-lab-header { flex-direction: column; }
     .practice-steps { grid-template-columns: 1fr; }
     .practice-score-chip { width: 100%; }
+}
+
+
+
+.generation-history-card {
+    border: 1px solid rgba(15, 118, 110, 0.18);
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(240, 253, 250, 0.95), rgba(255, 255, 255, 0.98));
+    padding: 0.9rem 1rem;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.generation-history-card summary {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    list-style: none;
+    font-weight: 800;
+    color: #0f766e;
+}
+
+.generation-history-card summary::-webkit-details-marker {
+    display: none;
+}
+
+.generation-history-card summary span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.generation-history-card summary small {
+    border-radius: 999px;
+    background: rgba(20, 184, 166, 0.14);
+    color: #0f766e;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+}
+
+.generation-history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.generation-history-grid div,
+.generation-prompt-box,
+.generation-detail-box {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 0.75rem;
+}
+
+.generation-history-grid strong,
+.generation-prompt-box strong,
+.generation-detail-box strong {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+
+.generation-history-grid span,
+.generation-prompt-box p,
+.generation-detail-box p {
+    color: #1e293b;
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    word-break: break-word;
 }
 
 </style>
