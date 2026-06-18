@@ -669,24 +669,24 @@ def generar_ruta_respaldo(
 
 
 
-def detectar_categoria_tema(tema: str) -> str:
-    t = (tema or "").lower().strip()
+def detectar_categoria_tema(tema: str, punto_dificil: str = "") -> str:
+    t = f"{tema or ''} {punto_dificil or ''}".strip().lower()
 
-    # Primero casos específicos para evitar mala clasificación
+    # Primero casos específicos para evitar mala clasificación.
     if (
         "linfático" in t or "linfatico" in t or
         "linfáticos" in t or "linfaticos" in t or
-        "nódulo" in t or "nodulo" in t
+        "nódulo" in t or "nodulo" in t or "linfa" in t
     ):
         return "linfatico"
 
     if "periné" in t or "perine" in t:
         return "perine"
 
-    if "articulacion" in t or "articulación" in t or "articulaciones" in t:
+    if "articulacion" in t or "articulación" in t or "articulaciones" in t or "ligamento" in t:
         return "articular"
 
-    if "nervio" in t or "nervios" in t:
+    if "nervio" in t or "nervios" in t or "plexo" in t:
         return "nervioso"
 
     if (
@@ -708,144 +708,125 @@ def detectar_categoria_tema(tema: str) -> str:
         "órgano" in t or "organo" in t or
         "órganos" in t or "organos" in t or
         "abdomen" in t or
-        "víscera" in t or "viscera" in t
+        "víscera" in t or "viscera" in t or
+        "vejiga" in t or "recto" in t or "útero" in t or "utero" in t
     ):
+        if "pelvis" in t or "pelvis menor" in t:
+            return "pelvis_visceral"
         return "visceral"
 
     if (
         "pelvis" in t or
-        "esqueleto" in t or
-        "columna vertebral" in t or
+        "esqueleto" in t or "hueso" in t or "óseo" in t or "oseo" in t or
+        "columna vertebral" in t or "columna" in t or
         "tórax" in t or "torax" in t
     ):
-        return "pelvis_osea"
+        return "pelvis_osea" if "pelvis" in t else "oseo"
 
     return "general"
 
-def construir_prompt_visual_controlado(tema, datos_academicos=None, anatomica=None):
-    categoria = detectar_categoria_tema(tema)
-
-    focus = ""
+def construir_prompt_visual_controlado(tema: str, datos_academicos=None, anatomica=None) -> tuple[str, str, str]:
+    """Devuelve (prompt_positivo, prompt_negativo, categoria) para ComfyUI.
+    Evita prompts libres del LLM porque generan cráneos, pósters, texto falso o anatomía incoherente.
+    """
+    anatomica = anatomica or {}
+    punto = ""
     if datos_academicos is not None:
-        focus = getattr(datos_academicos, "temas_dificiles", "") or ""
-    if not focus and isinstance(anatomica, dict):
-        focus = anatomica.get("descripcion", "") or anatomica.get("titulo", "")
-    if not focus:
-        focus = "generación anatómica educativa"
+        punto = getattr(datos_academicos, "temas_dificiles", "") or ""
+    if not punto and isinstance(anatomica, dict):
+        punto = anatomica.get("descripcion", "") or anatomica.get("titulo", "") or ""
 
-    negativo_base = (
+    categoria = detectar_categoria_tema(tema, punto)
+    contexto = f"Topic: {tema}. Focus: {punto or 'general anatomy review'}. "
+
+    negative_base = (
         "text, labels, letters, words, watermark, logo, blurry, low quality, low resolution, "
         "bad anatomy, deformed anatomy, malformed structures, extra bones, wrong body part, "
-        "messy composition, vintage poster, old paper, infographic, fake writing, unreadable text"
+        "messy composition, vintage poster, old paper, infographic, fake writing, unreadable text, "
+        "surgery, blood, gore"
     )
 
     if categoria == "pelvis_osea":
-        positivo = (
-            f"Topic: {tema}. Focus: {focus}. "
-            "professional medical atlas illustration of the HUMAN BONY PELVIS ONLY, "
-            "isolated pelvis bone, front anterior view or slight superior view, "
-            "clearly visible iliac bones, sacrum, coccyx, pubis, ischium, pubic symphysis, "
-            "realistic bone texture, clean white background, centered composition, "
-            "high detail, no text, no labels"
+        positive = (
+            contexto +
+            "professional medical atlas illustration of the HUMAN BONY PELVIS ONLY, isolated pelvis bone, "
+            "front anterior view or slight superior view, clearly visible iliac bones, sacrum, coccyx, pubis, ischium, pubic symphysis, "
+            "realistic bone texture, clean white background, centered composition, textbook anatomy plate, high detail, no text, no labels"
         )
-        negativo = (
-            negativo_base +
-            ", skull, head, face, teeth, jaw, mandible, cranium, full skeleton, full body, "
-            "arms, legs, ribs as main subject, spine as main subject, organs, skin, muscles"
+        negative = negative_base + ", skull, cranium, head, face, teeth, jaw, mandible, eyes, nose, ribs, chest, full skeleton, full body, skin, muscles, organs"
+    elif categoria == "pelvis_visceral":
+        positive = (
+            contexto +
+            "educational medical atlas cutaway illustration of the pelvis minor with internal pelvic organs, "
+            "clear pelvic cavity, bladder, rectum, uterus and vagina when female anatomy applies, spatial relationships visible, "
+            "clean modern medical teaching style, centered composition, high detail, no text, no labels"
         )
-
+        negative = negative_base + ", skull, head, face, erotic, sexualized, explicit nudity, full body glamour, poster, random torso, unrelated limbs"
+    elif categoria == "oseo":
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on the selected bony anatomical region only, "
+            "isolated skeletal structure, realistic bone texture, clean white background, textbook style, high detail, no text, no labels"
+        )
+        negative = negative_base + ", skull if not requested, face, skin, muscles, organs, full body"
     elif categoria == "articular":
-        positivo = (
-            f"Topic: {tema}. Focus: {focus}. "
-            "professional medical atlas illustration focused on joints and ligaments, "
-            "close-up anatomical view, clear articulation surfaces, stabilizing ligaments, "
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on joints and ligaments, close-up anatomical view, "
+            "clear articulation surfaces and stabilizing ligaments, clean white background, high detail, no text, no labels"
+        )
+        negative = negative_base + ", face, full body, unrelated organs, fashion pose"
+    elif categoria == "muscular":
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on muscular anatomy, clear layered muscle groups, "
+            "teaching anatomy plate, neutral background, centered composition, high detail, no text, no labels"
+        )
+        negative = negative_base + ", bones only, organs only, glamour, erotic, face closeup"
+    elif categoria == "visceral":
+        positive = (
+            contexto +
+            "professional medical atlas cutaway illustration focused on internal organs, clear anatomical relationships, "
+            "clean educational medical style, centered composition, high detail, no text, no labels"
+        )
+        negative = negative_base + ", erotic, sexualized, glamour, unrelated limbs, full body poster"
+    elif categoria == "nervioso":
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on nerves and nerve pathways, clear anatomical course, "
             "clean white background, high detail, no text, no labels"
         )
-        negativo = (
-            negativo_base +
-            ", skull, head, full body, random organs, unrelated muscles, fashion pose"
-        )
-
-    elif categoria == "muscular":
-        positivo = (
-            f"Topic: {tema}. Focus: {focus}. "
-            "professional medical atlas illustration focused on muscular anatomy, "
-            "clear layered muscle groups, teaching anatomy plate, neutral background, "
-            "centered composition, high detail, no text, no labels"
-        )
-        negativo = (
-            negativo_base +
-            ", skull, bones only, random organs, erotic, glamour, bodybuilder pose"
-        )
-
-    elif categoria == "visceral":
-        positivo = (
-            f"Topic: {tema}. Focus: {focus}. "
-            "professional medical atlas cutaway illustration focused on internal organs, "
-            "clear anatomical relationships, clean educational medical style, "
-            "centered composition, high detail, no text, no labels"
-        )
-        negativo = (
-            negativo_base +
-            ", skull, full body glamour, erotic, explicit nudity, unrelated limbs, random skeleton"
-        )
-
-    elif categoria == "nervioso":
-        positivo = (
-            f"Topic: {tema}. Focus: {focus}. "
-            "professional medical atlas illustration focused on nerves and nerve pathways, "
-            "clear anatomical course, clean white background, high detail, no text, no labels"
-        )
-        negativo = (
-            negativo_base +
-            ", skull, unrelated organs, arteries only, veins only, random muscles"
-        )
-
+        negative = negative_base + ", random colors, organs emphasis only, poster"
     elif categoria == "vascular":
-        positivo = (
-            f"Topic: {tema}. Focus: {focus}. "
-            "professional medical atlas illustration focused on arteries and veins, "
-            "clear vascular pathways, heart and major vessels if relevant, "
-            "clean educational composition, high detail, no text, no labels"
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on arteries and veins, heart and major vessels if relevant, "
+            "clear vascular pathways, clean educational composition, high detail, no text, no labels"
         )
-        negativo = (
-            negativo_base +
-            ", skull, nerves only, lymph nodes only, random muscles, unrelated organs"
-        )
-
+        negative = negative_base + ", nerves only, muscles only, lymph nodes only, poster, fake labels"
     elif categoria == "linfatico":
-        positivo = (
-            f"Topic: {tema}. Focus: {focus}. "
-            "professional medical atlas illustration focused on lymph nodes and lymphatic vessels, "
-            "clear lymphatic drainage pathways, lymph node chains, clean educational anatomical composition, "
-            "high detail, no text, no labels"
+        positive = (
+            contexto +
+            "professional medical atlas illustration focused on lymph nodes and lymphatic vessels, clear lymphatic drainage pathways, "
+            "lymph node chains, clean educational anatomical composition, high detail, no text, no labels"
         )
-        negativo = (
-            negativo_base +
-            ", skull, arteries only, veins only, unrelated muscles, random organs, full body glamour"
-        )
-
+        negative = negative_base + ", arteries only, veins only, unrelated muscles, full body glamour, random infographic, fake text"
     elif categoria == "perine":
-        positivo = (
-            f"Topic: {tema}. Focus: {focus}. "
-            "professional educational anatomical cutaway illustration of the perineal region, "
-            "respectful medical presentation, clear anatomical relationships, clean background, "
-            "high detail, no text, no labels"
+        positive = (
+            contexto +
+            "professional educational anatomical cutaway illustration of the perineal region, respectful medical presentation, "
+            "clear anatomical relationships, clean background, high detail, no text, no labels"
         )
-        negativo = (
-            negativo_base +
-            ", explicit sexualized content, erotic, glamour, full body pose, poster"
-        )
-
+        negative = negative_base + ", erotic, sexualized, glamour, explicit sexual content, fake labels"
     else:
-        positivo = (
-            f"Topic: {tema}. Focus: {focus}. "
-            "professional educational anatomical atlas illustration, clean composition, "
-            "white background, high detail, no text, no labels"
+        positive = (
+            contexto +
+            "professional educational medical atlas illustration of the selected anatomy topic, clean composition, "
+            "white background, centered, high detail, no text, no labels"
         )
-        negativo = negativo_base
+        negative = negative_base
 
-    return positivo, negativo, categoria
+    return positive, negative, categoria
 
 def marcadores_sugeridos_por_categoria(categoria: str):
     if categoria == "pelvis_osea":
@@ -1436,6 +1417,57 @@ def normalizar_lectura(valor):
 
 
 
+
+def normalizar_preguntas_guiadas(valor, preguntas_base=None, marcadores=None):
+    """Convierte preguntas del LLM en tarjetas de práctica con pista y respuesta.
+    Si el LLM no devuelve objetos, crea respuestas sugeridas usando los marcadores.
+    """
+    preguntas_base = preguntas_base or []
+    marcadores = marcadores or []
+    preguntas_guiadas = []
+
+    if isinstance(valor, list):
+        for idx, item in enumerate(valor, start=1):
+            if isinstance(item, dict):
+                pregunta = str(item.get("pregunta", "")).strip()
+                pista = str(item.get("pista", "")).strip()
+                respuesta = str(item.get("respuesta", item.get("respuesta_esperada", ""))).strip()
+            else:
+                pregunta = str(item).strip()
+                pista = ""
+                respuesta = ""
+
+            if not pregunta:
+                continue
+
+            marcador = marcadores[(idx - 1) % len(marcadores)] if marcadores else {}
+            if not pista:
+                pista = marcador.get("pista") or "Observa la lámina y relaciona la pregunta con los marcadores numerados."
+            if not respuesta:
+                nombre = marcador.get("nombre") or "la estructura anatómica correspondiente"
+                detalle = marcador.get("detalle") or "Relaciona su ubicación, función y estructuras vecinas."
+                respuesta = f"Respuesta esperada: identificar {nombre}. {detalle}"
+
+            preguntas_guiadas.append({
+                "id": idx,
+                "pregunta": pregunta,
+                "pista": pista,
+                "respuesta": respuesta,
+            })
+
+    if not preguntas_guiadas:
+        for idx, pregunta in enumerate(preguntas_base[:4], start=1):
+            marcador = marcadores[(idx - 1) % len(marcadores)] if marcadores else {}
+            nombre = marcador.get("nombre") or "estructura clave"
+            preguntas_guiadas.append({
+                "id": idx,
+                "pregunta": str(pregunta).strip(),
+                "pista": marcador.get("pista") or "Usa la posición de los marcadores para orientar tu respuesta.",
+                "respuesta": marcador.get("detalle") or f"Identifica {nombre} y explica su relación anatómica con el tema del día.",
+            })
+
+    return preguntas_guiadas[:5]
+
 def normalizar_imagen_anatomica(valor):
     if not isinstance(valor, dict):
         valor = {}
@@ -1473,6 +1505,11 @@ def normalizar_imagen_anatomica(valor):
         "descripcion": str(valor.get("descripcion", "")).strip(),
         "marcadores": marcadores_limpios,
         "preguntas": normalizar_lista(valor.get("preguntas", [])),
+        "preguntas_guiadas": normalizar_preguntas_guiadas(
+            valor.get("preguntas_guiadas", valor.get("preguntas_detalladas", [])),
+            preguntas_base=normalizar_lista(valor.get("preguntas", [])),
+            marcadores=marcadores_limpios,
+        ),
         "modo_practica": str(valor.get("modo_practica", "")).strip(),
         "prompt_imagen": str(valor.get("prompt_imagen", "")).strip(),
         "negative_prompt": str(valor.get("negative_prompt", "")).strip(),

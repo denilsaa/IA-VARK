@@ -471,22 +471,80 @@
                                     </div>
                                 {% endif %}
 
-                                {% if dia.recursos.imagen_anatomica.modo_practica %}
-                                    <p class="marker-help mt-3">
-                                        <strong>Modo práctica:</strong> {{ dia.recursos.imagen_anatomica.modo_practica }}
-                                    </p>
-                                {% endif %}
-
-                                {% if dia.recursos.imagen_anatomica.preguntas %}
-                                    <div class="text-preview mt-3">
-                                        <strong>Preguntas sobre la imagen</strong>
-                                        <ul class="clean-list mt-3">
-                                            {% for pregunta in dia.recursos.imagen_anatomica.preguntas %}
-                                                <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
-                                            {% endfor %}
-                                        </ul>
+                                <div class="practice-lab mt-4">
+                                    <div class="practice-lab-header">
+                                        <div>
+                                            <p class="eyebrow">Modo práctica</p>
+                                            <h3>Observa, responde y verifica</h3>
+                                            {% if dia.recursos.imagen_anatomica.modo_practica %}
+                                                <p>{{ dia.recursos.imagen_anatomica.modo_practica }}</p>
+                                            {% else %}
+                                                <p>Primero observa la lámina sin ayudas, luego responde y finalmente revela las pistas y respuestas esperadas.</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="practice-score-chip">
+                                            <span>{% if dia.recursos.imagen_anatomica.preguntas_guiadas %}{{ dia.recursos.imagen_anatomica.preguntas_guiadas|length }}{% else %}{{ dia.recursos.imagen_anatomica.preguntas|length }}{% endif %}</span>
+                                            <small>retos</small>
+                                        </div>
                                     </div>
-                                {% endif %}
+
+                                    <div class="practice-steps">
+                                        <div><strong>1</strong><span>Observa la imagen 30 segundos sin leer la leyenda.</span></div>
+                                        <div><strong>2</strong><span>Responde cada pregunta con tus palabras.</span></div>
+                                        <div><strong>3</strong><span>Revela pista y respuesta para corregirte.</span></div>
+                                    </div>
+
+                                    {% if dia.recursos.imagen_anatomica.preguntas_guiadas %}
+                                        <div class="practice-question-grid mt-3">
+                                            {% for pregunta in dia.recursos.imagen_anatomica.preguntas_guiadas %}
+                                                <article class="practice-question-card">
+                                                    <div class="practice-question-top">
+                                                        <span class="practice-number">{{ forloop.counter }}</span>
+                                                        <strong>{{ pregunta.pregunta }}</strong>
+                                                    </div>
+                                                    <details class="practice-reveal">
+                                                        <summary>Ver pista</summary>
+                                                        <p>{{ pregunta.pista }}</p>
+                                                    </details>
+                                                    <details class="practice-reveal answer-reveal">
+                                                        <summary>Ver respuesta esperada</summary>
+                                                        <p>{{ pregunta.respuesta }}</p>
+                                                    </details>
+                                                </article>
+                                            {% endfor %}
+                                        </div>
+                                    {% elif dia.recursos.imagen_anatomica.preguntas %}
+                                        <div class="practice-question-grid mt-3">
+                                            {% for pregunta in dia.recursos.imagen_anatomica.preguntas %}
+                                                <article class="practice-question-card">
+                                                    <div class="practice-question-top">
+                                                        <span class="practice-number">{{ forloop.counter }}</span>
+                                                        <strong>{{ pregunta }}</strong>
+                                                    </div>
+                                                    <details class="practice-reveal">
+                                                        <summary>Ver pista</summary>
+                                                        <p>Observa los marcadores de la lámina y ubica la estructura relacionada con la pregunta.</p>
+                                                    </details>
+                                                    <details class="practice-reveal answer-reveal">
+                                                        <summary>Ver respuesta esperada</summary>
+                                                        <p>Contrasta tu respuesta con la leyenda de marcadores y explica la relación anatómica principal.</p>
+                                                    </details>
+                                                </article>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if dia.recursos.imagen_anatomica.marcadores %}
+                                        <div class="practice-marker-review mt-3">
+                                            <strong>Repaso rápido de marcadores</strong>
+                                            <div class="practice-marker-list">
+                                                {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
+                                                    <span><b>{{ marcador.id }}</b> {{ marcador.nombre }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </section>
                         {% endif %}
 
@@ -1850,6 +1908,155 @@
 @media print {
     .mindmap-elite { box-shadow: none; background: #fff; }
     .map-branch-card, .map-hero-node { box-shadow: none; }
+}
+
+
+/* ===== FASE 6: MODO PRACTICA PREMIUM ===== */
+.practice-lab {
+    border: 1px solid rgba(15, 118, 110, .14);
+    border-radius: 24px;
+    padding: 20px;
+    background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, .10), transparent 34%),
+        linear-gradient(135deg, #ffffff 0%, #f4fffc 100%);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, .06);
+}
+.practice-lab-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.practice-lab-header h3 {
+    margin: .1rem 0 .3rem;
+    color: #063c37;
+    font-size: 1.45rem;
+}
+.practice-lab-header p { margin: 0; color: #4b665f; }
+.practice-score-chip {
+    min-width: 76px;
+    padding: .8rem .9rem;
+    border-radius: 20px;
+    background: #0f766e;
+    color: #fff;
+    text-align: center;
+    box-shadow: 0 14px 30px rgba(15, 118, 110, .24);
+}
+.practice-score-chip span {
+    display: block;
+    font-size: 1.45rem;
+    font-weight: 950;
+    line-height: 1;
+}
+.practice-score-chip small { opacity: .9; text-transform: uppercase; letter-spacing: .06em; }
+.practice-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .8rem;
+    margin-top: 1rem;
+}
+.practice-steps div {
+    display: flex;
+    gap: .7rem;
+    align-items: center;
+    padding: .85rem;
+    border-radius: 18px;
+    background: rgba(255,255,255,.78);
+    border: 1px solid rgba(15, 118, 110, .10);
+}
+.practice-steps strong {
+    width: 30px;
+    height: 30px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 999px;
+    background: #dff8f3;
+    color: #0f766e;
+    flex: 0 0 auto;
+}
+.practice-steps span { color: #294843; font-size: .95rem; }
+.practice-question-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: .9rem;
+}
+.practice-question-card {
+    padding: 1rem;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 118, 110, .13);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .055);
+}
+.practice-question-top {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .75rem;
+    align-items: start;
+    margin-bottom: .8rem;
+}
+.practice-number {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: inline-grid;
+    place-items: center;
+    background: #0f766e;
+    color: #fff;
+    font-weight: 900;
+}
+.practice-question-top strong { color: #0c3f3a; line-height: 1.25; }
+.practice-reveal {
+    margin-top: .55rem;
+    border-radius: 14px;
+    background: #f7fbfb;
+    border: 1px dashed rgba(15, 118, 110, .20);
+    padding: .68rem .8rem;
+}
+.practice-reveal summary {
+    cursor: pointer;
+    font-weight: 850;
+    color: #0f766e;
+}
+.practice-reveal p { margin: .55rem 0 0; color: #355752; }
+.answer-reveal { background: #fffaf0; border-color: rgba(245, 158, 11, .30); }
+.answer-reveal summary { color: #b45309; }
+.practice-marker-review {
+    padding: .95rem;
+    border-radius: 18px;
+    background: rgba(255,255,255,.72);
+    border: 1px solid rgba(15, 118, 110, .10);
+}
+.practice-marker-review > strong { color: #0c3f3a; }
+.practice-marker-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+    margin-top: .7rem;
+}
+.practice-marker-list span {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .45rem .7rem;
+    border-radius: 999px;
+    background: #effcf8;
+    border: 1px solid rgba(15, 118, 110, .12);
+    color: #234d48;
+}
+.practice-marker-list b {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: #0f766e;
+    color: #fff;
+    font-size: .8rem;
+}
+@media (max-width: 820px) {
+    .practice-lab-header { flex-direction: column; }
+    .practice-steps { grid-template-columns: 1fr; }
+    .practice-score-chip { width: 100%; }
 }
 
 </style>
