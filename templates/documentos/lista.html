@@ -1,77 +1,150 @@
 {% extends "base.html" %}
 
-{% block title %}Materiales | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Materiales | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero">
-    <div>
-        <p class="eyebrow">Biblioteca personal</p>
-        <h1>Mis materiales</h1>
-        <p>
-            Aqu&iacute; puedes ver los materiales que subiste para estudiar Anatom&iacute;a I.
-        </p>
-    </div>
-</section>
+<section class="materials-library-shell app-container">
+    <section class="library-hero-pro">
+        <div class="library-hero-copy">
+            <p class="eyebrow">Biblioteca personal</p>
+            <h1>Mis materiales</h1>
+            <p>Revisa qué materiales ya fueron procesados por la IA, cuáles están pendientes y cuáles necesitan atención.</p>
+        </div>
 
-<section class="section-band">
-    <div class="page-inner">
-        <div class="form-actions mb-4">
-            <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
-                Volver al dashboard
-            </a>
-
+        <div class="library-hero-actions">
+            <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">Dashboard</a>
             <a href="{% url 'documentos:subir' %}" class="btn btn-primary icon-btn">
                 <i data-lucide="upload-cloud"></i>
-                <span>Subir nuevo material</span>
+                <span>Subir material</span>
             </a>
+        </div>
+    </section>
+
+    {% if messages %}
+        <div class="messages-stack">
+            {% for message in messages %}
+                <div class="app-alert alert-{{ message.tags }}">
+                    <i data-lucide="info"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <section class="library-summary-grid">
+        <article class="library-stat-card">
+            <span class="library-stat-icon"><i data-lucide="folders"></i></span>
+            <div>
+                <small>Total</small>
+                <strong>{{ stats_materiales.total }}</strong>
+                <p>Materiales registrados</p>
+            </div>
+        </article>
+        <article class="library-stat-card success-tone">
+            <span class="library-stat-icon"><i data-lucide="badge-check"></i></span>
+            <div>
+                <small>Procesados</small>
+                <strong>{{ stats_materiales.procesados }}</strong>
+                <p>Listos para usar</p>
+            </div>
+        </article>
+        <article class="library-stat-card warning-tone">
+            <span class="library-stat-icon"><i data-lucide="loader-circle"></i></span>
+            <div>
+                <small>Pendientes</small>
+                <strong>{{ stats_materiales.pendientes }}</strong>
+                <p>En espera o análisis</p>
+            </div>
+        </article>
+        <article class="library-stat-card danger-tone">
+            <span class="library-stat-icon"><i data-lucide="triangle-alert"></i></span>
+            <div>
+                <small>Con error</small>
+                <strong>{{ stats_materiales.error }}</strong>
+                <p>Necesitan revisión</p>
+            </div>
+        </article>
+    </section>
+
+    <section class="library-section-pro">
+        <div class="library-section-head">
+            <div>
+                <p class="eyebrow">Biblioteca de estudio</p>
+                <h2>Materiales cargados</h2>
+                <p>Los materiales procesados enriquecen tu ruta, mapas, láminas y simulacros.</p>
+            </div>
+            <span class="library-count-pill">{{ stats_materiales.total }} elemento{{ stats_materiales.total|pluralize }}</span>
         </div>
 
         {% if materiales %}
-            <div class="materials-grid">
+            <div class="materials-list-pro">
                 {% for material in materiales %}
-                    <article class="feature-card material-card">
-                        <div class="material-icon">
-                            <i data-lucide="{{ material.tipo_icono }}"></i>
+                    <article class="library-item-card status-{{ material.estado }}">
+                        <div class="library-item-main">
+                            <div class="library-item-icon">
+                                <i data-lucide="{{ material.tipo_icono }}"></i>
+                            </div>
+
+                            <div class="library-item-content">
+                                <div class="library-item-topline">
+                                    <h3>{{ material.titulo }}</h3>
+                                    <span class="material-status-badge status-{{ material.estado }}">
+                                        {{ material.get_estado_display }}
+                                    </span>
+                                </div>
+
+                                {% if material.tema %}
+                                    <p class="library-topic"><strong>Tema:</strong> {{ material.tema }}</p>
+                                {% endif %}
+
+                                {% if material.temario_examen %}
+                                    <p class="library-highlight"><strong>Importante:</strong> {{ material.temario_examen|truncatechars:140 }}</p>
+                                {% elif material.descripcion %}
+                                    <p class="library-highlight"><strong>Nota:</strong> {{ material.descripcion|truncatechars:140 }}</p>
+                                {% endif %}
+
+                                <div class="library-meta-row">
+                                    <span><i data-lucide="file"></i> {{ material.get_tipo_display }}</span>
+                                    <span><i data-lucide="calendar"></i> {{ material.creado|date:"d/m/Y" }}</span>
+                                    <span><i data-lucide="file-stack"></i> {{ material.nombre_archivo }}</span>
+                                </div>
+
+                                {% if material.estado == "procesado" %}
+                                    <div class="library-note success-note">
+                                        <i data-lucide="check-circle-2"></i>
+                                        <span>Listo para usar en tu ruta de aprendizaje.</span>
+                                    </div>
+                                {% elif material.estado == "error" %}
+                                    <div class="library-note error-note">
+                                        <i data-lucide="alert-triangle"></i>
+                                        <span>Revisa el detalle y vuelve a procesarlo.</span>
+                                    </div>
+                                {% else %}
+                                    <div class="library-note pending-note">
+                                        <i data-lucide="clock-3"></i>
+                                        <span>El análisis está pendiente o en proceso.</span>
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
 
-                        <h3>{{ material.titulo }}</h3>
-
-                        {% if material.tema %}
-                            <p><strong>Tema:</strong> {{ material.tema }}</p>
-                        {% endif %}
-
-                        <p>
-                            <strong>Tipo:</strong> {{ material.get_tipo_display }}
-                        </p>
-
-                        <p>
-                            <strong>Estado:</strong> {{ material.get_estado_display }}
-                        </p>
-
-                        <small>
-                            Subido el {{ material.creado|date:"d/m/Y H:i" }}
-                        </small>
-
-                        <div class="card-actions">
-                            <a href="{% url 'documentos:detalle' material.pk %}" class="btn btn-outline-primary btn-sm">
-                                Ver detalle
-                            </a>
+                        <div class="library-item-actions">
+                            <a href="{% url 'documentos:detalle' material.pk %}" class="btn btn-outline-primary btn-sm">Ver análisis</a>
                         </div>
                     </article>
                 {% endfor %}
             </div>
         {% else %}
-            <div class="empty-state">
+            <div class="empty-state library-empty-state">
                 <i data-lucide="folder-open"></i>
-                <h2>No tienes materiales todav&iacute;a</h2>
-                <p>Sube tu primer archivo o escribe texto manual para comenzar.</p>
-
+                <h2>No tienes materiales todavía</h2>
+                <p>Sube tu primer PDF, Word, imagen o TXT para que la IA lo analice.</p>
                 <a href="{% url 'documentos:subir' %}" class="btn btn-primary icon-btn">
                     <i data-lucide="upload-cloud"></i>
                     <span>Subir material</span>
                 </a>
             </div>
         {% endif %}
-    </div>
+    </section>
 </section>
 {% endblock %}

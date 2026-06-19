@@ -118,6 +118,11 @@ class ExamenGenerado(models.Model):
                     "respuesta_usuario": respuesta.get("respuesta_usuario", ""),
                     "es_correcta": respuesta.get("es_correcta", False),
                     "explicacion": pregunta.get("explicacion", ""),
+                    "habilidad_evaluada": pregunta.get("habilidad_evaluada", ""),
+                    "dificultad_cognitiva": pregunta.get("dificultad_cognitiva", ""),
+                    "pista_estudio": pregunta.get("pista_estudio", ""),
+                    "retroalimentacion_error": pregunta.get("retroalimentacion_error", ""),
+                    "repaso_recomendado": pregunta.get("repaso_recomendado", ""),
                 }
             )
 

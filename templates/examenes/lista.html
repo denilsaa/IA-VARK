@@ -1,53 +1,78 @@
 {% extends "base.html" %}
 
-{% block title %}Mis ex&aacute;menes | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Mis simulacros | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero">
+<section class="page-hero compact-hero">
     <div>
-        <p class="eyebrow">Historial</p>
-        <h1>Mis ex&aacute;menes</h1>
-        <p>
-            Revisa tus simulacros generados con IA y sus resultados.
-        </p>
+        <p class="eyebrow">Historial de evaluación</p>
+        <h1>Mis simulacros</h1>
+        <p>Revisa tus intentos, continúa simulacros pendientes y usa tus resultados para reforzar temas.</p>
     </div>
 </section>
 
-<section class="section-band">
-    <div class="page-inner">
-        <div class="form-actions mb-4">
-            <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
-                Volver al dashboard
-            </a>
+<section class="section-band exam-section-band">
+    <div class="container">
+        <div class="exam-result-grid mb-4">
+            <article class="exam-result-card">
+                <i data-lucide="file-question"></i>
+                <span>Total</span>
+                <strong>{{ resumen_examenes.total }}</strong>
+            </article>
+            <article class="exam-result-card">
+                <i data-lucide="check-circle"></i>
+                <span>Respondidos</span>
+                <strong>{{ resumen_examenes.respondidos }}</strong>
+            </article>
+            <article class="exam-result-card">
+                <i data-lucide="clock"></i>
+                <span>Pendientes</span>
+                <strong>{{ resumen_examenes.pendientes }}</strong>
+            </article>
+            <article class="exam-result-card">
+                <i data-lucide="percent"></i>
+                <span>Promedio</span>
+                <strong>{% if resumen_examenes.promedio != None %}{{ resumen_examenes.promedio }}%{% else %}--{% endif %}</strong>
+            </article>
+        </div>
 
+        <div class="form-actions mb-4 sticky-mobile-actions">
+            <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">Volver al dashboard</a>
             <a href="{% url 'examenes:generar' %}" class="btn btn-primary icon-btn">
                 <i data-lucide="file-question"></i>
-                <span>Generar examen</span>
+                <span>Generar simulacro</span>
             </a>
         </div>
 
         {% if examenes %}
-            <div class="materials-grid">
+            <div class="materials-grid exam-history-grid">
                 {% for examen in examenes %}
-                    <article class="feature-card material-card">
-                        <div class="material-icon">
-                            <i data-lucide="file-question"></i>
+                    <article class="feature-card material-card exam-history-card">
+                        <div class="exam-history-top">
+                            <div class="material-icon"><i data-lucide="file-question"></i></div>
+                            {% if examen.esta_respondido %}
+                                <span class="status-badge success">Respondido</span>
+                            {% else %}
+                                <span class="status-badge warning">Pendiente</span>
+                            {% endif %}
                         </div>
 
                         <h3>{{ examen.titulo }}</h3>
-                        <p><strong>Estado:</strong> {{ examen.get_estado_display }}</p>
                         <p><strong>Dificultad:</strong> {{ examen.get_dificultad_display }}</p>
                         <p><strong>Preguntas:</strong> {{ examen.total_preguntas }}</p>
 
                         {% if examen.esta_respondido %}
-                            <p><strong>Puntaje:</strong> {{ examen.puntaje }}/{{ examen.total_preguntas }} - {{ examen.porcentaje }}%</p>
-                            <a href="{% url 'examenes:resultado' examen.pk %}" class="btn btn-outline-primary btn-sm">
-                                Ver resultado
-                            </a>
+                            <div class="exam-card-score">
+                                <strong>{{ examen.porcentaje }}%</strong>
+                                <span>{{ examen.puntaje }}/{{ examen.total_preguntas }} correctas</span>
+                            </div>
+                            <a href="{% url 'examenes:resultado' examen.pk %}" class="btn btn-outline-primary btn-sm">Ver resultado</a>
                         {% else %}
-                            <a href="{% url 'examenes:rendir' examen.pk %}" class="btn btn-outline-primary btn-sm">
-                                Rendir examen
-                            </a>
+                            <div class="exam-card-score pending">
+                                <strong>Sin responder</strong>
+                                <span>Continúa este simulacro.</span>
+                            </div>
+                            <a href="{% url 'examenes:rendir' examen.pk %}" class="btn btn-primary btn-sm">Rendir ahora</a>
                         {% endif %}
                     </article>
                 {% endfor %}
@@ -55,8 +80,11 @@
         {% else %}
             <div class="empty-state">
                 <i data-lucide="file-question"></i>
-                <h2>No tienes ex&aacute;menes todav&iacute;a</h2>
-                <p>Genera tu primer simulacro con Gemini.</p>
+                <h2>No tienes simulacros todavía</h2>
+                <p>Genera tu primer simulacro para medir comprensión y recibir retroalimentación.</p>
+                <a href="{% url 'examenes:generar' %}" class="btn btn-primary icon-btn mt-3">
+                    <i data-lucide="file-question"></i><span>Generar primer simulacro</span>
+                </a>
             </div>
         {% endif %}
     </div>

@@ -1,62 +1,243 @@
 {% extends "base.html" %}
 
-{% block title %}Panel | Tutor IA Anatomía VARK{% endblock %}
+{% block title %}Dashboard | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero dashboard-hero">
-    <div>
-        <span class="eyebrow">Panel del estudiante</span>
-        <h1>Hola, {{ request.user.username }}</h1>
-        <p>Continúa tu preparación de Anatomía I desde un solo lugar: perfil VARK, materiales, ruta, simulacros y progreso.</p>
-    </div>
-    <div class="hero-action-card">
-        <span>Avance de ruta</span>
-        <strong>{{ resumen.ruta_progreso.porcentaje }}%</strong>
-        <div class="progress-bar-wrap compact"><div class="progress-bar-fill" style="width: {{ resumen.ruta_progreso.porcentaje|default:0 }}%"></div></div>
-        <small>{{ resumen.ruta_progreso.dias_completados }}/{{ resumen.ruta_progreso.total_dias }} días completados</small>
-    </div>
-</section>
+<section class="dashboard-shell app-container">
+    <section class="dashboard-hero-pro">
+        <div class="dashboard-hero-copy">
+            <p class="eyebrow">Panel del estudiante</p>
+            <h1>Hola, {{ request.user.username }}</h1>
+            <p class="dashboard-hero-lead">
+                Sigue el flujo recomendado para estudiar Anatomía I con VARK, IA,
+                materiales, ruta personalizada y simulacros.
+            </p>
 
-<section class="section-band">
-    <div class="dashboard-grid metric-grid">
-        <article class="metric-card"><span class="metric-icon"><i data-lucide="scan-eye"></i></span><small>Estilo VARK</small><strong>{{ resumen.estilo_vark }}</strong><p>{% if perfil_vark %}Perfil completado{% else %}Pendiente de completar{% endif %}</p></article>
-        <article class="metric-card"><span class="metric-icon"><i data-lucide="book-open"></i></span><small>Tema actual</small><strong>{{ resumen.tema_actual }}</strong><p>Contenido principal</p></article>
-        <article class="metric-card"><span class="metric-icon"><i data-lucide="calendar-days"></i></span><small>Fecha examen</small><strong>{{ resumen.fecha_examen }}</strong><p>Días restantes: {{ resumen.dias_restantes }}</p></article>
-        <article class="metric-card"><span class="metric-icon"><i data-lucide="clock"></i></span><small>Tiempo por día</small><strong>{{ resumen.tiempo_estudio }}</strong><p>Disponibilidad diaria</p></article>
-        <article class="metric-card"><span class="metric-icon"><i data-lucide="clipboard-check"></i></span><small>Tipo de examen</small><strong>{{ resumen.proximo_examen }}</strong><p>Formato registrado</p></article>
-        <article class="metric-card"><span class="metric-icon"><i data-lucide="file-stack"></i></span><small>Materiales</small><strong>{{ resumen.materiales }}</strong><p>Archivos guardados</p></article>
-        <article class="metric-card"><span class="metric-icon"><i data-lucide="route"></i></span><small>Ruta activa</small><strong>{{ resumen.ruta_activa }}</strong><p>Plan personalizado</p></article>
-        <article class="metric-card"><span class="metric-icon"><i data-lucide="trending-up"></i></span><small>Último puntaje</small><strong>{{ resumen.ultimo_puntaje }}</strong><p>Simulacros respondidos</p></article>
-    </div>
+            <div class="dashboard-hero-actions">
+                <a href="{{ onboarding.siguiente.url }}" class="btn btn-primary icon-btn">
+                    <i data-lucide="{{ onboarding.siguiente.icono }}"></i>
+                    <span>{{ onboarding.siguiente.titulo }}</span>
+                </a>
+                <a href="#onboarding-panel" class="btn btn-outline-primary icon-btn">
+                    <i data-lucide="list-checks"></i>
+                    <span>Ver guía paso a paso</span>
+                </a>
+            </div>
+        </div>
 
-    {% if datos_academicos %}
-        <div class="form-panel wide-panel mt-4 academic-summary">
-            <div class="panel-title-row">
-                <div><span class="eyebrow">Resumen académico</span><h2>{{ datos_academicos.materia }}</h2></div>
-                <a href="{% url 'anatomia:datos_academicos' %}" class="btn btn-outline-primary btn-sm icon-btn"><i data-lucide="edit-3"></i><span>Editar</span></a>
+        <aside class="dashboard-hero-side">
+            <div class="dashboard-progress-pro">
+                <div class="progress-head">
+                    <div>
+                        <small>Avance del flujo</small>
+                        <strong>{{ onboarding.completados }}/{{ onboarding.total }} módulos completados</strong>
+                    </div>
+                    <span class="progress-percentage">{{ onboarding.porcentaje }}%</span>
+                </div>
+                <div class="progress-bar-wrap" aria-label="Avance del flujo">
+                    <div class="progress-bar-fill" style="width: {{ onboarding.porcentaje }}%;"></div>
+                </div>
+                <p>{{ onboarding.mensaje }}</p>
             </div>
-            <div class="detail-grid mt-3">
-                <div><strong>Tema actual</strong><p>{{ datos_academicos.tema_actual }}</p></div>
-                <div><strong>Tipo de examen</strong><p>{{ datos_academicos.get_tipo_examen_display }}</p></div>
-                <div><strong>Fecha de examen</strong><p>{{ datos_academicos.fecha_examen_formateada }}</p></div>
+
+            <div class="dashboard-focus-card">
+                <span class="focus-kicker"><i data-lucide="sparkles"></i> Siguiente acción</span>
+                <h3>{{ onboarding.siguiente.titulo }}</h3>
+                <p>{{ onboarding.siguiente.descripcion }}</p>
+                <a href="{{ onboarding.siguiente.url }}" class="focus-link">
+                    Ir ahora
+                    <i data-lucide="arrow-right"></i>
+                </a>
             </div>
-            {% if datos_academicos.temas_dificiles %}<div class="text-preview mt-3"><strong>Punto específico difícil</strong><p>{{ datos_academicos.temas_dificiles }}</p></div>{% endif %}
-            {% if datos_academicos.objetivo_estudio %}<div class="text-preview mt-3"><strong>Objetivo de estudio</strong><p>{{ datos_academicos.objetivo_estudio }}</p></div>{% endif %}
+        </aside>
+    </section>
+
+    {% if messages %}
+        <div class="messages-stack dashboard-messages">
+            {% for message in messages %}
+                <div class="app-alert alert-{{ message.tags }}">
+                    <i data-lucide="info"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
         </div>
     {% endif %}
 
-    <div class="section-heading mt-5">
-        <span class="eyebrow">Accesos rápidos</span>
-        <h2>¿Qué quieres hacer ahora?</h2>
-    </div>
-    <div class="quick-actions-grid">
-        {% for acceso in accesos %}
-            <a class="quick-action-card" href="{{ acceso.url }}">
-                <span><i data-lucide="{{ acceso.icon }}"></i></span>
-                <strong>{{ acceso.label }}</strong>
-                <small>Entrar al módulo</small>
-            </a>
-        {% endfor %}
-    </div>
+    <section class="onboarding-panel-pro" id="onboarding-panel">
+        <div class="onboarding-panel-head">
+            <div>
+                <span class="hero-badge"><i data-lucide="compass"></i> Empieza aquí</span>
+                <h2>Tu guía paso a paso</h2>
+                <p>Completa los módulos en orden para que la experiencia sea más clara y la personalización sea mejor.</p>
+            </div>
+            <div class="onboarding-panel-tip">
+                <i data-lucide="lightbulb"></i>
+                <div>
+                    <strong>Consejo</strong>
+                    <span>Si no sabes qué hacer, sigue el paso marcado como <b>Ahora</b>.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="onboarding-steps-pro" aria-label="Flujo recomendado del sistema">
+            {% for paso in onboarding.pasos %}
+                <a href="{{ paso.url }}" class="onboarding-step-pro is-{{ paso.estado }}">
+                    <div class="step-topline">
+                        <span class="step-badge">Paso {{ paso.numero }}</span>
+                        <span class="step-status-pill">
+                            {% if paso.estado == "completado" %}
+                                Listo
+                            {% elif paso.estado == "actual" %}
+                                Ahora
+                            {% else %}
+                                Pendiente
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="step-iconbox">
+                        {% if paso.completado %}
+                            <i data-lucide="check-check"></i>
+                        {% elif paso.estado == "actual" %}
+                            <i data-lucide="play"></i>
+                        {% else %}
+                            <i data-lucide="circle"></i>
+                        {% endif %}
+                    </div>
+                    <h3>{{ paso.titulo }}</h3>
+                    <p>{{ paso.descripcion }}</p>
+                    <span class="step-linkline">Abrir módulo <i data-lucide="arrow-right"></i></span>
+                </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="dashboard-summary-zone">
+        <div class="section-heading mb-3">
+            <p class="eyebrow">Resumen rápido</p>
+            <h2>Tu estado actual</h2>
+            <p>Revisa en segundos lo más importante para continuar tu preparación.</p>
+        </div>
+
+        <div class="dashboard-grid mt-0">
+            <article class="feature-card dashboard-card pro-card">
+                <i data-lucide="scan-eye"></i>
+                <h3>Estilo VARK</h3>
+                <strong>{{ resumen.estilo_vark }}</strong>
+                <p>{% if perfil_vark %}Perfil completado y guardado.{% else %}Pendiente de completar.{% endif %}</p>
+            </article>
+
+            <article class="feature-card dashboard-card pro-card">
+                <i data-lucide="book-open"></i>
+                <h3>Tema actual</h3>
+                <strong>{{ resumen.tema_actual }}</strong>
+                <p>Contenido principal registrado.</p>
+            </article>
+
+            <article class="feature-card dashboard-card pro-card">
+                <i data-lucide="calendar-days"></i>
+                <h3>Fecha de examen</h3>
+                <strong>{{ resumen.fecha_examen }}</strong>
+                <p>Días restantes: {{ resumen.dias_restantes }}</p>
+            </article>
+
+            <article class="feature-card dashboard-card pro-card">
+                <i data-lucide="clock"></i>
+                <h3>Tiempo por día</h3>
+                <strong>{{ resumen.tiempo_estudio }}</strong>
+                <p>Tiempo diario disponible.</p>
+            </article>
+
+            <article class="feature-card dashboard-card pro-card">
+                <i data-lucide="clipboard-check"></i>
+                <h3>Tipo de examen</h3>
+                <strong>{{ resumen.proximo_examen }}</strong>
+                <p>Formato del próximo examen.</p>
+            </article>
+
+            <article class="feature-card dashboard-card pro-card">
+                <i data-lucide="file-stack"></i>
+                <h3>Materiales</h3>
+                <strong>{{ resumen.materiales }}</strong>
+                <p>Archivos subidos al sistema.</p>
+            </article>
+
+            <article class="feature-card dashboard-card pro-card">
+                <i data-lucide="route"></i>
+                <h3>Ruta activa</h3>
+                <strong>{{ resumen.ruta_activa }}</strong>
+                <p>Plan de estudio personalizado.</p>
+            </article>
+
+            <article class="feature-card dashboard-card pro-card">
+                <i data-lucide="trending-up"></i>
+                <h3>Último puntaje</h3>
+                <strong>{{ resumen.ultimo_puntaje }}</strong>
+                <p>Resultado de simulacros.</p>
+            </article>
+        </div>
+    </section>
+
+    {% if datos_academicos %}
+        <section class="form-panel wide-panel mt-4 academic-summary-panel pro-academic-summary">
+            <div class="panel-title-row">
+                <div>
+                    <p class="eyebrow">Resumen académico</p>
+                    <h2>{{ datos_academicos.materia }}</h2>
+                </div>
+                <span class="summary-chip"><i data-lucide="graduation-cap"></i> Configurado</span>
+            </div>
+
+            <div class="detail-grid">
+                <div>
+                    <strong>Tema actual</strong>
+                    <p>{{ datos_academicos.tema_actual }}</p>
+                </div>
+                <div>
+                    <strong>Tipo de examen</strong>
+                    <p>{{ datos_academicos.get_tipo_examen_display }}</p>
+                </div>
+                <div>
+                    <strong>Fecha de examen</strong>
+                    <p>{{ datos_academicos.fecha_examen_formateada }}</p>
+                </div>
+            </div>
+
+            {% if datos_academicos.temas_dificiles or datos_academicos.objetivo_estudio %}
+                <div class="detail-grid mt-4">
+                    {% if datos_academicos.temas_dificiles %}
+                        <div>
+                            <strong>Punto específico que te cuesta más</strong>
+                            <p>{{ datos_academicos.temas_dificiles }}</p>
+                        </div>
+                    {% endif %}
+                    {% if datos_academicos.objetivo_estudio %}
+                        <div>
+                            <strong>Objetivo de estudio</strong>
+                            <p>{{ datos_academicos.objetivo_estudio }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </section>
+    {% endif %}
+
+    <section class="quick-access-pro mt-4">
+        <div class="section-heading mb-3">
+            <p class="eyebrow">Accesos rápidos</p>
+            <h2>Continuar trabajando</h2>
+            <p>También puedes entrar directamente a cualquier módulo del sistema.</p>
+        </div>
+
+        <div class="process-grid">
+            {% for acceso in accesos %}
+                <a class="feature-card access-card pro-access-card" href="{{ acceso.url }}">
+                    <i data-lucide="{{ acceso.icon }}"></i>
+                    <h3>{{ acceso.label }}</h3>
+                    <p>Entrar al módulo.</p>
+                    <span class="access-arrow">Abrir <i data-lucide="arrow-right"></i></span>
+                </a>
+            {% endfor %}
+        </div>
+    </section>
 </section>
 {% endblock %}

@@ -1600,3 +1600,531 @@ def limpiar_json(texto):
     if texto.endswith("```"):
         texto = texto[:-3].strip()
     return texto
+
+
+
+# =========================================================
+# MEJORAS SENIOR: generación visual anatómica + mapas mentales premium
+# Estas funciones redefinen las anteriores sin cambiar modelos ni migraciones.
+# =========================================================
+
+def limpiar_texto_visual(texto, max_chars=70):
+    texto = str(texto or "").strip()
+    texto = re.sub(r"\s+", " ", texto)
+    texto = texto.replace("**", "").replace("__", "")
+    if len(texto) > max_chars:
+        texto = texto[: max_chars - 1].rstrip() + "…"
+    return texto
+
+
+def detectar_categoria_tema(tema: str, punto_dificil: str = "") -> str:
+    t = f"{tema or ''} {punto_dificil or ''}".strip().lower()
+
+    if any(p in t for p in ["linfático", "linfatico", "linfáticos", "linfaticos", "linfa", "ganglio", "nódulo", "nodulo"]):
+        return "linfatico"
+
+    if any(p in t for p in ["periné", "perine", "triángulo urogenital", "triangulo urogenital", "diafragma pélvico", "diafragma pelvico"]):
+        return "perine"
+
+    if any(p in t for p in ["plexo", "nervio", "nervios", "raíz nerviosa", "raiz nerviosa", "simpático", "parasimpático"]):
+        return "nervioso"
+
+    if any(p in t for p in ["arteria", "arterias", "vena", "venas", "vascular", "vaso", "vasos", "aorta", "cava", "porta"]):
+        return "vascular"
+
+    if any(p in t for p in ["articulación", "articulacion", "articulaciones", "ligamento", "ligamentos", "sínfisis", "sinfisis"]):
+        return "articular"
+
+    if any(p in t for p in ["músculo", "musculo", "músculos", "musculos", "diafragma", "pared abdominal", "suelo pélvico", "suelo pelvico"]):
+        return "muscular"
+
+    if "pelvis" in t and any(p in t for p in ["vejiga", "recto", "útero", "utero", "ovario", "próstata", "prostata", "pelvis menor", "órganos", "organos"]):
+        return "pelvis_visceral"
+
+    if "pelvis" in t or any(p in t for p in ["coxal", "sacro", "isquion", "ilion", "pubis"]):
+        return "pelvis_osea"
+
+    if any(p in t for p in ["abdomen", "abdominal", "peritoneo", "mesenterio", "estómago", "estomago", "intestino", "hígado", "higado", "bazo", "páncreas", "pancreas", "riñón", "rinon", "renal"]):
+        return "abdominal"
+
+    if any(p in t for p in ["tórax", "torax", "costilla", "costillas", "esternón", "esternon", "mediastino", "pulmón", "pulmon", "corazón", "corazon"]):
+        return "toracico"
+
+    if any(p in t for p in ["hueso", "huesos", "óseo", "oseo", "esqueleto", "columna", "vértebra", "vertebra"]):
+        return "oseo"
+
+    if any(p in t for p in ["órgano", "organo", "órganos", "organos", "víscera", "viscera", "visceral"]):
+        return "visceral"
+
+    return "general"
+
+
+def construir_prompt_visual_controlado(tema: str, datos_academicos=None, anatomica=None) -> tuple[str, str, str]:
+    """Prompt más controlado para evitar imágenes raras, texto falso y anatomía incoherente."""
+    anatomica = anatomica or {}
+    punto = ""
+    materia = "Anatomía I"
+
+    if datos_academicos is not None:
+        punto = getattr(datos_academicos, "temas_dificiles", "") or ""
+        materia = getattr(datos_academicos, "materia", "Anatomía I") or "Anatomía I"
+
+    if not punto and isinstance(anatomica, dict):
+        punto = anatomica.get("descripcion", "") or anatomica.get("titulo", "") or ""
+
+    categoria = detectar_categoria_tema(tema, punto)
+    descripcion = limpiar_texto_visual(anatomica.get("descripcion", ""), 220)
+
+    base = (
+        "Create a clean professional medical atlas illustration for university anatomy study. "
+        f"Subject: {tema}. Focus: {punto or 'general review'}. Course: {materia}. "
+        f"Didactic purpose: {descripcion or 'identify the main anatomical relationships'}. "
+        "Use a realistic educational anatomy plate style, centered composition, white or very light background, "
+        "soft anatomical colors, high detail, correct proportions, clear spatial relationships, marker-ready empty areas, "
+        "NO embedded text, NO labels, NO letters, NO numbers, NO watermark. "
+    )
+
+    negative_base = (
+        "text, labels, letters, numbers, typography, watermark, logo, signature, fake writing, infographic text, "
+        "low quality, blurry, noisy, distorted anatomy, malformed structures, wrong body part, extra limbs, extra bones, "
+        "messy composition, cropped anatomy, dark background, vintage poster, horror, surgery, blood, gore"
+    )
+
+    especificaciones = {
+        "pelvis_osea": (
+            "Show the human bony pelvis only, anterior view with slight superior perspective, iliac bones, sacrum, coccyx, pubis, ischium and pubic symphysis visible. "
+            "Isolated bone structure, no organs, no muscles, no full skeleton.",
+            "skull, cranium, face, full body, ribs, skin, organs, muscles"
+        ),
+        "pelvis_visceral": (
+            "Show a respectful educational cutaway of the pelvis minor with pelvic cavity relationships, bladder, rectum and reproductive region when relevant. "
+            "Use a neutral medical section view, not explicit, not sexualized.",
+            "erotic, sexualized, glamour, explicit nudity, face, full body pose"
+        ),
+        "abdominal": (
+            "Show abdominal region or organs in a clean didactic cutaway, emphasizing position, layers and neighboring relationships. "
+            "Use a textbook abdominal anatomy plate, not a surgical scene.",
+            "surgery, open wound, blood, full body glamour, random limbs"
+        ),
+        "toracico": (
+            "Show thoracic anatomy in a clean atlas view, rib cage or mediastinal relationships only if relevant, clear depth and orientation.",
+            "skull, pelvis, random abdomen, surgery, blood"
+        ),
+        "oseo": (
+            "Show the selected skeletal region only, realistic bone texture, isolated anatomical structure, no skin and no organs.",
+            "skin, organs, face, full body, muscles if not relevant"
+        ),
+        "articular": (
+            "Show a close-up of the selected joint and ligaments, clear articular surfaces and stabilizing elements, educational atlas style.",
+            "organs, face, full body fashion pose, unrelated muscles"
+        ),
+        "muscular": (
+            "Show layered muscular anatomy of the selected region, fiber direction and neighboring muscle groups, clean neutral view.",
+            "organs only, bones only, erotic, glamour, face closeup"
+        ),
+        "visceral": (
+            "Show internal organs and anatomical relationships in a clean non-graphic medical cutaway, educational atlas plate.",
+            "erotic, sexualized, unrelated limbs, full body poster, surgery, blood"
+        ),
+        "nervioso": (
+            "Show nerves or plexus pathways as clean anatomical lines over a subtle anatomical base, clear course and branching, no text.",
+            "random colorful infographic, labels, organs only, poster"
+        ),
+        "vascular": (
+            "Show arteries and veins of the selected region, clean vascular pathways with anatomical context, no text.",
+            "nerves only, muscles only, fake labels, text"
+        ),
+        "linfatico": (
+            "Show lymph node chains and lymphatic drainage pathways in the selected anatomical region, clean educational composition.",
+            "arteries only, veins only, fake labels, random infographic"
+        ),
+        "perine": (
+            "Show a respectful educational anatomical cutaway of the perineal region with muscles and spaces simplified for study, medical style only.",
+            "erotic, sexualized, explicit sexual content, glamour, fake text"
+        ),
+        "general": (
+            "Show the selected anatomy topic as a clear educational medical plate, simplified enough for student study but anatomically coherent.",
+            "unrelated body region, face, random full body"
+        ),
+    }
+
+    positivo_extra, negativo_extra = especificaciones.get(categoria, especificaciones["general"])
+    positive = base + positivo_extra + " High resolution, crisp edges, balanced lighting, 4:3 composition."
+    negative = f"{negative_base}, {negativo_extra}"
+
+    return positive, negative, categoria
+
+
+def marcadores_sugeridos_por_categoria(categoria: str):
+    mapas = {
+        "pelvis_osea": [
+            {"id": 1, "nombre": "Sacro", "x": 50, "y": 24, "pista": "Estructura posterior central.", "detalle": "Forma la pared posterior de la pelvis ósea y articula con los coxales."},
+            {"id": 2, "nombre": "Ilion", "x": 24, "y": 42, "pista": "Ala ósea amplia lateral.", "detalle": "Es la porción superior y lateral del hueso coxal."},
+            {"id": 3, "nombre": "Pubis", "x": 50, "y": 75, "pista": "Región anterior inferior.", "detalle": "Participa en la sínfisis púbica y en el límite anterior de la pelvis."},
+            {"id": 4, "nombre": "Isquion", "x": 73, "y": 68, "pista": "Porción posteroinferior del coxal.", "detalle": "Se relaciona con la tuberosidad isquiática y el apoyo sentado."},
+        ],
+        "pelvis_visceral": [
+            {"id": 1, "nombre": "Vejiga", "x": 50, "y": 42, "pista": "Órgano anterior de la pelvis menor.", "detalle": "Se ubica por delante del recto y sirve como referencia anterior."},
+            {"id": 2, "nombre": "Región reproductora", "x": 50, "y": 56, "pista": "Estructura central según el sexo anatómico representado.", "detalle": "Permite estudiar relaciones con vejiga y recto."},
+            {"id": 3, "nombre": "Recto", "x": 50, "y": 72, "pista": "Estructura posterior.", "detalle": "Ocupa la región posterior de la pelvis menor."},
+            {"id": 4, "nombre": "Pared pélvica", "x": 27, "y": 54, "pista": "Límite lateral de la cavidad.", "detalle": "Ayuda a comprender el espacio disponible para órganos y vasos."},
+        ],
+        "abdominal": [
+            {"id": 1, "nombre": "Región superior abdominal", "x": 50, "y": 30, "pista": "Zona relacionada con órganos supramesocólicos.", "detalle": "Úsala para ubicar hígado, estómago o bazo según el tema."},
+            {"id": 2, "nombre": "Plano medio", "x": 50, "y": 50, "pista": "Referencia para relaciones derecha-izquierda.", "detalle": "Ayuda a ordenar estructuras por posición."},
+            {"id": 3, "nombre": "Región inferior abdominal", "x": 50, "y": 70, "pista": "Zona cercana a pelvis o intestino.", "detalle": "Conecta el abdomen con la pelvis menor si corresponde."},
+            {"id": 4, "nombre": "Relación lateral", "x": 72, "y": 52, "pista": "Compara estructuras vecinas.", "detalle": "Describe qué queda medial, lateral, anterior o posterior."},
+        ],
+        "toracico": [
+            {"id": 1, "nombre": "Línea media torácica", "x": 50, "y": 35, "pista": "Referencia central.", "detalle": "Sirve para ubicar esternón, mediastino o corazón."},
+            {"id": 2, "nombre": "Región costal", "x": 30, "y": 50, "pista": "Referencia lateral.", "detalle": "Relaciona costillas, pleura o límites torácicos."},
+            {"id": 3, "nombre": "Mediastino", "x": 50, "y": 55, "pista": "Zona central del tórax.", "detalle": "Contiene estructuras vitales y relaciones vasculares."},
+            {"id": 4, "nombre": "Base torácica", "x": 50, "y": 72, "pista": "Límite inferior.", "detalle": "Relaciona el tórax con diafragma y abdomen."},
+        ],
+        "nervioso": [
+            {"id": 1, "nombre": "Trayecto principal", "x": 45, "y": 35, "pista": "Sigue el recorrido desde origen a destino.", "detalle": "Identifica cómo se distribuye el nervio o plexo."},
+            {"id": 2, "nombre": "Rama secundaria", "x": 62, "y": 48, "pista": "Observa una división del trayecto.", "detalle": "Relaciona cada rama con función o territorio."},
+            {"id": 3, "nombre": "Zona de inervación", "x": 55, "y": 68, "pista": "Área final del recorrido.", "detalle": "Permite conectar anatomía con función."},
+        ],
+        "vascular": [
+            {"id": 1, "nombre": "Vaso principal", "x": 50, "y": 35, "pista": "Estructura de mayor calibre.", "detalle": "Úsala como referencia para ramas o drenaje."},
+            {"id": 2, "nombre": "Rama vascular", "x": 38, "y": 52, "pista": "Trayecto secundario.", "detalle": "Identifica hacia qué región se dirige."},
+            {"id": 3, "nombre": "Relación vecina", "x": 62, "y": 58, "pista": "Compara con órganos, nervios o músculos.", "detalle": "La relación espacial ayuda a memorizar el recorrido."},
+        ],
+    }
+
+    return mapas.get(categoria, [
+        {"id": 1, "nombre": "Estructura principal", "x": 50, "y": 35, "pista": "Observa el elemento central.", "detalle": "Relaciona esta estructura con el objetivo del día."},
+        {"id": 2, "nombre": "Relación anatómica", "x": 32, "y": 55, "pista": "Compara posición y vecindad.", "detalle": "Describe qué queda medial, lateral, anterior o posterior."},
+        {"id": 3, "nombre": "Referencia espacial", "x": 68, "y": 55, "pista": "Busca el borde, límite o zona de transición.", "detalle": "Úsalo para ubicar el tema en el cuerpo."},
+        {"id": 4, "nombre": "Punto difícil", "x": 50, "y": 72, "pista": "Conecta con el subtema que más debes reforzar.", "detalle": "Explica este punto con tus propias palabras."},
+    ])
+
+
+def construir_ramas_mapa_premium(visual: dict, tema: str):
+    ramas = []
+    existentes = visual.get("ramas") if isinstance(visual.get("ramas"), list) else []
+
+    for rama in existentes[:4]:
+        if not isinstance(rama, dict):
+            continue
+        titulo = limpiar_texto_visual(rama.get("titulo") or "Idea clave", 34)
+        detalle = limpiar_texto_visual(rama.get("detalle") or "Relación importante del tema.", 110)
+        subpuntos = [limpiar_texto_visual(item, 42) for item in normalizar_lista(rama.get("subpuntos", []))[:3]]
+        if len(subpuntos) < 2:
+            subpuntos += ["Ubicar en la lámina", "Explicar con tus palabras"]
+        ramas.append({
+            "titulo": titulo,
+            "detalle": detalle,
+            "subpuntos": subpuntos[:3],
+            "estudio_activo": limpiar_texto_visual(rama.get("estudio_activo") or f"Convierte {titulo.lower()} en una pregunta oral.", 95),
+        })
+
+    apoyo = normalizar_lista(visual.get("apoyo_visual", []))
+    plantillas = [
+        ("Concepto", f"Define {tema} con una frase clara.", ["Definición simple", "Función o importancia"], "Explícalo sin mirar tus apuntes."),
+        ("Ubicación", "Reconoce dónde se encuentra dentro del cuerpo o región.", ["Región anatómica", "Referencia espacial"], "Señala la ubicación en la lámina."),
+        ("Relaciones", "Conecta el tema con estructuras vecinas.", ["Anterior/posterior", "Medial/lateral"], "Di qué estructuras lo rodean."),
+        ("Punto difícil", "Prioriza el subtema que más cuesta.", apoyo[:2] or ["Duda principal", "Repaso final"], "Haz una pregunta de examen sobre este punto."),
+    ]
+
+    while len(ramas) < 4:
+        titulo, detalle, subpuntos, accion = plantillas[len(ramas)]
+        ramas.append({
+            "titulo": titulo,
+            "detalle": detalle,
+            "subpuntos": subpuntos[:3],
+            "estudio_activo": accion,
+        })
+
+    return ramas[:4]
+
+
+def mejorar_visual_para_mapa_html(visual: dict, tema: str):
+    if not isinstance(visual, dict):
+        visual = {}
+
+    nodo = limpiar_texto_visual(visual.get("nodo_central") or tema or "Tema central", 34)
+    ramas = construir_ramas_mapa_premium(visual, tema)
+
+    apoyo_visual = normalizar_lista(visual.get("apoyo_visual", []))
+    if not apoyo_visual:
+        apoyo_visual = [rama["titulo"] for rama in ramas]
+
+    visual.update({
+        "habilitado": bool(visual.get("habilitado", True)),
+        "titulo": limpiar_texto_visual(visual.get("titulo") or f"Mapa mental de {tema}", 70),
+        "tipo": "mapa_mental_html_premium",
+        "descripcion": limpiar_texto_visual(
+            visual.get("descripcion") or "Mapa mental estructurado para repasar el tema sin depender de texto generado dentro de una imagen.",
+            180
+        ),
+        "nodo_central": nodo,
+        "ramas": ramas,
+        "apoyo_visual": apoyo_visual[:6],
+        "image_url": "",
+        "image_error": "",
+        "prompt_imagen": "",
+        "negative_prompt": "",
+        "categoria_visual": "mapa_html",
+        "instruccion_estudio": "Lee el nodo central, recorre las cuatro ramas y convierte cada subpunto en una pregunta de repaso.",
+    })
+
+    return visual
+
+
+def normalizar_visual(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+
+    visual = {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": str(valor.get("titulo", "Mapa mental generado por IA")).strip(),
+        "tipo": str(valor.get("tipo", "mapa_mental_html_premium")).strip(),
+        "descripcion": str(valor.get("descripcion", "")).strip(),
+        "nodo_central": str(valor.get("nodo_central", "Tema central")).strip(),
+        "ramas": valor.get("ramas", []),
+        "mermaid": str(valor.get("mermaid", "")).strip(),
+        "apoyo_visual": normalizar_lista(valor.get("apoyo_visual", [])),
+        "prompt_imagen": "",
+        "negative_prompt": "",
+        "categoria_visual": "mapa_html",
+        "image_url": "",
+        "image_error": "",
+        "instruccion_estudio": str(valor.get("instruccion_estudio", "")).strip(),
+    }
+
+    tema = visual["nodo_central"] or "Tema central"
+    return mejorar_visual_para_mapa_html(visual, tema)
+
+
+def normalizar_imagen_anatomica(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+
+    marcadores = valor.get("marcadores", [])
+    marcadores_limpios = []
+
+    if isinstance(marcadores, list):
+        for idx, item in enumerate(marcadores, start=1):
+            if not isinstance(item, dict):
+                continue
+
+            try:
+                x = max(8, min(int(item.get("x") or 50), 92))
+                y = max(8, min(int(item.get("y") or 50), 92))
+            except (TypeError, ValueError):
+                x = 50
+                y = 50
+
+            nombre = limpiar_texto_visual(item.get("nombre", f"Estructura {idx}"), 38)
+            pista = limpiar_texto_visual(item.get("pista", ""), 90)
+            detalle = limpiar_texto_visual(item.get("detalle", ""), 150)
+
+            marcadores_limpios.append({
+                "id": int(item.get("id") or idx),
+                "nombre": nombre,
+                "x": x,
+                "y": y,
+                "pista": pista,
+                "detalle": detalle,
+            })
+
+    return {
+        "habilitado": bool(valor.get("habilitado")),
+        "titulo": limpiar_texto_visual(valor.get("titulo", "Lámina anatómica guiada"), 75),
+        "tipo_vista": limpiar_texto_visual(valor.get("tipo_vista", "vista anatómica didáctica"), 45),
+        "descripcion": limpiar_texto_visual(valor.get("descripcion", ""), 220),
+        "marcadores": marcadores_limpios[:5],
+        "preguntas": normalizar_lista(valor.get("preguntas", []))[:5],
+        "preguntas_guiadas": normalizar_preguntas_guiadas(
+            valor.get("preguntas_guiadas", valor.get("preguntas_detalladas", [])),
+            preguntas_base=normalizar_lista(valor.get("preguntas", [])),
+            marcadores=marcadores_limpios[:5],
+        ),
+        "modo_practica": str(valor.get("modo_practica", "Observa primero, responde sin ayuda y luego revela pistas y respuestas.")).strip(),
+        "prompt_imagen": str(valor.get("prompt_imagen", "")).strip(),
+        "negative_prompt": str(valor.get("negative_prompt", "")).strip(),
+        "categoria_visual": str(valor.get("categoria_visual", "")).strip(),
+        "image_url": str(valor.get("image_url", "")).strip(),
+        "image_error": str(valor.get("image_error", "")).strip(),
+        "calidad_didactica": "Prompt controlado + marcadores externos + práctica guiada",
+    }
+
+
+def enriquecer_plan_con_imagenes_ia(respuesta, user, datos_academicos):
+    """Enriquece mapa mental HTML y lámina anatómica con prompt controlado, marcadores y práctica."""
+    if not isinstance(respuesta, dict):
+        return respuesta
+
+    plan = respuesta.get("plan_diario", [])
+    if not isinstance(plan, list):
+        return respuesta
+
+    try:
+        max_imagenes = int(os.getenv("MAX_IMAGENES_RUTA", "2"))
+    except ValueError:
+        max_imagenes = 2
+
+    generar_imagenes = os.getenv("GENERAR_IMAGENES_RUTA", "true").strip().lower() in ["1", "true", "yes", "si", "sí"]
+    imagenes_generadas = 0
+
+    for dia in plan:
+        if not isinstance(dia, dict):
+            continue
+
+        recursos = dia.get("recursos", {})
+        if not isinstance(recursos, dict):
+            recursos = {}
+            dia["recursos"] = recursos
+
+        numero_dia = dia.get("dia") or 1
+        tema = dia.get("tema_principal") or datos_academicos.tema_actual or "Anatomía I"
+
+        visual = recursos.get("visual", {})
+        if isinstance(visual, dict) and visual.get("habilitado"):
+            recursos["visual"] = mejorar_visual_para_mapa_html(visual, tema)
+
+        anatomica = recursos.get("imagen_anatomica", {})
+        if not (isinstance(anatomica, dict) and anatomica.get("habilitado")):
+            continue
+
+        prompt_controlado, negative_controlado, categoria = construir_prompt_visual_controlado(
+            tema=tema,
+            datos_academicos=datos_academicos,
+            anatomica=anatomica,
+        )
+        anatomica["prompt_imagen"] = prompt_controlado
+        anatomica["negative_prompt"] = negative_controlado
+        anatomica["categoria_visual"] = categoria
+        anatomica["calidad_didactica"] = "Prompt controlado, sin texto dentro de imagen, marcadores HTML externos."
+
+        marcadores = anatomica.get("marcadores", [])
+        if not isinstance(marcadores, list) or len(marcadores) < 3:
+            anatomica["marcadores"] = marcadores_sugeridos_por_categoria(categoria)
+
+        anatomica["preguntas_guiadas"] = normalizar_preguntas_guiadas(
+            anatomica.get("preguntas_guiadas", anatomica.get("preguntas", [])),
+            preguntas_base=normalizar_lista(anatomica.get("preguntas", [])),
+            marcadores=anatomica.get("marcadores", []),
+        )
+
+        if generar_imagenes and imagenes_generadas < max_imagenes and imagen_necesita_regeneracion(anatomica.get("image_url")):
+            image_url, image_error = generar_y_guardar_imagen_gemini(
+                prompt=prompt_controlado,
+                carpeta="laminas",
+                nombre_archivo=f"user_{user.id}_dia_{numero_dia}_lamina.png",
+                aspect_ratio="4:3",
+                negative_prompt=negative_controlado,
+            )
+            if image_url:
+                anatomica["image_url"] = image_url
+                anatomica["image_error"] = ""
+                anatomica["historial_generacion"] = crear_historial_generacion_visual(
+                    estado="ok",
+                    tema=tema,
+                    numero_dia=numero_dia,
+                    categoria=categoria,
+                    prompt=prompt_controlado,
+                    negative_prompt=negative_controlado,
+                    image_url=image_url,
+                    detalle="Lámina generada con prompt controlado y guardada dentro del plan_json/base64 cuando el proveedor lo permite.",
+                )
+                imagenes_generadas += 1
+            else:
+                anatomica["image_error"] = image_error or "El proveedor de imagen no devolvió una imagen utilizable."
+                anatomica["historial_generacion"] = crear_historial_generacion_visual(
+                    estado="error",
+                    tema=tema,
+                    numero_dia=numero_dia,
+                    categoria=categoria,
+                    prompt=prompt_controlado,
+                    negative_prompt=negative_controlado,
+                    image_url="",
+                    detalle=anatomica["image_error"],
+                )
+
+    return respuesta
+
+
+def generar_y_guardar_imagen_gemini(prompt, carpeta, nombre_archivo, aspect_ratio="1:1", negative_prompt=None):
+    provider = os.getenv("IMAGE_PROVIDER", "gemini").strip().lower()
+    if provider == "local":
+        return generar_y_guardar_imagen_local(prompt, carpeta, nombre_archivo, aspect_ratio, negative_prompt=negative_prompt)
+    return generar_y_guardar_imagen_gemini_api(prompt, carpeta, nombre_archivo, aspect_ratio, negative_prompt=negative_prompt)
+
+
+def generar_y_guardar_imagen_gemini_api(prompt, carpeta, nombre_archivo, aspect_ratio="1:1", negative_prompt=None):
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return "", "Falta la variable GEMINI_API_KEY en Render."
+
+    try:
+        from google import genai
+        from google.genai import types
+    except Exception as error:
+        return "", f"No se pudo importar google-genai: {error}"
+
+    model_candidates = []
+    env_model = os.getenv("GEMINI_IMAGE_MODEL", "").strip()
+    if env_model:
+        model_candidates.append(env_model)
+    for candidate in ["gemini-2.5-flash-image-preview", "gemini-2.5-flash-image", "gemini-3-pro-image", "gemini-3.1-flash-image"]:
+        if candidate not in model_candidates:
+            model_candidates.append(candidate)
+
+    image_size = os.getenv("GEMINI_IMAGE_SIZE", "1K").strip() or "1K"
+    last_error = ""
+
+    try:
+        client = genai.Client(api_key=api_key)
+    except Exception as error:
+        return "", f"No se pudo crear el cliente Gemini: {error}"
+
+    ruta_relativa = f"rutas_generadas/{carpeta}/{limpiar_nombre_archivo(nombre_archivo)}"
+    ruta_absoluta = Path(settings.MEDIA_ROOT) / ruta_relativa
+    ruta_absoluta.parent.mkdir(parents=True, exist_ok=True)
+
+    prompt_final = str(prompt or "").strip()
+    if negative_prompt:
+        prompt_final += (
+            "\n\nStrict negative constraints: "
+            + str(negative_prompt)
+            + ". Do not render any text, labels, letters, numbers or watermark inside the image."
+        )
+
+    for model in model_candidates:
+        try:
+            config = types.GenerateContentConfig(
+                response_modalities=["TEXT", "IMAGE"],
+                image_config=types.ImageConfig(
+                    aspect_ratio=aspect_ratio,
+                    image_size=image_size,
+                ),
+            )
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt_final,
+                config=config,
+            )
+
+            for part in obtener_partes_respuesta(response):
+                if guardar_parte_imagen(part, ruta_absoluta):
+                    return settings.MEDIA_URL + ruta_relativa.replace("\\", "/"), ""
+
+            response = client.models.generate_content(
+                model=model,
+                contents=[prompt_final],
+            )
+            for part in obtener_partes_respuesta(response):
+                if guardar_parte_imagen(part, ruta_absoluta):
+                    return settings.MEDIA_URL + ruta_relativa.replace("\\", "/"), ""
+
+            last_error = f"El modelo {model} respondió, pero no devolvió imagen utilizable."
+        except Exception as error:
+            last_error = f"{model}: {error}"
+            print("Error generando imagen con Gemini:", last_error)
+            continue
+
+    return "", last_error or "No fue posible generar la imagen con Gemini."
+

@@ -1,115 +1,158 @@
 {% extends "base.html" %}
 
-{% block title %}Resultado examen | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Resultado del simulacro | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero">
-    <div>
+<section class="result-exam-hero">
+    <div class="result-exam-copy">
         <p class="eyebrow">Resultado del simulacro</p>
-        <h1>{{ examen.titulo }}</h1>
-        <p>
-            Obtuviste {{ examen.puntaje }} de {{ examen.total_preguntas }}
-            preguntas correctas.
-        </p>
+        <h1>{{ analisis_resultado.nivel }}</h1>
+        <p>Obtuviste {{ examen.puntaje }} de {{ examen.total_preguntas }} respuestas correctas. Usa esta revisión para reforzar exactamente lo que fallaste.</p>
+    </div>
+    <div class="score-ring-card score-tone-{{ analisis_resultado.tono }}">
+        <div class="score-ring-value">{{ examen.porcentaje }}%</div>
+        <span>{{ examen.puntaje }}/{{ examen.total_preguntas }}</span>
     </div>
 </section>
 
-<section class="section-band">
-    <div class="page-inner">
-        <div class="dashboard-grid">
-            <article class="feature-card dashboard-card">
-                <i data-lucide="target"></i>
-                <h3>Puntaje</h3>
-                <strong>{{ examen.puntaje }}/{{ examen.total_preguntas }}</strong>
-                <p>Respuestas correctas.</p>
+<section class="section-band exam-section-band">
+    <div class="container">
+        <div class="exam-result-grid">
+            <article class="exam-result-card">
+                <i data-lucide="check-circle"></i>
+                <span>Correctas</span>
+                <strong>{{ analisis_resultado.correctas }}</strong>
             </article>
-
-            <article class="feature-card dashboard-card">
-                <i data-lucide="percent"></i>
-                <h3>Porcentaje</h3>
-                <strong>{{ examen.porcentaje }}%</strong>
-                <p>Resultado general.</p>
+            <article class="exam-result-card">
+                <i data-lucide="x-circle"></i>
+                <span>Incorrectas</span>
+                <strong>{{ analisis_resultado.incorrectas }}</strong>
             </article>
-
-            <article class="feature-card dashboard-card">
+            <article class="exam-result-card">
                 <i data-lucide="gauge"></i>
-                <h3>Dificultad</h3>
+                <span>Dificultad</span>
                 <strong>{{ examen.get_dificultad_display }}</strong>
-                <p>Nivel configurado.</p>
             </article>
-
-            <article class="feature-card dashboard-card">
+            <article class="exam-result-card">
                 <i data-lucide="calendar-days"></i>
-                <h3>Fecha</h3>
+                <span>Fecha</span>
                 <strong>{{ examen.actualizado|date:"d/m/Y" }}</strong>
-                <p>{{ examen.actualizado|date:"H:i" }}</p>
             </article>
         </div>
 
-        {% if examen.retroalimentacion_ia %}
-            <div class="ai-analysis mt-4">
+        <div class="feedback-grid mt-4">
+            <div class="ai-analysis feedback-main-card">
                 <div class="ai-box-title">
                     <i data-lucide="sparkles"></i>
-                    <strong>Retroalimentaci&oacute;n generada por Gemini</strong>
+                    <strong>Retroalimentación personalizada</strong>
                 </div>
                 <p>{{ examen.retroalimentacion_ia }}</p>
+                <div class="next-action-box">
+                    <strong>Siguiente acción recomendada</strong>
+                    <span>{{ analisis_resultado.recomendacion }}</span>
+                </div>
             </div>
-        {% endif %}
+
+            <aside class="feedback-side-card">
+                <p class="eyebrow">Temas a revisar</p>
+                {% if analisis_resultado.temas_a_reforzar %}
+                    <ul class="clean-list">
+                        {% for tema in analisis_resultado.temas_a_reforzar %}
+                            <li><i data-lucide="alert-circle"></i><span>{{ tema }}</span></li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No se detectaron temas con errores. Puedes subir la dificultad.</p>
+                {% endif %}
+
+                {% if analisis_resultado.temas_fuertes %}
+                    <p class="eyebrow mt-3">Temas fuertes</p>
+                    <ul class="clean-list">
+                        {% for tema in analisis_resultado.temas_fuertes %}
+                            <li><i data-lucide="check"></i><span>{{ tema }}</span></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </aside>
+        </div>
 
         <div class="section-heading mt-4">
-            <p class="eyebrow">Correcci&oacute;n</p>
-            <h2>Revisi&oacute;n pregunta por pregunta</h2>
+            <p class="eyebrow">Corrección guiada</p>
+            <h2>Revisión pregunta por pregunta</h2>
+            <p>Observa qué marcaste, cuál era la respuesta correcta y qué repasar si fallaste.</p>
         </div>
 
         <div class="route-list">
             {% for resultado in examen.resultados %}
-                <article class="form-panel route-day-card">
-                    <p class="eyebrow">{{ resultado.tema }}</p>
-                    <h3>{{ resultado.id }}. {{ resultado.enunciado }}</h3>
-
-                    {% if resultado.es_correcta %}
-                        <div class="alert alert-success mt-4">
-                            Correcto. Respuesta seleccionada: {{ resultado.respuesta_usuario }}
+                <article class="form-panel route-day-card result-question-card {% if resultado.es_correcta %}is-correct{% else %}is-wrong{% endif %}">
+                    <div class="result-question-head">
+                        <div>
+                            <p class="eyebrow">{{ resultado.tema }}</p>
+                            <h3>{{ resultado.id }}. {{ resultado.enunciado }}</h3>
                         </div>
-                    {% else %}
-                        <div class="alert alert-danger mt-4">
-                            Incorrecto. Tu respuesta: {{ resultado.respuesta_usuario }}.
-                            Respuesta correcta: {{ resultado.respuesta_correcta }}.
-                        </div>
-                    {% endif %}
+                        {% if resultado.es_correcta %}
+                            <span class="result-status-pill success"><i data-lucide="check"></i> Correcta</span>
+                        {% else %}
+                            <span class="result-status-pill danger"><i data-lucide="x"></i> Revisar</span>
+                        {% endif %}
+                    </div>
 
-                    <div class="option-list mt-4">
+                    <div class="question-meta-row">
+                        {% if resultado.habilidad_evaluada %}<span><i data-lucide="target"></i>{{ resultado.habilidad_evaluada }}</span>{% endif %}
+                        {% if resultado.dificultad_cognitiva %}<span><i data-lucide="brain"></i>{{ resultado.dificultad_cognitiva }}</span>{% endif %}
+                    </div>
+
+                    <div class="option-list mt-4 result-option-list">
                         {% for opcion in resultado.opciones %}
-                            <div class="option-item">
-                                <span>
-                                    <strong>{{ opcion.letra }}.</strong>
-                                    {{ opcion.texto }}
-                                </span>
+                            <div class="option-item result-option-item {% if opcion.letra == resultado.respuesta_correcta %}correct-answer{% endif %}{% if opcion.letra == resultado.respuesta_usuario and not resultado.es_correcta %} wrong-answer{% endif %}{% if opcion.letra == resultado.respuesta_usuario and resultado.es_correcta %} selected-correct{% endif %}">
+                                <span class="option-letter">{{ opcion.letra }}</span>
+                                <span class="option-text">{{ opcion.texto }}</span>
                             </div>
                         {% endfor %}
+                    </div>
+
+                    <div class="answer-summary-box mt-4">
+                        <div>
+                            <strong>Tu respuesta</strong>
+                            <span>{{ resultado.respuesta_usuario|default:"Sin respuesta" }}</span>
+                        </div>
+                        <div>
+                            <strong>Respuesta correcta</strong>
+                            <span>{{ resultado.respuesta_correcta }}</span>
+                        </div>
                     </div>
 
                     {% if resultado.explicacion %}
                         <div class="info-box mt-4">
                             <div class="ai-box-title">
                                 <i data-lucide="info"></i>
-                                <strong>Explicaci&oacute;n</strong>
+                                <strong>Explicación</strong>
                             </div>
                             <p>{{ resultado.explicacion }}</p>
+                        </div>
+                    {% endif %}
+
+                    {% if not resultado.es_correcta %}
+                        <div class="review-action-card mt-3">
+                            <i data-lucide="book-open-check"></i>
+                            <div>
+                                <strong>Qué repasar</strong>
+                                <p>{{ resultado.retroalimentacion_error|default:resultado.repaso_recomendado }}</p>
+                                {% if resultado.pista_estudio %}<small>{{ resultado.pista_estudio }}</small>{% endif %}
+                            </div>
                         </div>
                     {% endif %}
                 </article>
             {% endfor %}
         </div>
 
-        <div class="form-actions mt-4">
-            <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
-                Volver al dashboard
+        <div class="form-actions mt-4 sticky-mobile-actions">
+            <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">Volver al dashboard</a>
+            <a href="{% url 'rutas:ruta_aprendizaje' %}" class="btn btn-outline-primary icon-btn">
+                <i data-lucide="route"></i><span>Repasar ruta</span>
             </a>
-
             <a href="{% url 'examenes:generar' %}" class="btn btn-primary icon-btn">
-                <i data-lucide="file-question"></i>
-                <span>Generar otro examen</span>
+                <i data-lucide="file-question"></i><span>Generar otro simulacro</span>
             </a>
         </div>
     </div>

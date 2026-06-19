@@ -3,46 +3,62 @@
 {% block title %}Resultado VARK | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="result-summary-shell">
-    <div class="result-summary-hero">
-        <div class="result-summary-copy">
-            <p class="eyebrow">Resultado del diagnóstico</p>
+<section class="vark-result-pro">
+    <div class="vark-result-hero">
+        <div class="vark-hero-copy">
+            <p class="eyebrow">Resultado del diagnóstico VARK</p>
             <h1>Tu estilo predominante es <span>{{ perfil.estilo_display }}</span></h1>
-            <p class="result-lead">{{ recomendacion.descripcion }}</p>
+            <p>{{ recomendacion.descripcion }}</p>
 
-            <div class="hero-highlight-row">
-                <div class="hero-stat-card">
-                    <small>Dominancia principal</small>
-                    <strong>{{ estilo_principal_info.porcentaje }}%</strong>
-                    <span>{{ estilo_principal_info.nombre }}</span>
-                </div>
-                {% if estilo_secundario %}
-                <div class="hero-stat-card soft">
-                    <small>Estilo complementario</small>
-                    <strong>{{ estilo_secundario.porcentaje }}%</strong>
-                    <span>{{ estilo_secundario.nombre }}</span>
-                </div>
-                {% endif %}
+            <div class="vark-hero-actions">
+                <a href="{{ siguiente_paso.url }}" class="btn btn-primary icon-btn">
+                    <i data-lucide="{{ siguiente_paso.icono }}"></i>
+                    <span>{{ siguiente_paso.label }}</span>
+                </a>
+                <a href="{% url 'vark:test' %}" class="btn btn-outline-primary">Repetir test</a>
             </div>
         </div>
-        <div class="result-summary-badge">
-            <div class="style-badge-large">
-                <i data-lucide="{{ estilo_principal_info.icono }}"></i>
-                <span>{{ perfil.estilo_display }}</span>
+
+        <aside class="vark-style-card">
+            <div class="vark-style-icon">
+                <i data-lucide="{{ recomendacion.icono }}"></i>
             </div>
-        </div>
+            <small>Perfil principal</small>
+            <strong>{{ perfil.estilo_display }}</strong>
+            <span>{{ estilo_principal_info.porcentaje }}% de dominancia</span>
+            {% if estilo_secundario %}
+                <div class="secondary-style-pill">
+                    Complemento: {{ estilo_secundario.nombre }} · {{ estilo_secundario.porcentaje }}%
+                </div>
+            {% endif %}
+        </aside>
     </div>
 
-    <div class="result-layout-grid">
-        <div class="analysis-card">
-            <div class="analysis-head">
-                <p class="eyebrow">Lectura de tu perfil</p>
-                <h2>Así se distribuyen tus estilos</h2>
+    <div class="vark-next-step-card">
+        <div>
+            <p class="eyebrow">Siguiente acción recomendada</p>
+            <h2>{{ siguiente_paso.titulo }}</h2>
+            <p>{{ siguiente_paso.descripcion }}</p>
+        </div>
+        <a href="{{ siguiente_paso.url }}" class="btn btn-primary icon-btn">
+            <i data-lucide="arrow-right"></i>
+            <span>Continuar</span>
+        </a>
+    </div>
+
+    <div class="vark-result-grid-main">
+        <section class="vark-panel distribution-panel">
+            <div class="panel-heading-row">
+                <div>
+                    <p class="eyebrow">Distribución de estilos</p>
+                    <h2>Tu perfil no es solo una etiqueta</h2>
+                </div>
+                <span class="mini-chip">{{ resumen_estilos|length }} estilos evaluados</span>
             </div>
 
-            <div class="score-breakdown">
+            <div class="score-breakdown pro-score-breakdown">
                 {% for item in resumen_estilos %}
-                    <div class="score-breakdown-item {% if item.clave == perfil.estilo_principal %}active{% endif %}">
+                    <article class="score-breakdown-item {% if item.clave == perfil.estilo_principal %}active{% endif %}">
                         <div class="score-breakdown-top">
                             <div class="style-label">
                                 <i data-lucide="{{ item.icono }}"></i>
@@ -53,36 +69,120 @@
                         <div class="score-bar-track">
                             <div class="score-bar-fill" style="width: {{ item.porcentaje }}%;"></div>
                         </div>
-                    </div>
+                    </article>
                 {% endfor %}
             </div>
-        </div>
+        </section>
 
-        <div class="analysis-card emphasis-card">
-            <p class="eyebrow">Interpretación principal</p>
-            <h2>¿Qué significa que seas {{ perfil.estilo_display }}?</h2>
-            <p>Tu mayor fortaleza está en la forma en que procesas la información usando {{ perfil.estilo_display|lower }}. Esto significa que, cuando estudias con estrategias alineadas a ese estilo, entiendes más rápido, recuerdas mejor y mantienes mayor concentración.</p>
+        <section class="vark-panel meaning-panel">
+            <p class="eyebrow">Interpretación aplicada</p>
+            <h2>¿Qué significa para Anatomía I?</h2>
+            <p>{{ recomendacion.explicacion }}</p>
             {% if estilo_secundario %}
-                <p class="support-text">Además, tu segundo estilo más fuerte es <strong>{{ estilo_secundario.nombre }}</strong>, por lo que puedes combinar ambos para aprender de manera más completa.</p>
+                <div class="blend-box">
+                    <i data-lucide="blend"></i>
+                    <span>
+                        Tu estilo complementario es <strong>{{ estilo_secundario.nombre }}</strong>. Combinarlo con {{ perfil.estilo_display }} puede ayudarte a estudiar con más equilibrio.
+                    </span>
+                </div>
             {% endif %}
+        </section>
+    </div>
+
+    <section class="vark-panel mt-4">
+        <div class="panel-heading-row">
+            <div>
+                <p class="eyebrow">Guía práctica</p>
+                <h2>Cómo estudiar Anatomía I con tu estilo</h2>
+            </div>
+            <span class="mini-chip">Acciones concretas</span>
         </div>
 
-        <div class="analysis-card result-advice-card">
-            <p class="eyebrow">Recomendación base</p>
-            <h2>Cómo te conviene estudiar Anatomía I</h2>
-            <ul class="clean-list">
-                {% for estrategia in recomendacion.estrategias %}
-                    <li>
-                        <i data-lucide="check"></i>
-                        <span>{{ estrategia }}</span>
-                    </li>
+        <div class="vark-practice-grid">
+            <article class="vark-advice-card">
+                <div class="advice-icon"><i data-lucide="badge-check"></i></div>
+                <h3>Fortalezas que debes aprovechar</h3>
+                <ul class="vark-check-list">
+                    {% for item in recomendacion.fortalezas %}
+                        <li><i data-lucide="check"></i><span>{{ item }}</span></li>
+                    {% endfor %}
+                </ul>
+            </article>
+
+            <article class="vark-advice-card">
+                <div class="advice-icon"><i data-lucide="list-checks"></i></div>
+                <h3>Técnicas recomendadas</h3>
+                <ul class="vark-check-list">
+                    {% for item in recomendacion.estrategias %}
+                        <li><i data-lucide="check"></i><span>{{ item }}</span></li>
+                    {% endfor %}
+                </ul>
+            </article>
+
+            <article class="vark-advice-card warning-card">
+                <div class="advice-icon"><i data-lucide="triangle-alert"></i></div>
+                <h3>Evita estudiar así</h3>
+                <ul class="vark-check-list warning-list">
+                    {% for item in recomendacion.evitar %}
+                        <li><i data-lucide="x"></i><span>{{ item }}</span></li>
+                    {% endfor %}
+                </ul>
+            </article>
+        </div>
+    </section>
+
+    <section class="vark-panel mt-4">
+        <div class="panel-heading-row">
+            <div>
+                <p class="eyebrow">Ejemplos para Anatomía I</p>
+                <h2>Esto es lo que puedes hacer con tu resultado</h2>
+            </div>
+            <span class="mini-chip">Retroalimentación accionable</span>
+        </div>
+
+        <div class="anatomy-example-grid">
+            {% for ejemplo in recomendacion.ejemplos_anatomia %}
+                <article class="anatomy-example-card">
+                    <span>{{ forloop.counter }}</span>
+                    <p>{{ ejemplo }}</p>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="vark-panel mt-4">
+        <div class="panel-heading-row">
+            <div>
+                <p class="eyebrow">Plan rápido de estudio</p>
+                <h2>Rutina de 20 minutos según tu estilo</h2>
+            </div>
+            <span class="mini-chip">Antes de un examen</span>
+        </div>
+
+        <div class="quick-plan-timeline">
+            {% for paso in recomendacion.plan_rapido %}
+                <article>
+                    <strong>{{ forloop.counter }}</strong>
+                    <span>{{ paso }}</span>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="vark-result-grid-main mt-4">
+        <section class="vark-panel resources-panel">
+            <p class="eyebrow">Recursos recomendados del sistema</p>
+            <h2>Usa más estos módulos</h2>
+            <div class="resource-pill-grid">
+                {% for recurso in recomendacion.recursos_sistema %}
+                    <span><i data-lucide="sparkles"></i>{{ recurso }}</span>
                 {% endfor %}
-            </ul>
-        </div>
+            </div>
+        </section>
 
-        <div class="analysis-card llm-card">
+        <section class="vark-panel llm-card-pro">
             <p class="eyebrow">Explicación personalizada con IA</p>
-            <h2>¿Por qué este estilo puede ayudarte a aprender mejor?</h2>
+            <h2>Recomendación adicional</h2>
             {% if estado_ia == "ok" and recomendacion_llm %}
                 <div class="ai-answer-copy">{{ recomendacion_llm|linebreaksbr }}</div>
             {% else %}
@@ -95,14 +195,17 @@
                     </a>
                 </div>
             {% endif %}
-        </div>
+        </section>
     </div>
 
     <div class="form-actions justify-content-center mt-4">
-        <a href="{% url 'vark:test' %}" class="btn btn-outline-primary">Repetir test</a>
-        <a href="{% url 'usuarios:dashboard' %}" class="btn btn-primary icon-btn">
+        <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary icon-btn">
             <i data-lucide="layout-dashboard"></i>
             <span>Ir al dashboard</span>
+        </a>
+        <a href="{{ siguiente_paso.url }}" class="btn btn-primary icon-btn">
+            <i data-lucide="{{ siguiente_paso.icono }}"></i>
+            <span>{{ siguiente_paso.label }}</span>
         </a>
     </div>
 </section>

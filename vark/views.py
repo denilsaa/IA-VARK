@@ -1,6 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.urls import reverse
+
+from anatomia.models import DatosAcademicos
+from documentos.models import MaterialEstudio
+from rutas.models import RutaAprendizaje
 
 from .models import PerfilVARK
 from .services import (
@@ -14,49 +19,210 @@ from .services import (
 RECOMENDACIONES = {
     "visual": {
         "titulo": "Aprendizaje Visual",
-        "descripcion": "Aprendes mejor usando imágenes, esquemas, mapas conceptuales, colores, tablas y organización espacial.",
+        "descripcion": "Aprendes mejor cuando puedes observar, comparar, colorear y ubicar estructuras en el espacio.",
+        "explicacion": (
+            "Tu fortaleza está en transformar la información en imágenes mentales. En Anatomía I esto es muy útil porque muchas preguntas dependen de reconocer forma, ubicación, relación y orientación de las estructuras."
+        ),
+        "fortalezas": [
+            "Reconocer estructuras en láminas, esquemas y atlas.",
+            "Recordar relaciones espaciales como anterior, posterior, medial y lateral.",
+            "Organizar temas complejos mediante colores, mapas y cuadros comparativos.",
+        ],
         "estrategias": [
-            "Usa atlas anatómicos con imágenes claras.",
-            "Crea mapas conceptuales por sistema anatómico.",
-            "Utiliza colores para diferenciar estructuras.",
+            "Usa atlas anatómicos y observa la misma estructura desde varias vistas.",
+            "Crea mapas mentales por sistema anatómico antes de memorizar detalles.",
+            "Usa colores distintos para huesos, vasos, nervios, músculos y órganos.",
             "Resume temas con diagramas y cuadros comparativos.",
         ],
+        "ejemplos_anatomia": [
+            "Para pelvis: dibuja o colorea ilion, isquion, pubis, sacro y sínfisis púbica.",
+            "Para abdomen: usa una lámina y marca la posición de órganos y relaciones vecinas.",
+            "Para músculos: identifica origen, inserción y acción con flechas o colores.",
+        ],
+        "evitar": [
+            "Estudiar solo leyendo párrafos largos sin ver imágenes.",
+            "Memorizar nombres sin ubicarlos en una lámina.",
+            "Usar mapas mentales con demasiado texto y poca jerarquía visual.",
+        ],
+        "recursos_sistema": [
+            "Mapas mentales",
+            "Láminas anatómicas",
+            "Marcadores visuales",
+            "Ruta de aprendizaje",
+        ],
+        "plan_rapido": [
+            "5 min: mira una lámina sin leer la explicación.",
+            "7 min: identifica estructuras principales y relaciones.",
+            "5 min: dibuja un esquema simple de memoria.",
+            "3 min: responde un mini quiz de identificación.",
+        ],
         "icono": "eye",
+        "color": "#0f766e",
     },
     "auditivo": {
         "titulo": "Aprendizaje Auditivo",
-        "descripcion": "Aprendes mejor escuchando explicaciones, hablando del tema y repasando en voz alta.",
+        "descripcion": "Aprendes mejor cuando escuchas, explicas en voz alta y conviertes el contenido en conversación.",
+        "explicacion": (
+            "Tu fortaleza está en comprender la información cuando la escuchas o la verbalizas. En Anatomía I esto ayuda a fijar conceptos, relaciones y funciones mediante explicación oral, repetición y preguntas habladas."
+        ),
+        "fortalezas": [
+            "Comprender conceptos cuando alguien los explica paso a paso.",
+            "Recordar mejor al repetir ideas en voz alta.",
+            "Detectar dudas cuando intentas explicar el tema a otra persona.",
+        ],
         "estrategias": [
-            "Explica los temas en voz alta como si enseñaras.",
-            "Graba audios cortos con tus propios resúmenes.",
-            "Estudia con compañeros mediante preguntas orales.",
-            "Usa explicaciones conversacionales para temas difíciles.",
+            "Escucha el guion del día antes de leer el resumen.",
+            "Explica cada estructura como si estuvieras enseñando a un compañero.",
+            "Graba audios cortos con tus propias palabras y repásalos antes del examen.",
+            "Haz preguntas orales rápidas después de cada tema.",
+        ],
+        "ejemplos_anatomia": [
+            "Para nervios: explica en voz alta el trayecto desde origen hasta destino.",
+            "Para órganos: describe ubicación, función y relación con estructuras vecinas.",
+            "Para músculos: di en voz alta origen, inserción, acción e inervación.",
+        ],
+        "evitar": [
+            "Leer en silencio sin comprobar si puedes explicarlo.",
+            "Memorizar listas largas sin convertirlas en explicación oral.",
+            "Escuchar audios sin pausar para repetir los puntos clave.",
+        ],
+        "recursos_sistema": [
+            "Audio o guion explicativo",
+            "Preguntas orales",
+            "Mini quizzes",
+            "Ruta diaria",
+        ],
+        "plan_rapido": [
+            "5 min: escucha el guion del día.",
+            "7 min: explica el tema en voz alta sin mirar.",
+            "5 min: responde preguntas orales o mini quiz.",
+            "3 min: graba una conclusión breve del tema.",
         ],
         "icono": "volume-2",
+        "color": "#3b82f6",
     },
     "lectura": {
         "titulo": "Lectura/Escritura",
-        "descripcion": "Aprendes mejor leyendo, escribiendo, ordenando conceptos y creando resúmenes estructurados.",
+        "descripcion": "Aprendes mejor leyendo, escribiendo, ordenando conceptos y creando resúmenes claros.",
+        "explicacion": (
+            "Tu fortaleza está en organizar la información mediante palabras, listas y resúmenes. En Anatomía I esto ayuda a dominar definiciones, clasificaciones, relaciones y detalles que suelen aparecer en evaluaciones teóricas."
+        ),
+        "fortalezas": [
+            "Ordenar contenido complejo en apuntes claros.",
+            "Recordar definiciones y listas anatómicas.",
+            "Construir glosarios y cuadros de comparación.",
+        ],
         "estrategias": [
             "Haz resúmenes por tema y subtema.",
-            "Crea glosarios de términos anatómicos.",
-            "Usa listas para clasificar estructuras.",
-            "Reescribe con tus palabras las definiciones importantes.",
+            "Crea glosarios de términos anatómicos importantes.",
+            "Transforma párrafos largos en listas o tablas.",
+            "Reescribe con tus palabras las definiciones difíciles.",
+        ],
+        "ejemplos_anatomia": [
+            "Para articulaciones: crea una tabla con tipo, superficies, ligamentos y movimientos.",
+            "Para órganos: escribe ubicación, relaciones, irrigación e inervación.",
+            "Para periné: separa límites, planos, músculos y funciones en listas cortas.",
+        ],
+        "evitar": [
+            "Copiar texto sin resumirlo con tus palabras.",
+            "Hacer apuntes muy largos que no puedas repasar rápido.",
+            "Estudiar sin convertir el contenido en preguntas de examen.",
+        ],
+        "recursos_sistema": [
+            "Resumen IA",
+            "Glosario",
+            "Preguntas sugeridas",
+            "Materiales procesados",
+        ],
+        "plan_rapido": [
+            "5 min: lee el resumen del tema.",
+            "7 min: escribe una tabla con conceptos clave.",
+            "5 min: crea 3 preguntas de examen.",
+            "3 min: revisa errores y completa tu glosario.",
         ],
         "icono": "book-open",
+        "color": "#f59e0b",
     },
     "kinestesico": {
         "titulo": "Aprendizaje Kinestésico",
-        "descripcion": "Aprendes mejor practicando, resolviendo ejercicios, identificando estructuras y aplicando los conceptos.",
+        "descripcion": "Aprendes mejor practicando, resolviendo, identificando y aplicando los conceptos en ejercicios concretos.",
+        "explicacion": (
+            "Tu fortaleza está en aprender haciendo. En Anatomía I esto es valioso porque puedes fijar conceptos mediante identificación de estructuras, simulacros, ejercicios de relación y práctica activa."
+        ),
+        "fortalezas": [
+            "Aprender mejor cuando resuelves ejercicios o casos.",
+            "Recordar estructuras al identificarlas activamente.",
+            "Conectar teoría con función, movimiento o aplicación clínica básica.",
+        ],
         "estrategias": [
-            "Practica con modelos anatómicos o imágenes interactivas.",
-            "Resuelve preguntas de identificación.",
-            "Relaciona estructuras con movimientos o funciones.",
-            "Haz simulacros y casos aplicados.",
+            "Practica con imágenes y trata de identificar estructuras sin mirar la respuesta.",
+            "Resuelve mini quizzes después de cada tema.",
+            "Relaciona estructuras con funciones, movimientos o límites anatómicos.",
+            "Haz simulacros cortos y corrige tus errores inmediatamente.",
+        ],
+        "ejemplos_anatomia": [
+            "Para huesos: señala accidentes anatómicos en una imagen y luego verifica.",
+            "Para músculos: relaciona acción con movimiento real o simulado.",
+            "Para vasos y nervios: sigue el trayecto con el dedo sobre una lámina.",
+        ],
+        "evitar": [
+            "Solo leer teoría sin practicar identificación.",
+            "Dejar los simulacros para el último día.",
+            "Mirar respuestas antes de intentar resolver.",
+        ],
+        "recursos_sistema": [
+            "Ejercicios prácticos",
+            "Mini quizzes",
+            "Láminas con marcadores",
+            "Simulacros",
+        ],
+        "plan_rapido": [
+            "5 min: observa una lámina y oculta las respuestas.",
+            "7 min: identifica estructuras o relaciones.",
+            "5 min: resuelve un mini quiz.",
+            "3 min: repite solo las preguntas falladas.",
         ],
         "icono": "activity",
+        "color": "#8b5cf6",
     },
 }
+
+
+def construir_siguiente_paso_resultado(user):
+    if not DatosAcademicos.objects.filter(user=user).exists():
+        return {
+            "titulo": "Registra tus datos académicos",
+            "descripcion": "Indica tu tema, fecha de examen, tiempo disponible y punto difícil para que la ruta sea personalizada.",
+            "url": reverse("anatomia:datos_academicos"),
+            "label": "Registrar datos académicos",
+            "icono": "clipboard-list",
+        }
+
+    if not MaterialEstudio.objects.filter(user=user, estado=MaterialEstudio.ESTADO_PROCESADO).exists():
+        return {
+            "titulo": "Sube tu primer material",
+            "descripcion": "Carga PDF, apuntes o imágenes para que la IA use tus contenidos reales al generar la ruta.",
+            "url": reverse("documentos:subir"),
+            "label": "Subir material",
+            "icono": "upload-cloud",
+        }
+
+    if not RutaAprendizaje.objects.filter(user=user).exists():
+        return {
+            "titulo": "Genera tu ruta de aprendizaje",
+            "descripcion": "Usa tu perfil VARK y tus materiales para crear un plan de estudio por días.",
+            "url": reverse("rutas:ruta_aprendizaje"),
+            "label": "Generar ruta",
+            "icono": "route",
+        }
+
+    return {
+        "titulo": "Continúa con tu ruta",
+        "descripcion": "Ya tienes lo necesario para estudiar con recursos personalizados y comprobar tu avance.",
+        "url": reverse("rutas:ruta_aprendizaje"),
+        "label": "Ver mi ruta",
+        "icono": "route",
+    }
 
 
 @login_required
@@ -189,6 +355,7 @@ def resultado_vark(request):
             "puntaje": perfil.puntaje_visual,
             "porcentaje": porcentajes["visual"],
             "icono": "eye",
+            "color": RECOMENDACIONES["visual"]["color"],
         },
         {
             "clave": "auditivo",
@@ -196,6 +363,7 @@ def resultado_vark(request):
             "puntaje": perfil.puntaje_auditivo,
             "porcentaje": porcentajes["auditivo"],
             "icono": "volume-2",
+            "color": RECOMENDACIONES["auditivo"]["color"],
         },
         {
             "clave": "lectura",
@@ -203,6 +371,7 @@ def resultado_vark(request):
             "puntaje": perfil.puntaje_lectura,
             "porcentaje": porcentajes["lectura"],
             "icono": "book-open",
+            "color": RECOMENDACIONES["lectura"]["color"],
         },
         {
             "clave": "kinestesico",
@@ -210,6 +379,7 @@ def resultado_vark(request):
             "puntaje": perfil.puntaje_kinestesico,
             "porcentaje": porcentajes["kinestesico"],
             "icono": "activity",
+            "color": RECOMENDACIONES["kinestesico"]["color"],
         },
     ]
     resumen_estilos = sorted(resumen_estilos, key=lambda item: item["puntaje"], reverse=True)
@@ -230,6 +400,7 @@ def resultado_vark(request):
             "resumen_estilos": resumen_estilos,
             "estilo_principal_info": estilo_principal,
             "estilo_secundario": estilo_secundario,
+            "siguiente_paso": construir_siguiente_paso_resultado(request.user),
         },
     )
 

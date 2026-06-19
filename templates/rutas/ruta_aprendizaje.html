@@ -16,7 +16,13 @@
 </section>
 
 <section class="section-band">
-    <div class="page-inner">
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
         <div class="dashboard-grid">
             <article class="feature-card dashboard-card">
                 <i data-lucide="scan-eye"></i>
@@ -230,9 +236,19 @@
                                         <i data-lucide="map"></i>
                                         <div>
                                             <strong>{{ dia.recursos.visual.titulo }}</strong>
-                                            <p>Mapa mental generado por IA y renderizado con texto real para máxima legibilidad.</p>
+                                            <p>Mapa mental HTML premium: texto real, ramas claras y lectura activa.</p>
                                         </div>
                                     </div>
+
+                                    <div class="visual-meta-strip mt-3">
+                                        <span><i data-lucide="target"></i> Nodo central: {{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</span>
+                                        <span><i data-lucide="git-branch"></i> 4 ramas guiadas</span>
+                                        <span><i data-lucide="eye"></i> Sin texto falso en imágenes</span>
+                                    </div>
+
+                                    {% if dia.recursos.visual.descripcion %}
+                                        <p class="visual-resource-description">{{ dia.recursos.visual.descripcion }}</p>
+                                    {% endif %}
 
                                     <div class="mindmap-elite mt-3" id="generated-map-{{ dia.dia }}">
                                         <div class="map-bg-orbit orbit-one"></div>
@@ -274,6 +290,13 @@
                                                                 <li>Repasar con lectura, observación y práctica.</li>
                                                             </ul>
                                                         {% endif %}
+
+                                                        {% if rama.estudio_activo %}
+                                                            <div class="map-active-task">
+                                                                <i data-lucide="pencil-line"></i>
+                                                                <span>{{ rama.estudio_activo }}</span>
+                                                            </div>
+                                                        {% endif %}
                                                     </article>
                                                 {% endfor %}
                                             {% else %}
@@ -299,7 +322,7 @@
                                         <div class="map-study-footer">
                                             <div>
                                                 <strong>Cómo estudiarlo</strong>
-                                                <span>Lee el nodo central, recorre las ramas en orden y convierte cada subpunto en una pregunta.</span>
+                                                <span>{{ dia.recursos.visual.instruccion_estudio|default:"Lee el nodo central, recorre las ramas en orden y convierte cada subpunto en una pregunta." }}</span>
                                             </div>
                                             <div>
                                                 <strong>Enfoque VARK</strong>
@@ -401,13 +424,24 @@
                         </div>
                         {% if dia.recursos.imagen_anatomica.habilitado %}
                             <section class="form-panel wide-panel mt-4 anatomical-panel">
-                                <div class="resource-card-header">
+                                <div class="resource-card-header anatomy-title-premium">
                                     <i data-lucide="image"></i>
-                                    <strong>{{ dia.recursos.imagen_anatomica.titulo }}</strong>
+                                    <div>
+                                        <strong>{{ dia.recursos.imagen_anatomica.titulo }}</strong>
+                                        <p>Lámina anatómica con prompt controlado, marcadores externos y práctica guiada.</p>
+                                    </div>
+                                </div>
+
+                                <div class="visual-meta-strip mt-3">
+                                    <span><i data-lucide="scan-eye"></i> Vista: {{ dia.recursos.imagen_anatomica.tipo_vista|default:"anatómica didáctica" }}</span>
+                                    {% if dia.recursos.imagen_anatomica.categoria_visual %}
+                                        <span><i data-lucide="layers"></i> Categoría: {{ dia.recursos.imagen_anatomica.categoria_visual }}</span>
+                                    {% endif %}
+                                    <span><i data-lucide="badge-check"></i> Marcadores HTML</span>
                                 </div>
 
                                 {% if dia.recursos.imagen_anatomica.descripcion %}
-                                    <p>{{ dia.recursos.imagen_anatomica.descripcion }}</p>
+                                    <p class="visual-resource-description">{{ dia.recursos.imagen_anatomica.descripcion }}</p>
                                 {% endif %}
 
                                 {% if dia.recursos.imagen_anatomica.image_url %}
@@ -488,9 +522,24 @@
                                         </details>
                                     {% endif %}
                                 {% else %}
-                                    <div class="image-pending-box mt-3">
-                                        <strong>Lámina pendiente de generación</strong>
-                                        <p>La descripción anatómica ya fue preparada, pero la imagen IA no se creó. Revisa GEMINI_API_KEY, GEMINI_IMAGE_MODEL o vuelve a regenerar la ruta.{% if dia.recursos.imagen_anatomica.image_error %}<br><small><strong>Detalle:</strong> {{ dia.recursos.imagen_anatomica.image_error }}</small>{% endif %}</p>
+                                    <div class="image-pending-box premium-pending-box mt-3">
+                                        <div>
+                                            <i data-lucide="image-off"></i>
+                                            <strong>Lámina pendiente de generación</strong>
+                                        </div>
+                                        <p>
+                                            El sistema ya preparó el prompt anatómico y los marcadores de práctica.
+                                            Regenera la ruta cuando el proveedor de imágenes esté disponible.
+                                            {% if dia.recursos.imagen_anatomica.image_error %}
+                                                <br><small><strong>Detalle técnico:</strong> {{ dia.recursos.imagen_anatomica.image_error }}</small>
+                                            {% endif %}
+                                        </p>
+                                        {% if dia.recursos.imagen_anatomica.prompt_imagen %}
+                                            <details class="generation-prompt-box mt-3">
+                                                <summary>Ver prompt controlado preparado</summary>
+                                                <p>{{ dia.recursos.imagen_anatomica.prompt_imagen }}</p>
+                                            </details>
+                                        {% endif %}
                                     </div>
                                 {% endif %}
 

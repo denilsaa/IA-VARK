@@ -15,11 +15,14 @@ from .services import calificar_examen, generar_examen_personalizado
 def lista_examenes(request):
     examenes = ExamenGenerado.objects.filter(user=request.user)
 
+    resumen_examenes = construir_resumen_examenes(examenes)
+
     return render(
         request,
         "examenes/lista.html",
         {
             "examenes": examenes,
+            "resumen_examenes": resumen_examenes,
         },
     )
 
@@ -166,10 +169,89 @@ def resultado_examen(request, pk):
         user=request.user,
     )
 
+    analisis_resultado = construir_analisis_resultado(examen)
+
     return render(
         request,
         "examenes/resultado.html",
         {
             "examen": examen,
+            "analisis_resultado": analisis_resultado,
         },
     )
+
+
+def construir_resumen_examenes(examenes):
+    examenes_lista = list(examenes)
+    respondidos = [examen for examen in examenes_lista if examen.esta_respondido]
+    pendientes = [examen for examen in examenes_lista if not examen.esta_respondido]
+
+    if respondidos:
+        promedio = round(
+            sum(float(examen.porcentaje or 0) for examen in respondidos) / len(respondidos),
+            1,
+        )
+        ultimo = respondidos[0]
+    else:
+        promedio = None
+        ultimo = None
+
+    return {
+        "total": len(examenes_lista),
+        "respondidos": len(respondidos),
+        "pendientes": len(pendientes),
+        "promedio": promedio,
+        "ultimo": ultimo,
+    }
+
+
+def construir_analisis_resultado(examen):
+    resultados = examen.resultados
+    correctas = [resultado for resultado in resultados if resultado.get("es_correcta")]
+    incorrectas = [resultado for resultado in resultados if not resultado.get("es_correcta")]
+
+    conteo_temas = {}
+    for resultado in resultados:
+        tema = resultado.get("tema") or "Tema no especificado"
+        if tema not in conteo_temas:
+            conteo_temas[tema] = {"correctas": 0, "incorrectas": 0}
+        if resultado.get("es_correcta"):
+            conteo_temas[tema]["correctas"] += 1
+        else:
+            conteo_temas[tema]["incorrectas"] += 1
+
+    temas_a_reforzar = [
+        tema
+        for tema, datos in conteo_temas.items()
+        if datos["incorrectas"] > 0
+    ][:5]
+
+    temas_fuertes = [
+        tema
+        for tema, datos in conteo_temas.items()
+        if datos["correctas"] >= datos["incorrectas"] and datos["correctas"] > 0
+    ][:5]
+
+    porcentaje = float(examen.porcentaje or 0)
+    if porcentaje >= 85:
+        nivel = "Dominio alto"
+        recomendacion = "Mantén el ritmo y realiza un simulacro de mayor dificultad para confirmar dominio."
+        tono = "success"
+    elif porcentaje >= 60:
+        nivel = "Dominio medio"
+        recomendacion = "Revisa las preguntas falladas, vuelve a la ruta y repite un simulacro corto."
+        tono = "warning"
+    else:
+        nivel = "Necesita refuerzo"
+        recomendacion = "Conviene repasar los temas base antes de generar otro simulacro."
+        tono = "danger"
+
+    return {
+        "correctas": len(correctas),
+        "incorrectas": len(incorrectas),
+        "temas_a_reforzar": temas_a_reforzar,
+        "temas_fuertes": temas_fuertes,
+        "nivel": nivel,
+        "recomendacion": recomendacion,
+        "tono": tono,
+    }

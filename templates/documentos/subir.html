@@ -1,112 +1,305 @@
 {% extends "base.html" %}
 
-{% block title %}Subir material | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Subir material | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero">
-    <div>
-        <p class="eyebrow">Materiales de estudio</p>
-        <h1>Subir material</h1>
-        <p>
-            Sube tu libro, PDF, documento o imagen. Luego indica qu&eacute; temas entrar&aacute;n
-            al examen para que Gemini analice el contenido correcto.
-        </p>
-    </div>
-</section>
+<section class="materials-shell app-container">
+    <section class="materials-hero-pro compact-hero">
+        <div class="materials-hero-copy">
+            <p class="eyebrow">Materiales de estudio</p>
+            <h1>Sube tu material en 2 pasos</h1>
+            <p>Primero indica a qué tema pertenece el material y luego resume qué es lo importante para tu examen.</p>
+            <div class="materials-hero-steps two-step-hero" aria-label="Flujo de análisis IA">
+                <div class="hero-step-pill">
+                    <span>1</span>
+                    <div>
+                        <strong>Ubicar material</strong>
+                        <small>Tema, subtema y archivo</small>
+                    </div>
+                </div>
+                <div class="hero-step-pill">
+                    <span>2</span>
+                    <div>
+                        <strong>Marcar lo importante</strong>
+                        <small>Lo clave para el examen</small>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<section class="section-band">
-    <div class="page-inner">
-        <form method="post" enctype="multipart/form-data" class="form-panel wide-panel">
+        <aside class="materials-hero-side compact-help-side">
+            <div class="materials-focus-card compact-focus-card">
+                <span class="focus-kicker"><i data-lucide="sparkles"></i> Detección automática</span>
+                <ul>
+                    <li>El sistema detecta si el archivo es PDF, Word, imagen o TXT.</li>
+                    <li>No necesitas elegir manualmente el tipo de material.</li>
+                </ul>
+            </div>
+        </aside>
+    </section>
+
+    <section class="materials-layout-pro simplified-layout">
+        <form method="post" enctype="multipart/form-data" class="form-panel material-form-pro" id="material-upload-form">
             {% csrf_token %}
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger">
-                    {{ form.non_field_errors }}
+
+            <div class="material-form-head compact-form-head">
+                <div>
+                    <span class="hero-badge"><i data-lucide="folder-up"></i> Carga inteligente</span>
+                    <h2>Subir material de estudio</h2>
+                    <p>Completa solo lo esencial y deja que la IA haga el resto.</p>
+                </div>
+                <div class="form-head-badge">
+                    <i data-lucide="shield-check"></i>
+                    <span>Tipo detectado automáticamente</span>
+                </div>
+            </div>
+
+            {% if messages %}
+                <div class="messages-stack mb-3">
+                    {% for message in messages %}
+                        <div class="app-alert alert-{{ message.tags }}">
+                            <i data-lucide="info"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
                 </div>
             {% endif %}
 
-            <div class="form-grid">
-                <div class="form-group">
-                    <label class="form-label" for="{{ form.titulo.id_for_label }}">
-                        {{ form.titulo.label }}
-                    </label>
-                    {{ form.titulo }}
-                    {{ form.titulo.errors }}
+            {% if form.non_field_errors %}
+                <div class="app-alert alert-danger mb-3">
+                    <i data-lucide="triangle-alert"></i>
+                    <span>{{ form.non_field_errors }}</span>
+                </div>
+            {% endif %}
+
+            <section class="material-section-card compact-section-card">
+                <div class="upload-step-title compact-step-title">
+                    <span>1</span>
+                    <div>
+                        <h3>Ubicar material</h3>
+                        <p>Selecciona el tema, el subtema y luego sube tu archivo.</p>
+                    </div>
+                </div>
+
+                <div class="form-grid cols-2">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.titulo.id_for_label }}">{{ form.titulo.label }}</label>
+                        {{ form.titulo }}
+                        {{ form.titulo.errors }}
+                    </div>
+                    <div class="auto-type-panel" id="auto-type-panel">
+                        <span class="auto-type-label">Tipo detectado</span>
+                        <strong id="auto-type-value">Se detectará al subir el archivo</strong>
+                    </div>
+                </div>
+
+                <div class="form-grid cols-2 mt-4">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.tema_principal.id_for_label }}">{{ form.tema_principal.label }}</label>
+                        {{ form.tema_principal }}
+                        {{ form.tema_principal.errors }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.subtema_relacionado.id_for_label }}">{{ form.subtema_relacionado.label }}</label>
+                        {{ form.subtema_relacionado }}
+                        {{ form.subtema_relacionado.errors }}
+                    </div>
+                </div>
+
+                <div class="smart-upload-zone mt-3" id="smart-upload-zone">
+                    <div class="smart-upload-icon"><i data-lucide="upload-cloud"></i></div>
+                    <div class="upload-zone-copy">
+                        <label class="form-label" for="{{ form.archivo.id_for_label }}">{{ form.archivo.label }}</label>
+                        {{ form.archivo }}
+                        <small class="form-hint">PDF, Word, JPG, PNG, WEBP o TXT.</small>
+                        {{ form.archivo.errors }}
+                    </div>
+                </div>
+
+                <div class="selected-files-panel" id="selected-files-panel" hidden>
+                    <div class="selected-files-head">
+                        <strong>Archivos seleccionados</strong>
+                        <span id="selected-files-count">0 archivos</span>
+                    </div>
+                    <div class="selected-files-list" id="selected-files-list"></div>
+                </div>
+            </section>
+
+            <section class="material-section-card compact-section-card">
+                <div class="upload-step-title compact-step-title">
+                    <span>2</span>
+                    <div>
+                        <h3>Marcar lo importante</h3>
+                        <p>Escribe solo lo importante que debe considerar el análisis.</p>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="{{ form.tema.id_for_label }}">
-                        {{ form.tema.label }}
-                    </label>
-                    {{ form.tema }}
-                    {{ form.tema.errors }}
+                    <label class="form-label" for="{{ form.temario_examen.id_for_label }}">{{ form.temario_examen.label }}</label>
+                    {{ form.temario_examen }}
+                    <div class="topic-suggestion-row" aria-label="Ejemplos de ideas importantes">
+                        <button type="button" data-topic="Conceptos principales del tema">Conceptos principales</button>
+                        <button type="button" data-topic="Estructuras anatómicas más importantes">Estructuras importantes</button>
+                        <button type="button" data-topic="Relaciones anatómicas clave">Relaciones anatómicas</button>
+                        <button type="button" data-topic="Puntos que el docente suele preguntar">Puntos que preguntan</button>
+                    </div>
+                    {{ form.temario_examen.errors }}
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="{{ form.tipo.id_for_label }}">
-                        {{ form.tipo.label }}
-                    </label>
-                    {{ form.tipo }}
-                    <small class="form-hint">
-                        Si subes un archivo, el sistema puede detectar el tipo autom&aacute;ticamente.
-                    </small>
-                    {{ form.tipo.errors }}
+                <div class="form-grid cols-1 mt-4">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.descripcion.id_for_label }}">{{ form.descripcion.label }}</label>
+                        {{ form.descripcion }}
+                        {{ form.descripcion.errors }}
+                    </div>
                 </div>
+            </section>
 
-                <div class="form-group">
-                    <label class="form-label" for="{{ form.archivo.id_for_label }}">
-                        {{ form.archivo.label }}
-                    </label>
-                    {{ form.archivo }}
-                    <small class="form-hint">
-                        Formatos permitidos: PDF, Word, JPG, PNG, WEBP o TXT. M&aacute;ximo 500 MB.
-                    </small>
-                    {{ form.archivo.errors }}
+            <div class="processing-preview" id="processing-preview" hidden>
+                <div class="processing-spinner"></div>
+                <div>
+                    <strong>Procesando material...</strong>
+                    <p>La IA está preparando el análisis.</p>
                 </div>
             </div>
 
-            <div class="form-group mt-4">
-                <label class="form-label" for="{{ form.temario_examen.id_for_label }}">
-                    {{ form.temario_examen.label }}
-                </label>
-                {{ form.temario_examen }}
-                <small class="form-hint">
-                    Escribe aqu&iacute; los temas que el docente dijo que entrar&aacute;n al examen.
-                </small>
-                {{ form.temario_examen.errors }}
-            </div>
-
-            <div class="form-group mt-4">
-                <label class="form-label" for="{{ form.descripcion.id_for_label }}">
-                    {{ form.descripcion.label }}
-                </label>
-                {{ form.descripcion }}
-                {{ form.descripcion.errors }}
-            </div>
-
-            <div class="info-box mt-4">
-                <div class="ai-box-title">
-                    <i data-lucide="info"></i>
-                    <strong>Ejemplo de temas del examen</strong>
-                </div>
-                <p>
-                    &Oacute;rganos del abdomen<br>
-                    &Oacute;rganos de la regi&oacute;n lumbar y pelvis menor<br>
-                    Perin&eacute;<br>
-                    Anatom&iacute;a topogr&aacute;fica del perin&eacute;
-                </p>
-            </div>
-
-            <div class="form-actions">
-                <a href="{% url 'documentos:lista' %}" class="btn btn-outline-primary">
-                    Ver materiales
-                </a>
-
-                <button type="submit" class="btn btn-primary icon-btn">
-                    <i data-lucide="upload-cloud"></i>
-                    <span>Guardar y analizar material</span>
+            <div class="form-actions material-form-actions">
+                <a href="{% url 'documentos:lista' %}" class="btn btn-outline-primary">Ver materiales</a>
+                <button type="submit" class="btn btn-primary icon-btn" id="submit-material-btn">
+                    <i data-lucide="sparkles"></i>
+                    <span>Subir y analizar</span>
                 </button>
             </div>
         </form>
-    </div>
+
+        <aside class="materials-help-pro simplified-help-pro">
+            <div class="material-help-card main-help-card compact-help-card">
+                <i data-lucide="badge-check"></i>
+                <h3>Consejo rápido</h3>
+                <p>Escribe solo lo clave. Mientras más concreto sea tu resumen, mejor será el análisis.</p>
+            </div>
+        </aside>
+    </section>
 </section>
+
+{{ subtema_dataset|json_script:"subtema-dataset" }}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const input = document.querySelector(".smart-file-input");
+        const panel = document.getElementById("selected-files-panel");
+        const list = document.getElementById("selected-files-list");
+        const count = document.getElementById("selected-files-count");
+        const form = document.getElementById("material-upload-form");
+        const processing = document.getElementById("processing-preview");
+        const submitBtn = document.getElementById("submit-material-btn");
+        const textarea = document.getElementById("{{ form.temario_examen.id_for_label }}");
+        const temaSelect = document.getElementById("id_tema_principal");
+        const subtemaSelect = document.getElementById("id_subtema_relacionado");
+        const autoTypeValue = document.getElementById("auto-type-value");
+        const subtemaDatasetEl = document.getElementById("subtema-dataset");
+        const subtemaDataset = subtemaDatasetEl ? JSON.parse(subtemaDatasetEl.textContent) : {};
+
+        function formatSize(bytes) {
+            if (!bytes) return "0 KB";
+            const units = ["B", "KB", "MB", "GB"];
+            let size = bytes;
+            let unit = 0;
+            while (size >= 1024 && unit < units.length - 1) {
+                size /= 1024;
+                unit += 1;
+            }
+            return `${size.toFixed(size >= 10 ? 0 : 1)} ${units[unit]}`;
+        }
+
+        function iconForFile(name) {
+            const ext = name.split(".").pop().toLowerCase();
+            if (["jpg", "jpeg", "png", "webp"].includes(ext)) return "image";
+            if (ext === "pdf") return "file-text";
+            if (["doc", "docx"].includes(ext)) return "file-type";
+            if (ext === "txt") return "align-left";
+            return "file";
+        }
+
+        function typeLabelForFile(name) {
+            const ext = name.split(".").pop().toLowerCase();
+            if (ext === "pdf") return "PDF";
+            if (["doc", "docx"].includes(ext)) return "Word";
+            if (["jpg", "jpeg", "png", "webp"].includes(ext)) return "Imagen";
+            if (ext === "txt") return "Texto";
+            return "Otro";
+        }
+
+        function updateSubtemas() {
+            if (!temaSelect || !subtemaSelect) return;
+            const tema = temaSelect.value;
+            const previo = subtemaSelect.dataset.current || subtemaSelect.value || "";
+            const items = subtemaDataset[tema] || [];
+            subtemaSelect.innerHTML = '<option value="">Selecciona un subtema</option>';
+            items.forEach((item) => {
+                const opt = document.createElement('option');
+                opt.value = item;
+                opt.textContent = item;
+                if (item === previo) opt.selected = true;
+                subtemaSelect.appendChild(opt);
+            });
+        }
+
+        if (temaSelect && subtemaSelect) {
+            subtemaSelect.dataset.current = subtemaSelect.value;
+            temaSelect.addEventListener('change', function () {
+                subtemaSelect.dataset.current = '';
+                updateSubtemas();
+            });
+            updateSubtemas();
+        }
+
+        if (input && panel && list && count) {
+            input.addEventListener("change", function () {
+                const files = Array.from(input.files || []);
+                list.innerHTML = "";
+                count.textContent = files.length === 1 ? "1 archivo" : `${files.length} archivos`;
+                panel.hidden = files.length === 0;
+                autoTypeValue.textContent = files.length ? typeLabelForFile(files[0].name) : 'Se detectará al subir el archivo';
+
+                files.forEach((file) => {
+                    const item = document.createElement("div");
+                    item.className = "selected-file-item";
+                    item.innerHTML = `
+                        <span class="selected-file-icon"><i data-lucide="${iconForFile(file.name)}"></i></span>
+                        <div>
+                            <strong>${file.name}</strong>
+                            <small>${formatSize(file.size)} · tipo ${typeLabelForFile(file.name)}</small>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+
+                if (window.lucide) lucide.createIcons();
+            });
+        }
+
+        document.querySelectorAll("[data-topic]").forEach((button) => {
+            button.addEventListener("click", function () {
+                if (!textarea) return;
+                const topic = button.dataset.topic;
+                const current = textarea.value.trim();
+                const topics = current ? current.split("
+").map(t => t.trim()) : [];
+                if (!topics.includes(topic)) {
+                    textarea.value = current ? `${current}
+${topic}` : topic;
+                }
+                textarea.focus();
+            });
+        });
+
+        if (form && processing && submitBtn) {
+            form.addEventListener("submit", function () {
+                processing.hidden = false;
+                submitBtn.disabled = true;
+                submitBtn.querySelector("span").textContent = "Analizando...";
+            });
+        }
+    });
+</script>
 {% endblock %}

@@ -70,6 +70,15 @@ def dashboard(request):
         "ultimo_puntaje": ultimo_puntaje,
     }
 
+    onboarding = construir_onboarding_dashboard(
+        perfil_vark=perfil_vark,
+        datos_academicos=datos_academicos,
+        cantidad_materiales=cantidad_materiales,
+        ruta=ruta,
+        progreso_ruta=progreso_ruta,
+        ultimo_examen=ultimo_examen,
+    )
+
     accesos = [
         {
             "label": "Test VARK",
@@ -116,8 +125,122 @@ def dashboard(request):
             "accesos": accesos,
             "perfil_vark": perfil_vark,
             "datos_academicos": datos_academicos,
+            "onboarding": onboarding,
         },
     )
+
+
+def construir_onboarding_dashboard(
+    *,
+    perfil_vark,
+    datos_academicos,
+    cantidad_materiales,
+    ruta,
+    progreso_ruta,
+    ultimo_examen,
+):
+    pasos = [
+        {
+            "numero": 1,
+            "titulo": "Test VARK",
+            "descripcion": "Identifica tu estilo de aprendizaje para personalizar la ruta.",
+            "icono": "scan-eye",
+            "url": reverse("vark:resultado") if perfil_vark else reverse("vark:test"),
+            "completado": bool(perfil_vark),
+        },
+        {
+            "numero": 2,
+            "titulo": "Datos académicos",
+            "descripcion": "Registra tema, fecha de examen, dificultad y tiempo disponible.",
+            "icono": "clipboard-list",
+            "url": reverse("anatomia:datos_academicos"),
+            "completado": bool(datos_academicos),
+        },
+        {
+            "numero": 3,
+            "titulo": "Materiales",
+            "descripcion": "Sube PDFs, apuntes o imágenes para enriquecer el análisis de IA.",
+            "icono": "folder-up",
+            "url": reverse("documentos:lista") if cantidad_materiales else reverse("documentos:subir"),
+            "completado": cantidad_materiales > 0,
+        },
+        {
+            "numero": 4,
+            "titulo": "Ruta",
+            "descripcion": "Genera tu plan de estudio diario adaptado a tu perfil y temario.",
+            "icono": "route",
+            "url": reverse("rutas:ruta_aprendizaje"),
+            "completado": bool(ruta),
+        },
+        {
+            "numero": 5,
+            "titulo": "Simulacro",
+            "descripcion": "Practica con preguntas para comprobar si entendiste el tema.",
+            "icono": "file-question",
+            "url": reverse("examenes:lista") if ultimo_examen else reverse("examenes:generar"),
+            "completado": bool(ultimo_examen),
+        },
+        {
+            "numero": 6,
+            "titulo": "Progreso",
+            "descripcion": "Revisa avance, puntajes y temas que debes reforzar.",
+            "icono": "trending-up",
+            "url": reverse("usuarios:progreso"),
+            "completado": bool((progreso_ruta or {}).get("porcentaje") or ultimo_examen),
+        },
+    ]
+
+    siguiente = None
+    for paso in pasos:
+        if not paso["completado"]:
+            siguiente = paso
+            break
+
+    if siguiente is None:
+        siguiente = {
+            "numero": 6,
+            "titulo": "Ver progreso",
+            "descripcion": "Todos los pasos base están listos. Revisa tu avance y continúa practicando.",
+            "icono": "trending-up",
+            "url": reverse("usuarios:progreso"),
+            "completado": True,
+        }
+
+    for paso in pasos:
+        if paso["completado"]:
+            paso["estado"] = "completado"
+        elif paso["numero"] == siguiente["numero"]:
+            paso["estado"] = "actual"
+        else:
+            paso["estado"] = "pendiente"
+
+    completados = sum(1 for paso in pasos if paso["completado"])
+    porcentaje = round(completados * 100 / len(pasos))
+
+    return {
+        "pasos": pasos,
+        "siguiente": siguiente,
+        "completados": completados,
+        "total": len(pasos),
+        "porcentaje": porcentaje,
+        "mensaje": obtener_mensaje_onboarding(siguiente, porcentaje),
+    }
+
+
+def obtener_mensaje_onboarding(siguiente, porcentaje):
+    if porcentaje == 100:
+        return "Tu flujo principal está completo. Ahora puedes medir tu avance, reforzar temas débiles y practicar con nuevos simulacros."
+
+    numero = siguiente.get("numero")
+    mensajes = {
+        1: "Empieza completando el test VARK para que el sistema adapte los recursos a tu forma de aprender.",
+        2: "Ahora registra tus datos académicos para que la IA conozca tu tema, fecha de examen y tiempo disponible.",
+        3: "Sube tus apuntes, PDFs o imágenes para que la ruta se base en el material que realmente estudias.",
+        4: "Con tu perfil y datos listos, genera una ruta personalizada para saber qué estudiar cada día.",
+        5: "Después de estudiar la ruta, practica con un simulacro para comprobar tu comprensión.",
+        6: "Revisa tu progreso para identificar avances, puntajes y temas que debes reforzar.",
+    }
+    return mensajes.get(numero, "Continúa con el siguiente paso para completar tu proceso de estudio.")
 
 
 @login_required

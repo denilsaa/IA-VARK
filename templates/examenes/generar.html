@@ -1,138 +1,166 @@
 {% extends "base.html" %}
 
-{% block title %}Generar examen | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Generar simulacro | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero">
+<section class="page-hero compact-hero">
     <div>
-        <p class="eyebrow">Simulacro con IA</p>
-        <h1>Generar examen</h1>
+        <p class="eyebrow">Fase 5 · Evaluación activa</p>
+        <h1>Generar simulacro</h1>
         <p>
-            Gemini crear&aacute; preguntas usando tu ruta de aprendizaje, estilo VARK,
-            datos acad&eacute;micos y materiales analizados.
+            Crea preguntas con IA a partir de tu ruta, tus materiales y tu perfil VARK. Al finalizar recibirás puntaje,
+            explicación y temas concretos para reforzar.
         </p>
     </div>
 </section>
 
-<section class="section-band">
-    <div class="page-inner">
-        <div class="dashboard-grid">
-            <article class="feature-card dashboard-card">
+<section class="section-band exam-section-band">
+    <div class="container">
+        <div class="exam-ready-grid">
+            <article class="exam-ready-card">
                 <i data-lucide="scan-eye"></i>
-                <h3>Estilo VARK</h3>
+                <span>Perfil usado</span>
                 <strong>{{ perfil_vark.estilo_display }}</strong>
-                <p>Se usa para adaptar enfoque y retroalimentaci&oacute;n.</p>
+                <p>La retroalimentación se adapta a tu estilo.</p>
             </article>
 
-            <article class="feature-card dashboard-card">
+            <article class="exam-ready-card">
                 <i data-lucide="route"></i>
-                <h3>Ruta</h3>
-                <strong>{{ ruta.dias_planificados }} d&iacute;as</strong>
+                <span>Ruta activa</span>
+                <strong>{{ ruta.dias_planificados }} días</strong>
                 <p>{{ ruta.titulo }}</p>
             </article>
 
-            <article class="feature-card dashboard-card">
+            <article class="exam-ready-card">
                 <i data-lucide="folder-open"></i>
-                <h3>Materiales</h3>
+                <span>Materiales</span>
                 <strong>{{ materiales|length }}</strong>
-                <p>Materiales procesados.</p>
+                <p>Archivos procesados para enriquecer el simulacro.</p>
             </article>
 
-            <article class="feature-card dashboard-card">
+            <article class="exam-ready-card">
                 <i data-lucide="clipboard-check"></i>
-                <h3>Tipo de examen</h3>
+                <span>Tema actual</span>
                 <strong>{{ datos_academicos.get_tipo_examen_display }}</strong>
-                <p>Tema: {{ datos_academicos.tema_actual }}</p>
+                <p>{{ datos_academicos.tema_actual }}</p>
             </article>
         </div>
 
-        <div class="form-panel wide-panel mt-4">
-            <p class="eyebrow">Configuraci&oacute;n</p>
-            <h2>Crear nuevo simulacro</h2>
+        <div class="exam-builder-grid mt-4">
+            <div class="exam-builder-panel">
+                <p class="eyebrow">Configuración del simulacro</p>
+                <h2>Elige cómo quieres practicar</h2>
+                <p class="builder-copy">
+                    Para estudiar rápido usa 5 o 10 preguntas. Para entrenar antes del examen usa 15 o 20 preguntas.
+                </p>
 
-            <form method="post">
-                {% csrf_token %}
+                <form method="post" class="exam-builder-form" data-loading-form>
+                    {% csrf_token %}
 
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label" for="cantidad_preguntas">
-                            Cantidad de preguntas
-                        </label>
-                        <select name="cantidad_preguntas" id="cantidad_preguntas" class="form-control">
-                            <option value="5">5 preguntas</option>
-                            <option value="10" selected>10 preguntas</option>
-                            <option value="15">15 preguntas</option>
-                            <option value="20">20 preguntas</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="dificultad">
-                            Dificultad
-                        </label>
-                        <select name="dificultad" id="dificultad" class="form-control">
-                            <option value="baja">Baja</option>
-                            <option value="media" selected>Media</option>
-                            <option value="alta">Alta</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="info-box mt-4">
-                    <div class="ai-box-title">
-                        <i data-lucide="sparkles"></i>
-                        <strong>Uso de Gemini</strong>
-                    </div>
-                    <p>
-                        El LLM genera las preguntas y explicaciones. La correcci&oacute;n del puntaje
-                        la realiza Django de forma determin&iacute;stica.
-                    </p>
-                </div>
-
-                <div class="form-actions">
-                    <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
-                        Volver
-                    </a>
-
-                    <button type="submit" class="btn btn-primary icon-btn">
-                        <i data-lucide="file-question"></i>
-                        <span>Generar examen con Gemini</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        {% if examenes_recientes %}
-            <div class="section-heading mt-4">
-                <p class="eyebrow">Historial</p>
-                <h2>Ex&aacute;menes recientes</h2>
-            </div>
-
-            <div class="materials-grid">
-                {% for examen in examenes_recientes %}
-                    <article class="feature-card material-card">
-                        <div class="material-icon">
-                            <i data-lucide="file-question"></i>
+                    <div class="config-block">
+                        <label class="config-label">Cantidad de preguntas</label>
+                        <div class="choice-card-grid">
+                            <label class="choice-card">
+                                <input type="radio" name="cantidad_preguntas" value="5">
+                                <span>5</span>
+                                <strong>Rápido</strong>
+                                <small>Repaso corto</small>
+                            </label>
+                            <label class="choice-card">
+                                <input type="radio" name="cantidad_preguntas" value="10" checked>
+                                <span>10</span>
+                                <strong>Recomendado</strong>
+                                <small>Simulacro balanceado</small>
+                            </label>
+                            <label class="choice-card">
+                                <input type="radio" name="cantidad_preguntas" value="15">
+                                <span>15</span>
+                                <strong>Completo</strong>
+                                <small>Más práctica</small>
+                            </label>
+                            <label class="choice-card">
+                                <input type="radio" name="cantidad_preguntas" value="20">
+                                <span>20</span>
+                                <strong>Intensivo</strong>
+                                <small>Preexamen</small>
+                            </label>
                         </div>
+                    </div>
 
-                        <h3>{{ examen.titulo }}</h3>
-                        <p><strong>Estado:</strong> {{ examen.get_estado_display }}</p>
-                        <p><strong>Preguntas:</strong> {{ examen.total_preguntas }}</p>
+                    <div class="config-block">
+                        <label class="config-label">Nivel de dificultad</label>
+                        <div class="choice-card-grid difficulty-grid">
+                            <label class="choice-card difficulty-card">
+                                <input type="radio" name="dificultad" value="baja">
+                                <i data-lucide="leaf"></i>
+                                <strong>Baja</strong>
+                                <small>Conceptos directos y ubicación básica.</small>
+                            </label>
+                            <label class="choice-card difficulty-card">
+                                <input type="radio" name="dificultad" value="media" checked>
+                                <i data-lucide="gauge"></i>
+                                <strong>Media</strong>
+                                <small>Relaciones anatómicas y comparación.</small>
+                            </label>
+                            <label class="choice-card difficulty-card">
+                                <input type="radio" name="dificultad" value="alta">
+                                <i data-lucide="flame"></i>
+                                <strong>Alta</strong>
+                                <small>Razonamiento y aplicación topográfica.</small>
+                            </label>
+                        </div>
+                    </div>
 
-                        {% if examen.esta_respondido %}
-                            <p><strong>Puntaje:</strong> {{ examen.puntaje }}/{{ examen.total_preguntas }} - {{ examen.porcentaje }}%</p>
-                            <a href="{% url 'examenes:resultado' examen.pk %}" class="btn btn-outline-primary btn-sm">
-                                Ver resultado
-                            </a>
-                        {% else %}
-                            <a href="{% url 'examenes:rendir' examen.pk %}" class="btn btn-outline-primary btn-sm">
-                                Rendir examen
-                            </a>
-                        {% endif %}
-                    </article>
-                {% endfor %}
+                    <div class="exam-ai-note">
+                        <div>
+                            <i data-lucide="sparkles"></i>
+                            <strong>Qué recibirás después</strong>
+                        </div>
+                        <p>
+                            Puntaje, revisión pregunta por pregunta, explicación de cada respuesta, temas fuertes,
+                            temas a reforzar y recomendación para el siguiente repaso.
+                        </p>
+                    </div>
+
+                    <div class="form-actions sticky-mobile-actions">
+                        <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">Volver</a>
+                        <button type="submit" class="btn btn-primary icon-btn" data-loading-button>
+                            <i data-lucide="file-question"></i>
+                            <span>Generar simulacro</span>
+                        </button>
+                    </div>
+                </form>
             </div>
-        {% endif %}
+
+            <aside class="exam-side-panel">
+                <div class="side-panel-card">
+                    <p class="eyebrow">Consejo de uso</p>
+                    <h3>Cómo sacarle provecho</h3>
+                    <ol class="exam-tip-list">
+                        <li>Responde sin mirar apuntes.</li>
+                        <li>Revisa primero las preguntas falladas.</li>
+                        <li>Vuelve a la ruta solo en los temas débiles.</li>
+                        <li>Genera otro simulacro con dificultad mayor.</li>
+                    </ol>
+                </div>
+
+                {% if examenes_recientes %}
+                    <div class="side-panel-card mt-3">
+                        <p class="eyebrow">Historial rápido</p>
+                        <h3>Últimos simulacros</h3>
+                        <div class="mini-history-list">
+                            {% for examen in examenes_recientes %}
+                                <a href="{% if examen.esta_respondido %}{% url 'examenes:resultado' examen.pk %}{% else %}{% url 'examenes:rendir' examen.pk %}{% endif %}">
+                                    <span>{{ examen.get_estado_display }}</span>
+                                    <strong>{{ examen.total_preguntas }} preguntas</strong>
+                                    {% if examen.esta_respondido %}<small>{{ examen.porcentaje }}%</small>{% endif %}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </aside>
+        </div>
     </div>
 </section>
 {% endblock %}

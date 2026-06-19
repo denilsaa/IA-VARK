@@ -1,54 +1,85 @@
 {% extends "base.html" %}
 
-{% block title %}Rendir examen | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Rendir simulacro | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero">
+<section class="page-hero compact-hero exam-hero">
     <div>
-        <p class="eyebrow">Simulacro</p>
+        <p class="eyebrow">Simulacro activo</p>
         <h1>{{ examen.titulo }}</h1>
         <p>{{ examen.instrucciones }}</p>
     </div>
 </section>
 
-<section class="section-band">
-    <div class="page-inner">
-        <form method="post" class="form-panel wide-panel">
+<section class="section-band exam-section-band">
+    <div class="container">
+        <form method="post" class="exam-taking-layout" data-exam-form data-total-questions="{{ examen.total_preguntas }}">
             {% csrf_token %}
 
-            {% for pregunta in examen.preguntas %}
-                <article class="question-card">
-                    <p class="eyebrow">{{ pregunta.tema }}</p>
-                    <h3>{{ pregunta.id }}. {{ pregunta.enunciado }}</h3>
+            <aside class="exam-progress-panel">
+                <div class="exam-progress-card">
+                    <p class="eyebrow">Avance</p>
+                    <h2><span data-answered-count>0</span>/{{ examen.total_preguntas }}</h2>
+                    <p class="progress-helper" data-progress-helper>Responde todas las preguntas para finalizar.</p>
+                    <div class="exam-progress-track">
+                        <span data-exam-progress style="width: 0%;"></span>
+                    </div>
 
-                    <div class="option-list">
-                        {% for opcion in pregunta.opciones %}
-                            <label class="option-item">
-                                <input
-                                    type="radio"
-                                    name="pregunta_{{ pregunta.id }}"
-                                    value="{{ opcion.letra }}"
-                                    required
-                                >
-                                <span>
-                                    <strong>{{ opcion.letra }}.</strong>
-                                    {{ opcion.texto }}
-                                </span>
-                            </label>
+                    <div class="question-jump-list">
+                        {% for pregunta in examen.preguntas %}
+                            <a href="#pregunta-{{ pregunta.id }}" data-question-jump="{{ pregunta.id }}">{{ pregunta.id }}</a>
                         {% endfor %}
                     </div>
-                </article>
-            {% endfor %}
+                </div>
+            </aside>
 
-            <div class="form-actions">
-                <a href="{% url 'examenes:generar' %}" class="btn btn-outline-primary">
-                    Cancelar
-                </a>
+            <div class="exam-question-column">
+                {% for pregunta in examen.preguntas %}
+                    <article class="question-card exam-question-card" id="pregunta-{{ pregunta.id }}" data-question-card="{{ pregunta.id }}">
+                        <div class="question-topline">
+                            <div>
+                                <p class="eyebrow">Pregunta {{ forloop.counter }} de {{ examen.total_preguntas }}</p>
+                                <h3>{{ pregunta.enunciado }}</h3>
+                            </div>
+                            <span class="question-topic-chip">{{ pregunta.tema }}</span>
+                        </div>
 
-                <button type="submit" class="btn btn-primary icon-btn">
-                    <i data-lucide="check-circle"></i>
-                    <span>Finalizar y calificar</span>
-                </button>
+                        <div class="question-meta-row">
+                            {% if pregunta.habilidad_evaluada %}<span><i data-lucide="target"></i>{{ pregunta.habilidad_evaluada }}</span>{% endif %}
+                            {% if pregunta.dificultad_cognitiva %}<span><i data-lucide="brain"></i>{{ pregunta.dificultad_cognitiva }}</span>{% endif %}
+                        </div>
+
+                        <div class="option-list exam-option-list">
+                            {% for opcion in pregunta.opciones %}
+                                <label class="option-item exam-option-item">
+                                    <input
+                                        type="radio"
+                                        name="pregunta_{{ pregunta.id }}"
+                                        value="{{ opcion.letra }}"
+                                        required
+                                        data-question-input="{{ pregunta.id }}"
+                                    >
+                                    <span class="option-letter">{{ opcion.letra }}</span>
+                                    <span class="option-text">{{ opcion.texto }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </article>
+                {% endfor %}
+
+                <div class="exam-submit-panel">
+                    <div>
+                        <strong>¿Listo para calificar?</strong>
+                        <p data-submit-helper>Cuando respondas todas las preguntas podrás finalizar el simulacro.</p>
+                    </div>
+                    <div class="form-actions">
+                        <a href="{% url 'examenes:generar' %}" class="btn btn-outline-primary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary icon-btn" data-submit-exam>
+                            <i data-lucide="check-circle"></i>
+                            <span>Finalizar y calificar</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
