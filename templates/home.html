@@ -1,134 +1,77 @@
 {% extends "base.html" %}
-{% load socialaccount %}
+{% load socialaccount static %}
 
-{% block title %}Tutor IA Anatom&iacute;a VARK | Inicio{% endblock %}
-{% block body_class %}home-shell{% endblock %}
+{% block title %}Tutor IA Anatomía VARK | Inicio{% endblock %}
+{% block body_class %}home-body{% endblock %}
 {% block main_class %}main-home{% endblock %}
 
 {% block content %}
 <section class="home-hero">
-    <div class="hero-backdrop" aria-hidden="true">
-        <div class="anatomy-visual">
-            <div class="visual-toolbar">
-                <span></span><span></span><span></span>
-            </div>
-            <div class="visual-grid">
-                <div class="scan-panel">
-                    <i data-lucide="bone"></i>
-                    <strong>Sistema oseo</strong>
-                    <small>Ruta activa</small>
-                </div>
-                <div class="scan-panel accent-mint">
-                    <i data-lucide="clipboard-check"></i>
-                    <strong>82%</strong>
-                    <small>Ultimo puntaje</small>
-                </div>
-                <div class="study-chart">
-                    <span style="height: 72%"></span>
-                    <span style="height: 48%"></span>
-                    <span style="height: 56%"></span>
-                    <span style="height: 32%"></span>
-                </div>
-                <div class="route-preview">
-                    <div></div><div></div><div></div><div></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
+    <div class="container-fluid app-container hero-grid">
         <div class="hero-content">
-            <p class="eyebrow">Anatom&iacute;a I + aprendizaje personalizado</p>
-            <h1>Tutor IA Anatom&iacute;a VARK</h1>
+            <span class="hero-badge"><i data-lucide="sparkles"></i> Anatomía I + IA + VARK</span>
+            <h1>Estudia Anatomía con una ruta clara, visual y personalizada.</h1>
             <p class="hero-copy">
-                Un sistema para diagnosticar tu estilo VARK, organizar tus materiales,
-                crear una ruta de estudio y practicar con examenes de Anatom&iacute;a I.
+                Diagnostica tu estilo VARK, sube tus materiales, genera un plan de estudio por días
+                y practica con simulacros antes del examen.
             </p>
-
             <div class="hero-actions">
                 <a href="{% url 'account_login' %}" class="btn btn-primary btn-lg icon-btn">
-                    <i data-lucide="log-in"></i>
-                    <span>Iniciar sesi&oacute;n</span>
+                    <i data-lucide="log-in"></i><span>Iniciar sesión</span>
                 </a>
-
                 <a href="{% url 'account_signup' %}" class="btn btn-outline-primary btn-lg icon-btn">
-                    <i data-lucide="user-plus"></i>
-                    <span>Registrarse</span>
+                    <i data-lucide="user-plus"></i><span>Crear cuenta</span>
                 </a>
-
                 {% if GOOGLE_AUTH_ENABLED %}
                     <a href="{% provider_login_url 'google' process='login' %}" class="btn btn-google btn-lg icon-btn">
-                        <i data-lucide="chrome"></i>
-                        <span>Continuar con Google</span>
+                        <i data-lucide="chrome"></i><span>Continuar con Google</span>
                     </a>
-                {% else %}
-                    <button class="btn btn-google btn-lg icon-btn" type="button" disabled>
-                        <i data-lucide="chrome"></i>
-                        <span>Google pendiente</span>
-                    </button>
                 {% endif %}
             </div>
+            <div class="hero-metrics" aria-label="Resumen de funciones">
+                <div><strong>10</strong><span>preguntas VARK</span></div>
+                <div><strong>1–21</strong><span>días de ruta</span></div>
+                <div><strong>IA</strong><span>resúmenes y simulacros</span></div>
+            </div>
         </div>
+
+        <aside class="hero-preview" aria-label="Vista previa del sistema">
+            <div class="preview-window">
+                <div class="preview-toolbar"><span></span><span></span><span></span></div>
+                <div class="preview-header">
+                    <div>
+                        <small>Ruta activa</small>
+                        <strong>Sistema óseo</strong>
+                    </div>
+                    <span class="status-pill">82%</span>
+                </div>
+                <div class="preview-card anatomy-card">
+                    <img src="{% static 'img/anatomy-study.png' %}" alt="Ilustración de estudio de anatomía">
+                </div>
+                <div class="preview-grid">
+                    <div class="mini-card"><i data-lucide="scan-eye"></i><strong>Visual</strong><span>Estilo VARK</span></div>
+                    <div class="mini-card"><i data-lucide="file-question"></i><strong>10</strong><span>Preguntas</span></div>
+                </div>
+                <div class="route-mini">
+                    <span class="done"></span><span class="done"></span><span></span><span></span><span></span>
+                </div>
+            </div>
+        </aside>
     </div>
 </section>
 
-<section class="section-band">
-    <div class="container">
-        <div class="section-heading">
-            <p class="eyebrow">Flujo general</p>
-            <h2>&iquest;C&oacute;mo funciona?</h2>
+<section class="home-section">
+    <div class="container-fluid app-container">
+        <div class="section-heading centered">
+            <span class="eyebrow">Flujo de trabajo</span>
+            <h2>De apuntes sueltos a una ruta de estudio</h2>
+            <p>La experiencia está pensada para que el estudiante sepa qué hacer en cada paso.</p>
         </div>
-
         <div class="process-grid">
-            <article class="feature-card">
-                <i data-lucide="user-check"></i>
-                <h3>Registro y acceso</h3>
-                <p>El estudiante entra con cuenta manual o Google y queda listo para continuar el flujo.</p>
-            </article>
-
-            <article class="feature-card">
-                <i data-lucide="scan-eye"></i>
-                <h3>Test VARK</h3>
-                <p>El sistema identifica si aprende mejor con recursos visuales, auditivos, escritos o practicos.</p>
-            </article>
-
-            <article class="feature-card">
-                <i data-lucide="calendar-clock"></i>
-                <h3>Datos academicos</h3>
-                <p>Se registran tema, fecha de examen, horas disponibles y dificultad esperada.</p>
-            </article>
-
-            <article class="feature-card">
-                <i data-lucide="route"></i>
-                <h3>Ruta y examen</h3>
-                <p>La app presenta un plan por dias, practica guiada, simulacros y retroalimentacion.</p>
-            </article>
-        </div>
-    </div>
-</section>
-
-<section class="section-band subtle-band">
-    <div class="container">
-        <div class="section-heading">
-            <p class="eyebrow">Beneficios</p>
-            <h2>Estudio mas claro para Anatom&iacute;a I</h2>
-        </div>
-
-        <div class="benefit-list">
-            <div class="benefit-item">
-                <i data-lucide="layers-3"></i>
-                <span>Organiza apuntes, imagenes, PDFs y textos en un solo lugar.</span>
-            </div>
-
-            <div class="benefit-item">
-                <i data-lucide="target"></i>
-                <span>Prioriza temas debiles antes del examen.</span>
-            </div>
-
-            <div class="benefit-item">
-                <i data-lucide="line-chart"></i>
-                <span>Muestra avance, puntajes y recomendaciones de mejora.</span>
-            </div>
+            <article class="feature-card"><span class="feature-icon"><i data-lucide="scan-eye"></i></span><h3>Test VARK</h3><p>Detecta el estilo principal para adaptar recursos y recomendaciones.</p></article>
+            <article class="feature-card"><span class="feature-icon"><i data-lucide="calendar-check"></i></span><h3>Datos académicos</h3><p>Registra tema, fecha de examen, dificultad y tiempo disponible.</p></article>
+            <article class="feature-card"><span class="feature-icon"><i data-lucide="folder-up"></i></span><h3>Materiales</h3><p>Sube PDFs, imágenes o textos para enriquecer la ruta personalizada.</p></article>
+            <article class="feature-card"><span class="feature-icon"><i data-lucide="route"></i></span><h3>Ruta y simulacro</h3><p>Estudia por días, marca avances y mide tu preparación con exámenes.</p></article>
         </div>
     </div>
 </section>

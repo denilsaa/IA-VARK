@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Página no encontrada | Tutor IA Anatomía VARK{% endblock %}
+
+{% block content %}
+<section class="not-found-page">
+    <div class="not-found-card">
+        <div class="not-found-icon">
+            <i data-lucide="search-x"></i>
+        </div>
+
+        <p class="eyebrow">Error 404</p>
+        <h1>Página no encontrada</h1>
+        <p>
+            La dirección que intentaste abrir no existe o fue movida.
+            Puedes volver a una pantalla segura para continuar usando el sistema.
+        </p>
+
+        <div class="not-found-actions">
+            {% if user.is_authenticated %}
+                <a href="{% url 'usuarios:dashboard' %}" class="btn btn-primary icon-btn">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Ir al panel</span>
+                </a>
+            {% else %}
+                <a href="{% url 'usuarios:home' %}" class="btn btn-primary icon-btn">
+                    <i data-lucide="home"></i>
+                    <span>Ir al inicio</span>
+                </a>
+            {% endif %}
+
+            <button type="button" class="btn btn-outline-primary icon-btn" onclick="window.history.back()">
+                <i data-lucide="arrow-left"></i>
+                <span>Volver atrás</span>
+            </button>
+        </div>
+    </div>
+</section>
+{% endblock %}

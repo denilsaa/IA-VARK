@@ -15,18 +15,9 @@
 </section>
 
 <section class="section-band">
-    <div class="container">
+    <div class="page-inner">
         <form method="post" class="form-panel wide-panel">
             {% csrf_token %}
-
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-
             <article class="question-card">
                 <h3>{{ pregunta.texto }}</h3>
 

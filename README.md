@@ -1,4 +1,4 @@
-# Tutor IA Anatomía I con VARK — README Técnico
+# Tutor IA Anatomía I con VARK 
 
 ## 1. Descripción general
 
@@ -289,8 +289,7 @@ Repositorio del proyecto:
 https://github.com/denilsaa/IA-VARK
 ```
 
-## 12. Comando de ejecución resumido para defensa
-
+## 12. Comando de ejecución 
 ```bash
 # 1. ComfyUI
 cd "C:\Users\denil\Desktop\IA local\ComfyUI"

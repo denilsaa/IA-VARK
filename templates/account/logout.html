@@ -1,24 +1,12 @@
 {% extends "base.html" %}
-
-{% block title %}Cerrar sesi&oacute;n | Tutor IA Anatom&iacute;a VARK{% endblock %}
-
+{% block title %}Cerrar sesión | Tutor IA Anatomía VARK{% endblock %}
 {% block content %}
 <section class="auth-layout compact-auth">
-    <div class="auth-copy">
-        <p class="eyebrow">Salida segura</p>
-        <h1>Cerrar sesi&oacute;n</h1>
-        <p>Tu progreso queda guardado para continuar luego.</p>
-    </div>
-
-    <form class="form-panel" method="post" action="{% url 'account_logout' %}">
+    <aside class="auth-copy"><span class="hero-badge"><i data-lucide="log-out"></i> Salida segura</span><h1>¿Cerrar sesión?</h1><p>Tu progreso queda guardado para continuar después.</p></aside>
+    <form class="form-panel auth-card" method="post" action="{% url 'account_logout' %}">
         {% csrf_token %}
-        {% if redirect_field_value %}
-            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
-        {% endif %}
-        <button class="btn btn-primary w-100 icon-btn justify-content-center" type="submit">
-            <i data-lucide="log-out"></i>
-            <span>Cerrar sesi&oacute;n</span>
-        </button>
+        {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
+        <button class="btn btn-primary w-100 icon-btn justify-content-center" type="submit"><i data-lucide="log-out"></i><span>Cerrar sesión</span></button>
         <a class="btn btn-outline-primary w-100 mt-2" href="{% url 'usuarios:dashboard' %}">Volver al panel</a>
     </form>
 </section>

@@ -1,57 +1,49 @@
 {% extends "base.html" %}
 
-{% block title %}Test VARK | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Test VARK | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero">
+<section class="page-header mb-4">
     <div>
-        <p class="eyebrow">Diagn&oacute;stico generado con IA</p>
+        <p class="eyebrow">Diagnóstico de estilo de aprendizaje</p>
         <h1>Test VARK</h1>
-        <p>
-            Responde estas 10 preguntas cotidianas. El sistema calcular&aacute;
-            tu estilo principal y lo guardar&aacute; en tu perfil.
-        </p>
-
-        {% if origen_preguntas == "gemini" %}
-            <div class="ai-box">
-                <div class="ai-box-title">
-                    <i data-lucide="sparkles"></i>
-                    <strong>Preguntas generadas por Gemini</strong>
-                </div>
-                <p>
-                    Este test fue creado din&aacute;micamente por el LLM usando situaciones cotidianas.
-                </p>
-            </div>
-        {% else %}
-            <div class="ai-box">
-                <div class="ai-box-title">
-                    <i data-lucide="info"></i>
-                    <strong>Preguntas de respaldo local</strong>
-                </div>
-                <p>
-                    El sistema us&oacute; preguntas internas porque el LLM no respondi&oacute;
-                    con el formato esperado.
-                </p>
-            </div>
-        {% endif %}
+        <p>Responde 10 preguntas para identificar cómo aprendes mejor y personalizar tu experiencia de estudio en Anatomía I.</p>
     </div>
 </section>
 
-<section class="section-band">
+{% if estado_llm == "error" or not preguntas %}
+<section class="section-band pt-0">
+    <div class="empty-state-panel wide-panel">
+        <div class="empty-state-icon"><i data-lucide="sparkles"></i></div>
+        <p class="eyebrow">No se pudo generar el test</p>
+        <h2>La IA no respondió correctamente</h2>
+        <p>{{ mensaje_llm|default:"No pudimos generar las preguntas del test en este momento. Vuelve a intentarlo." }}</p>
+        <div class="form-actions justify-content-center">
+            <a href="{% url 'vark:test' %}" class="btn btn-primary icon-btn">
+                <i data-lucide="refresh-cw"></i>
+                <span>Volver a intentar</span>
+            </a>
+            <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">Ir al panel</a>
+        </div>
+    </div>
+</section>
+{% else %}
+<section class="section-band pt-0">
     <div class="container">
+        <div class="ai-box test-source-box">
+            <div class="ai-box-title">
+                <i data-lucide="sparkles"></i>
+                <strong>Test generado por IA</strong>
+            </div>
+            <p>Las preguntas fueron creadas dinámicamente para ayudarte a identificar tu estilo predominante de aprendizaje.</p>
+        </div>
+
         <form method="post" class="form-panel wide-panel">
             {% csrf_token %}
 
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-
             {% for pregunta in preguntas %}
                 <article class="question-card">
+                    <div class="question-meta">Pregunta {{ forloop.counter }} de {{ preguntas|length }}</div>
                     <h3>{{ forloop.counter }}. {{ pregunta.texto }}</h3>
 
                     <div class="option-list">
@@ -71,16 +63,14 @@
             {% endfor %}
 
             <div class="form-actions">
-                <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
-                    Volver
-                </a>
-
+                <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">Volver</a>
                 <button type="submit" class="btn btn-primary icon-btn">
                     <i data-lucide="check-circle"></i>
-                    <span>Guardar resultado</span>
+                    <span>Ver mi resultado</span>
                 </button>
             </div>
         </form>
     </div>
 </section>
+{% endif %}
 {% endblock %}

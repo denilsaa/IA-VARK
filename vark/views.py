@@ -21,6 +21,7 @@ RECOMENDACIONES = {
             "Utiliza colores para diferenciar estructuras.",
             "Resume temas con diagramas y cuadros comparativos.",
         ],
+        "icono": "eye",
     },
     "auditivo": {
         "titulo": "Aprendizaje Auditivo",
@@ -31,6 +32,7 @@ RECOMENDACIONES = {
             "Estudia con compañeros mediante preguntas orales.",
             "Usa explicaciones conversacionales para temas difíciles.",
         ],
+        "icono": "volume-2",
     },
     "lectura": {
         "titulo": "Lectura/Escritura",
@@ -41,6 +43,7 @@ RECOMENDACIONES = {
             "Usa listas para clasificar estructuras.",
             "Reescribe con tus palabras las definiciones importantes.",
         ],
+        "icono": "book-open",
     },
     "kinestesico": {
         "titulo": "Aprendizaje Kinestésico",
@@ -51,6 +54,7 @@ RECOMENDACIONES = {
             "Relaciona estructuras con movimientos o funciones.",
             "Haz simulacros y casos aplicados.",
         ],
+        "icono": "activity",
     },
 }
 
@@ -59,12 +63,11 @@ RECOMENDACIONES = {
 def test_vark(request):
     if request.method == "POST":
         preguntas = request.session.get("preguntas_vark", [])
-        origen_preguntas = request.session.get("origen_preguntas_vark", "respaldo")
 
         if not preguntas:
             messages.error(
                 request,
-                "No se encontraron preguntas activas. Genera el test nuevamente.",
+                "No se encontraron preguntas activas. Vuelve a intentar generar el test.",
             )
             return redirect("vark:test")
 
@@ -97,7 +100,8 @@ def test_vark(request):
                 "vark/test.html",
                 {
                     "preguntas": preguntas,
-                    "origen_preguntas": origen_preguntas,
+                    "estado_llm": "ok",
+                    "mensaje_llm": "",
                 },
             )
 
@@ -107,21 +111,17 @@ def test_vark(request):
             request.session["puntajes_vark_pendientes"] = puntajes
             request.session["estilos_empatados_vark"] = estilos_ganadores
             request.session.modified = True
-
             return redirect("vark:desempate")
 
         estilo_principal = estilos_ganadores[0]
         guardar_perfil_vark(request.user, puntajes, estilo_principal)
         limpiar_sesion_vark(request)
-
         return redirect("vark:resultado")
 
     resultado_generacion = generar_preguntas_vark()
     preguntas = resultado_generacion["preguntas"]
-    origen_preguntas = resultado_generacion["origen"]
 
     request.session["preguntas_vark"] = preguntas
-    request.session["origen_preguntas_vark"] = origen_preguntas
     request.session.modified = True
 
     return render(
@@ -129,7 +129,8 @@ def test_vark(request):
         "vark/test.html",
         {
             "preguntas": preguntas,
-            "origen_preguntas": origen_preguntas,
+            "estado_llm": "ok" if resultado_generacion["ok"] else "error",
+            "mensaje_llm": resultado_generacion["mensaje"],
         },
     )
 
@@ -151,31 +152,15 @@ def desempate_vark(request):
                 "Debes elegir una opción para definir tu estilo principal.",
             )
             pregunta = generar_pregunta_desempate(estilos_empatados)
-
-            return render(
-                request,
-                "vark/desempate.html",
-                {
-                    "pregunta": pregunta,
-                },
-            )
+            return render(request, "vark/desempate.html", {"pregunta": pregunta})
 
         puntajes[estilo_elegido] += 1
-
         guardar_perfil_vark(request.user, puntajes, estilo_elegido)
         limpiar_sesion_vark(request)
-
         return redirect("vark:resultado")
 
     pregunta = generar_pregunta_desempate(estilos_empatados)
-
-    return render(
-        request,
-        "vark/desempate.html",
-        {
-            "pregunta": pregunta,
-        },
-    )
+    return render(request, "vark/desempate.html", {"pregunta": pregunta})
 
 
 @login_required
@@ -186,10 +171,7 @@ def resultado_vark(request):
         messages.warning(request, "Primero debes completar el test VARK.")
         return redirect("vark:test")
 
-    recomendacion = RECOMENDACIONES.get(
-        perfil.estilo_principal,
-        RECOMENDACIONES["visual"],
-    )
+    recomendacion = RECOMENDACIONES.get(perfil.estilo_principal, RECOMENDACIONES["visual"])
 
     porcentajes = {
         "visual": perfil.obtener_porcentaje("visual"),
@@ -200,6 +182,41 @@ def resultado_vark(request):
 
     recomendacion_llm = generar_recomendacion_llm(perfil)
 
+    resumen_estilos = [
+        {
+            "clave": "visual",
+            "nombre": "Visual",
+            "puntaje": perfil.puntaje_visual,
+            "porcentaje": porcentajes["visual"],
+            "icono": "eye",
+        },
+        {
+            "clave": "auditivo",
+            "nombre": "Auditivo",
+            "puntaje": perfil.puntaje_auditivo,
+            "porcentaje": porcentajes["auditivo"],
+            "icono": "volume-2",
+        },
+        {
+            "clave": "lectura",
+            "nombre": "Lectura/Escritura",
+            "puntaje": perfil.puntaje_lectura,
+            "porcentaje": porcentajes["lectura"],
+            "icono": "book-open",
+        },
+        {
+            "clave": "kinestesico",
+            "nombre": "Kinestésico",
+            "puntaje": perfil.puntaje_kinestesico,
+            "porcentaje": porcentajes["kinestesico"],
+            "icono": "activity",
+        },
+    ]
+    resumen_estilos = sorted(resumen_estilos, key=lambda item: item["puntaje"], reverse=True)
+
+    estilo_secundario = resumen_estilos[1] if len(resumen_estilos) > 1 else None
+    estilo_principal = resumen_estilos[0]
+
     return render(
         request,
         "vark/resultado.html",
@@ -207,7 +224,12 @@ def resultado_vark(request):
             "perfil": perfil,
             "recomendacion": recomendacion,
             "porcentajes": porcentajes,
-            "recomendacion_llm": recomendacion_llm,
+            "recomendacion_llm": recomendacion_llm["texto"],
+            "estado_ia": "ok" if recomendacion_llm["ok"] else "error",
+            "mensaje_ia": recomendacion_llm["mensaje"],
+            "resumen_estilos": resumen_estilos,
+            "estilo_principal_info": estilo_principal,
+            "estilo_secundario": estilo_secundario,
         },
     )
 
@@ -226,15 +248,12 @@ def guardar_perfil_vark(user, puntajes, estilo_principal):
 
 
 def limpiar_sesion_vark(request):
-    claves = [
+    for key in [
         "preguntas_vark",
         "origen_preguntas_vark",
         "puntajes_vark_pendientes",
         "estilos_empatados_vark",
-    ]
-
-    for clave in claves:
-        if clave in request.session:
-            del request.session[clave]
+    ]:
+        request.session.pop(key, None)
 
     request.session.modified = True

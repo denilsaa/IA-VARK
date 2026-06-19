@@ -28,3 +28,15 @@ elif getattr(settings, "SERVE_MEDIA_IN_PRODUCTION", False):
             {"document_root": settings.MEDIA_ROOT},
         )
     ]
+
+handler404 = "usuarios.views.pagina_no_encontrada"
+
+# Pantalla personalizada para rutas inexistentes también con DEBUG=True.
+# Debe quedar al final para no interferir con las rutas reales ni con media.
+urlpatterns += [
+    re_path(
+        r"^(?!media/).*$",
+        usuarios_views.pagina_no_encontrada,
+        name="pagina_no_encontrada",
+    )
+]

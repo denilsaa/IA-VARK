@@ -115,16 +115,19 @@ def generar_preguntas_vark():
 
     if proveedor == "gemini":
         preguntas = generar_preguntas_con_gemini()
-
         if preguntas:
             return {
+                "ok": True,
                 "origen": "gemini",
                 "preguntas": preparar_preguntas(preguntas),
+                "mensaje": "",
             }
 
     return {
-        "origen": "respaldo",
-        "preguntas": preparar_preguntas(PREGUNTAS_RESPALDO),
+        "ok": False,
+        "origen": "error",
+        "preguntas": [],
+        "mensaje": "No pudimos generar el test VARK con IA en este momento. Vuelve a intentarlo en unos segundos.",
     }
 
 
@@ -204,11 +207,18 @@ def generar_recomendacion_llm(perfil):
 
     if proveedor == "gemini":
         recomendacion = generar_recomendacion_con_gemini(perfil)
-
         if recomendacion:
-            return recomendacion
+            return {
+                "ok": True,
+                "texto": recomendacion,
+                "mensaje": "",
+            }
 
-    return ""
+    return {
+        "ok": False,
+        "texto": "",
+        "mensaje": "La explicación personalizada con IA no pudo generarse ahora mismo. Vuelve a intentarlo para obtener una recomendación más completa.",
+    }
 
 
 def generar_recomendacion_con_gemini(perfil):
@@ -225,30 +235,30 @@ def generar_recomendacion_con_gemini(perfil):
         model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite").strip()
 
         prompt = f"""
-Genera una recomendación breve y personalizada para un estudiante de Anatomía I.
+Genera una explicación personalizada para un estudiante de Anatomía I según su estilo VARK.
 
 Datos del estudiante:
-- Estilo principal: {perfil.estilo_display}
+- Estilo predominante: {perfil.estilo_display}
 - Puntaje visual: {perfil.puntaje_visual}
 - Puntaje auditivo: {perfil.puntaje_auditivo}
 - Puntaje lectura/escritura: {perfil.puntaje_lectura}
 - Puntaje kinestésico: {perfil.puntaje_kinestesico}
 
-Instrucciones:
-- Escribe en español.
-- Máximo 120 palabras.
-- Da consejos prácticos para estudiar Anatomía I.
-- Adapta los consejos al estilo principal.
-- No uses formato JSON.
-- No uses markdown.
+Instrucciones obligatorias:
+- Responde en español.
+- Máximo 170 palabras.
+- Explica por qué su estilo predominante le favorece para aprender en general y en Anatomía I.
+- Menciona fortalezas concretas de ese estilo.
+- Indica cómo debería estudiar usando ese estilo.
+- Si tiene un segundo estilo fuerte, puedes mencionarlo brevemente como complemento.
+- Usa tono claro, motivador y útil para estudiantes.
+- Entrega solo texto plano, sin JSON, sin markdown, sin viñetas.
 """
 
         response = client.models.generate_content(
             model=model,
             contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.7,
-            ),
+            config=types.GenerateContentConfig(temperature=0.7),
         )
 
         return response.text.strip()
@@ -284,31 +294,14 @@ def validar_preguntas(preguntas):
             valor = str(opcion.get("valor", "")).strip().lower()
             texto_opcion = str(opcion.get("texto", "")).strip()
 
-            if valor not in ESTILOS_VALIDOS:
-                continue
-
-            if valor in estilos_encontrados:
-                continue
-
-            if not texto_opcion:
+            if valor not in ESTILOS_VALIDOS or valor in estilos_encontrados or not texto_opcion:
                 continue
 
             estilos_encontrados.add(valor)
-            opciones_validadas.append(
-                {
-                    "valor": valor,
-                    "texto": texto_opcion,
-                }
-            )
+            opciones_validadas.append({"valor": valor, "texto": texto_opcion})
 
         if set(estilos_encontrados) == set(ESTILOS_VALIDOS):
-            preguntas_validadas.append(
-                {
-                    "id": index,
-                    "texto": texto,
-                    "opciones": opciones_validadas,
-                }
-            )
+            preguntas_validadas.append({"id": index, "texto": texto, "opciones": opciones_validadas})
 
     return preguntas_validadas
 
@@ -319,14 +312,7 @@ def preparar_preguntas(preguntas):
     for index, pregunta in enumerate(preguntas, start=1):
         opciones = pregunta["opciones"].copy()
         random.shuffle(opciones)
-
-        preguntas_preparadas.append(
-            {
-                "id": index,
-                "texto": pregunta["texto"],
-                "opciones": opciones,
-            }
-        )
+        preguntas_preparadas.append({"id": index, "texto": pregunta["texto"], "opciones": opciones})
 
     return preguntas_preparadas
 
@@ -348,12 +334,7 @@ def limpiar_json(texto):
 
 def obtener_estilos_ganadores(puntajes):
     puntaje_maximo = max(puntajes.values())
-
-    return [
-        estilo
-        for estilo, puntaje in puntajes.items()
-        if puntaje == puntaje_maximo
-    ]
+    return [estilo for estilo, puntaje in puntajes.items() if puntaje == puntaje_maximo]
 
 
 def generar_pregunta_desempate(estilos_empatados):
@@ -372,14 +353,9 @@ def generar_pregunta_desempate(estilos_empatados):
     }
 
     opciones = [
-        {
-            "valor": estilo,
-            "texto": opciones_base[estilo],
-            "label": etiquetas[estilo],
-        }
+        {"valor": estilo, "texto": opciones_base[estilo], "label": etiquetas[estilo]}
         for estilo in estilos_empatados
     ]
-
     random.shuffle(opciones)
 
     return {

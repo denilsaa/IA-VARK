@@ -1,143 +1,62 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Panel | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero">
+<section class="page-hero dashboard-hero">
     <div>
-        <p class="eyebrow">Panel del estudiante</p>
+        <span class="eyebrow">Panel del estudiante</span>
         <h1>Hola, {{ request.user.username }}</h1>
-        <p>
-            Este es tu centro de control para estudiar Anatom&iacute;a I con apoyo de IA,
-            VARK y seguimiento acad&eacute;mico.
-        </p>
+        <p>Continúa tu preparación de Anatomía I desde un solo lugar: perfil VARK, materiales, ruta, simulacros y progreso.</p>
+    </div>
+    <div class="hero-action-card">
+        <span>Avance de ruta</span>
+        <strong>{{ resumen.ruta_progreso.porcentaje }}%</strong>
+        <div class="progress-bar-wrap compact"><div class="progress-bar-fill" style="width: {{ resumen.ruta_progreso.porcentaje|default:0 }}%"></div></div>
+        <small>{{ resumen.ruta_progreso.dias_completados }}/{{ resumen.ruta_progreso.total_dias }} días completados</small>
     </div>
 </section>
 
 <section class="section-band">
-    <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
+    <div class="dashboard-grid metric-grid">
+        <article class="metric-card"><span class="metric-icon"><i data-lucide="scan-eye"></i></span><small>Estilo VARK</small><strong>{{ resumen.estilo_vark }}</strong><p>{% if perfil_vark %}Perfil completado{% else %}Pendiente de completar{% endif %}</p></article>
+        <article class="metric-card"><span class="metric-icon"><i data-lucide="book-open"></i></span><small>Tema actual</small><strong>{{ resumen.tema_actual }}</strong><p>Contenido principal</p></article>
+        <article class="metric-card"><span class="metric-icon"><i data-lucide="calendar-days"></i></span><small>Fecha examen</small><strong>{{ resumen.fecha_examen }}</strong><p>Días restantes: {{ resumen.dias_restantes }}</p></article>
+        <article class="metric-card"><span class="metric-icon"><i data-lucide="clock"></i></span><small>Tiempo por día</small><strong>{{ resumen.tiempo_estudio }}</strong><p>Disponibilidad diaria</p></article>
+        <article class="metric-card"><span class="metric-icon"><i data-lucide="clipboard-check"></i></span><small>Tipo de examen</small><strong>{{ resumen.proximo_examen }}</strong><p>Formato registrado</p></article>
+        <article class="metric-card"><span class="metric-icon"><i data-lucide="file-stack"></i></span><small>Materiales</small><strong>{{ resumen.materiales }}</strong><p>Archivos guardados</p></article>
+        <article class="metric-card"><span class="metric-icon"><i data-lucide="route"></i></span><small>Ruta activa</small><strong>{{ resumen.ruta_activa }}</strong><p>Plan personalizado</p></article>
+        <article class="metric-card"><span class="metric-icon"><i data-lucide="trending-up"></i></span><small>Último puntaje</small><strong>{{ resumen.ultimo_puntaje }}</strong><p>Simulacros respondidos</p></article>
+    </div>
 
-        <div class="dashboard-grid">
-            <article class="feature-card dashboard-card">
-                <i data-lucide="scan-eye"></i>
-                <h3>Estilo VARK</h3>
-                <strong>{{ resumen.estilo_vark }}</strong>
-                {% if perfil_vark %}
-                    <p>Perfil completado y guardado.</p>
-                {% else %}
-                    <p>Pendiente de completar.</p>
-                {% endif %}
-            </article>
-
-            <article class="feature-card dashboard-card">
-                <i data-lucide="book-open"></i>
-                <h3>Tema actual</h3>
-                <strong>{{ resumen.tema_actual }}</strong>
-                <p>Contenido principal registrado.</p>
-            </article>
-
-            <article class="feature-card dashboard-card">
-                <i data-lucide="calendar-days"></i>
-                <h3>Fecha de examen</h3>
-                <strong>{{ resumen.fecha_examen }}</strong>
-                <p>D&iacute;as restantes: {{ resumen.dias_restantes }}</p>
-            </article>
-
-            <article class="feature-card dashboard-card">
-                <i data-lucide="clock"></i>
-                <h3>Tiempo por d&iacute;a</h3>
-                <strong>{{ resumen.tiempo_estudio }}</strong>
-                <p>Tiempo diario disponible.</p>
-            </article>
-
-            <article class="feature-card dashboard-card">
-                <i data-lucide="clipboard-check"></i>
-                <h3>Tipo de examen</h3>
-                <strong>{{ resumen.proximo_examen }}</strong>
-                <p>Formato del pr&oacute;ximo examen.</p>
-            </article>
-
-            <article class="feature-card dashboard-card">
-                <i data-lucide="file-stack"></i>
-                <h3>Materiales</h3>
-                <strong>{{ resumen.materiales }}</strong>
-                <p>Archivos subidos al sistema.</p>
-            </article>
-
-            <article class="feature-card dashboard-card">
-                <i data-lucide="route"></i>
-                <h3>Ruta activa</h3>
-                <strong>{{ resumen.ruta_activa }}</strong>
-                <p>Plan de estudio personalizado.</p>
-            </article>
-
-            <article class="feature-card dashboard-card">
-                <i data-lucide="trending-up"></i>
-                <h3>&Uacute;ltimo puntaje</h3>
-                <strong>{{ resumen.ultimo_puntaje }}</strong>
-                <p>Resultado de simulacros.</p>
-            </article>
-        </div>
-
-        {% if datos_academicos %}
-            <div class="form-panel wide-panel mt-4">
-                <p class="eyebrow">Resumen acad&eacute;mico</p>
-                <h2>{{ datos_academicos.materia }}</h2>
-
-                <div class="detail-grid">
-                    <div>
-                        <strong>Tema actual</strong>
-                        <p>{{ datos_academicos.tema_actual }}</p>
-                    </div>
-
-                    <div>
-                        <strong>Tipo de examen</strong>
-                        <p>{{ datos_academicos.get_tipo_examen_display }}</p>
-                    </div>
-
-                    <div>
-                        <strong>Fecha de examen</strong>
-                        <p>{{ datos_academicos.fecha_examen_formateada }}</p>
-                    </div>
-                </div>
-
-                {% if datos_academicos.temas_dificiles %}
-                    <div class="mt-4">
-                        <strong>Punto espec&iacute;fico que te cuesta m&aacute;s</strong>
-                        <p>{{ datos_academicos.temas_dificiles }}</p>
-                    </div>
-                {% endif %}
-
-                {% if datos_academicos.objetivo_estudio %}
-                    <div class="mt-4">
-                        <strong>Objetivo de estudio</strong>
-                        <p>{{ datos_academicos.objetivo_estudio }}</p>
-                    </div>
-                {% endif %}
+    {% if datos_academicos %}
+        <div class="form-panel wide-panel mt-4 academic-summary">
+            <div class="panel-title-row">
+                <div><span class="eyebrow">Resumen académico</span><h2>{{ datos_academicos.materia }}</h2></div>
+                <a href="{% url 'anatomia:datos_academicos' %}" class="btn btn-outline-primary btn-sm icon-btn"><i data-lucide="edit-3"></i><span>Editar</span></a>
             </div>
-        {% endif %}
-
-        <div class="section-heading mt-4">
-            <p class="eyebrow">Accesos r&aacute;pidos</p>
-            <h2>Continuar trabajando</h2>
+            <div class="detail-grid mt-3">
+                <div><strong>Tema actual</strong><p>{{ datos_academicos.tema_actual }}</p></div>
+                <div><strong>Tipo de examen</strong><p>{{ datos_academicos.get_tipo_examen_display }}</p></div>
+                <div><strong>Fecha de examen</strong><p>{{ datos_academicos.fecha_examen_formateada }}</p></div>
+            </div>
+            {% if datos_academicos.temas_dificiles %}<div class="text-preview mt-3"><strong>Punto específico difícil</strong><p>{{ datos_academicos.temas_dificiles }}</p></div>{% endif %}
+            {% if datos_academicos.objetivo_estudio %}<div class="text-preview mt-3"><strong>Objetivo de estudio</strong><p>{{ datos_academicos.objetivo_estudio }}</p></div>{% endif %}
         </div>
+    {% endif %}
 
-        <div class="process-grid">
-            {% for acceso in accesos %}
-                <a class="feature-card access-card" href="{{ acceso.url }}">
-                    <i data-lucide="{{ acceso.icon }}"></i>
-                    <h3>{{ acceso.label }}</h3>
-                    <p>Entrar al m&oacute;dulo.</p>
-                </a>
-            {% endfor %}
-        </div>
+    <div class="section-heading mt-5">
+        <span class="eyebrow">Accesos rápidos</span>
+        <h2>¿Qué quieres hacer ahora?</h2>
+    </div>
+    <div class="quick-actions-grid">
+        {% for acceso in accesos %}
+            <a class="quick-action-card" href="{{ acceso.url }}">
+                <span><i data-lucide="{{ acceso.icon }}"></i></span>
+                <strong>{{ acceso.label }}</strong>
+                <small>Entrar al módulo</small>
+            </a>
+        {% endfor %}
     </div>
 </section>
 {% endblock %}

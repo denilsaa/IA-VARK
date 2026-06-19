@@ -4,65 +4,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Tutor IA Anatom&iacute;a VARK{% endblock %}</title>
+    <title>{% block title %}Tutor IA Anatomía VARK{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=uiux-home-vark-fix-5">
 </head>
-<body class="{% block body_class %}app-shell{% endblock %}">
-    <nav class="navbar navbar-expand-lg navbar-light app-navbar">
-        <div class="container">
-            <a class="navbar-brand brand-mark" href="{% url 'usuarios:home' %}">
-                <span class="brand-icon"><i data-lucide="brain-circuit"></i></span>
-                <span>Tutor IA Anatom&iacute;a VARK</span>
-            </a>
+<body class="app-body {% block body_class %}{% endblock %}">
+    <a class="visually-hidden-focusable skip-link" href="#contenido-principal">Saltar al contenido principal</a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Abrir navegacion">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+    {% with app_name=request.resolver_match.app_name url_name=request.resolver_match.url_name %}
+    <header class="app-topbar">
+        <nav class="navbar navbar-expand-lg app-navbar" aria-label="Navegación principal">
+            <div class="container-fluid app-container">
+                <a class="navbar-brand brand-mark" href="{% if user.is_authenticated %}{% url 'usuarios:dashboard' %}{% else %}{% url 'usuarios:home' %}{% endif %}">
+                    <span class="brand-icon" aria-hidden="true"><i data-lucide="brain-circuit"></i></span>
+                    <span class="brand-text">
+                        <strong>Tutor IA</strong>
+                        <small>Anatomía VARK</small>
+                    </span>
+                </a>
 
-            <div class="collapse navbar-collapse" id="mainNav">
-                <div class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
-                    {% if user.is_authenticated %}
-                        <a class="nav-link" href="{% url 'usuarios:dashboard' %}">Panel</a>
-                        <a class="nav-link" href="{% url 'documentos:lista' %}">Materiales</a>
-                        <a class="nav-link" href="{% url 'rutas:ruta_aprendizaje' %}">Ruta</a>
-                        <a class="nav-link" href="{% url 'usuarios:progreso' %}">Progreso</a>
-                        <form method="post" action="{% url 'account_logout' %}" class="ms-lg-2">
-                            {% csrf_token %}
-                            <button class="btn btn-outline-primary btn-sm icon-btn" type="submit">
-                                <i data-lucide="log-out"></i>
-                                <span>Cerrar sesi&oacute;n</span>
-                            </button>
-                        </form>
-                    {% else %}
-                        <a class="nav-link" href="{% url 'account_login' %}">Iniciar sesi&oacute;n</a>
-                        <a class="btn btn-primary btn-sm icon-btn" href="{% url 'account_signup' %}">
-                            <i data-lucide="user-plus"></i>
-                            <span>Registrarse</span>
-                        </a>
-                    {% endif %}
+                <button class="navbar-toggler app-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Abrir navegación">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <div class="navbar-nav ms-auto align-items-lg-center app-nav gap-lg-1">
+                        {% if user.is_authenticated %}
+                            <a class="nav-link {% if app_name == 'usuarios' and url_name == 'dashboard' %}active{% endif %}" href="{% url 'usuarios:dashboard' %}">
+                                <i data-lucide="layout-dashboard"></i><span>Panel</span>
+                            </a>
+                            <a class="nav-link {% if app_name == 'documentos' %}active{% endif %}" href="{% url 'documentos:lista' %}">
+                                <i data-lucide="folder-open"></i><span>Materiales</span>
+                            </a>
+                            <a class="nav-link {% if app_name == 'rutas' %}active{% endif %}" href="{% url 'rutas:ruta_aprendizaje' %}">
+                                <i data-lucide="route"></i><span>Ruta</span>
+                            </a>
+                            <a class="nav-link {% if app_name == 'examenes' %}active{% endif %}" href="{% url 'examenes:generar' %}">
+                                <i data-lucide="file-question"></i><span>Exámenes</span>
+                            </a>
+                            <a class="nav-link {% if app_name == 'usuarios' and url_name == 'progreso' %}active{% endif %}" href="{% url 'usuarios:progreso' %}">
+                                <i data-lucide="trending-up"></i><span>Progreso</span>
+                            </a>
+                            <form method="post" action="{% url 'account_logout' %}" class="ms-lg-2 nav-form">
+                                {% csrf_token %}
+                                <button class="btn btn-outline-primary btn-sm icon-btn nav-logout" type="submit">
+                                    <i data-lucide="log-out"></i><span>Cerrar sesión</span>
+                                </button>
+                            </form>
+                        {% else %}
+                            <a class="nav-link {% if url_name == 'account_login' %}active{% endif %}" href="{% url 'account_login' %}">
+                                <i data-lucide="log-in"></i><span>Iniciar sesión</span>
+                            </a>
+                            <a class="btn btn-primary btn-sm icon-btn nav-register" href="{% url 'account_signup' %}">
+                                <i data-lucide="user-plus"></i><span>Registrarse</span>
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-        </div>
-    </nav>
+        </nav>
+    </header>
+    {% endwith %}
 
-    <main class="{% block main_class %}container py-4 py-lg-5{% endblock %}">
-        {% if messages %}
+    {% if messages %}
+        <div class="container-fluid app-container message-region" aria-live="polite" aria-atomic="true">
             <div class="messages-stack">
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message }}</div>
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show app-alert" role="alert">
+                        <i data-lucide="{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}alert-triangle{% elif message.tags == 'warning' %}alert-circle{% else %}info{% endif %}"></i>
+                        <span>{{ message }}</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar mensaje"></button>
+                    </div>
                 {% endfor %}
             </div>
-        {% endif %}
+        </div>
+    {% endif %}
+
+    <main id="contenido-principal" class="{% block main_class %}container-fluid app-container app-main{% endblock %}">
         {% block content %}{% endblock %}
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script>
-        if (window.lucide) {
-            window.lucide.createIcons();
-        }
+        if (window.lucide) { window.lucide.createIcons(); }
+        document.addEventListener('change', function (event) {
+            const input = event.target;
+            if (!input.matches('.option-item input[type="radio"], .quiz-option input[type="radio"], .option-tile input[type="radio"]')) return;
+            document.querySelectorAll('input[name="' + CSS.escape(input.name) + '"]').forEach(function (item) {
+                const label = item.closest('label');
+                if (label) label.classList.toggle('is-selected', item.checked);
+            });
+        });
     </script>
 </body>
 </html>

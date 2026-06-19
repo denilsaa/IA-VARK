@@ -1,99 +1,29 @@
 {% extends "base.html" %}
 {% load socialaccount %}
 
-{% block title %}Registro | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Registro | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
 <section class="auth-layout">
-    <div class="auth-copy">
-        <p class="eyebrow">Registro manual</p>
-        <h1>Crear cuenta</h1>
-        <p>Prepara tu perfil para recibir una ruta adaptada a tu estilo de aprendizaje.</p>
-    </div>
+    <aside class="auth-copy">
+        <span class="hero-badge"><i data-lucide="user-plus"></i> Nuevo estudiante</span>
+        <h1>Crea tu perfil de estudio personalizado.</h1>
+        <p>Con tu cuenta podrás guardar el test VARK, materiales, rutas y resultados de simulacros.</p>
+        <div class="auth-benefits"><div><i data-lucide="scan-eye"></i><span>Diagnóstico VARK</span></div><div><i data-lucide="folder-up"></i><span>Biblioteca personal</span></div><div><i data-lucide="line-chart"></i><span>Seguimiento de avance</span></div></div>
+    </aside>
 
-    <form class="form-panel" method="post" action="{% url 'account_signup' %}">
+    <form class="form-panel auth-card" method="post" action="{% url 'account_signup' %}">
         {% csrf_token %}
-
-        {% if form.non_field_errors %}
-            <div class="alert alert-danger">
-                {{ form.non_field_errors }}
-            </div>
-        {% endif %}
-
-        <label class="form-label" for="id_username">Nombre de usuario</label>
-        <input
-            class="form-control"
-            id="id_username"
-            type="text"
-            name="username"
-            autocomplete="username"
-            value="{{ form.username.value|default:'' }}"
-            required
-        >
-        {{ form.username.errors }}
-
-        <label class="form-label mt-3" for="id_email">Correo</label>
-        <input
-            class="form-control"
-            id="id_email"
-            type="email"
-            name="email"
-            autocomplete="email"
-            value="{{ form.email.value|default:'' }}"
-            required
-        >
-        {{ form.email.errors }}
-
-        <label class="form-label mt-3" for="id_password1">Contrase&ntilde;a</label>
-        <input
-            class="form-control"
-            id="id_password1"
-            type="password"
-            name="password1"
-            autocomplete="new-password"
-            required
-        >
-        {{ form.password1.errors }}
-
-        <label class="form-label mt-3" for="id_password2">Confirmar contrase&ntilde;a</label>
-        <input
-            class="form-control"
-            id="id_password2"
-            type="password"
-            name="password2"
-            autocomplete="new-password"
-            required
-        >
-        {{ form.password2.errors }}
-
-        {% if redirect_field_value %}
-            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
-        {% endif %}
-
-        <button class="btn btn-primary w-100 mt-4 icon-btn justify-content-center" type="submit">
-            <i data-lucide="user-plus"></i>
-            <span>Registrarse</span>
-        </button>
-
-        {% if GOOGLE_AUTH_ENABLED %}
-            <a
-                class="btn btn-google w-100 mt-2 icon-btn justify-content-center"
-                href="{% provider_login_url 'google' process='login' %}"
-            >
-                <i data-lucide="chrome"></i>
-                <span>Registrarse con Google</span>
-            </a>
-        {% else %}
-            <button class="btn btn-google w-100 mt-2 icon-btn justify-content-center" type="button" disabled>
-                <i data-lucide="chrome"></i>
-                <span>Google pendiente de configurar</span>
-            </button>
-        {% endif %}
-
-        <p class="form-footer">
-            &iquest;Ya tienes cuenta?
-            <a href="{% url 'account_login' %}">Inicia sesi&oacute;n</a>
-        </p>
+        <div class="form-card-heading"><span class="form-icon"><i data-lucide="user-plus"></i></span><div><span class="eyebrow">Registro manual</span><h2>Crear cuenta</h2></div></div>
+        {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="form-group"><label class="form-label" for="id_username">Nombre de usuario</label><input class="form-control" id="id_username" type="text" name="username" autocomplete="username" value="{{ form.username.value|default:'' }}" required>{{ form.username.errors }}</div>
+        <div class="form-group"><label class="form-label" for="id_email">Correo</label><input class="form-control" id="id_email" type="email" name="email" autocomplete="email" value="{{ form.email.value|default:'' }}" required>{{ form.email.errors }}</div>
+        <div class="form-group"><label class="form-label" for="id_password1">Contraseña</label><input class="form-control" id="id_password1" type="password" name="password1" autocomplete="new-password" required>{{ form.password1.errors }}</div>
+        <div class="form-group"><label class="form-label" for="id_password2">Confirmar contraseña</label><input class="form-control" id="id_password2" type="password" name="password2" autocomplete="new-password" required>{{ form.password2.errors }}</div>
+        {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
+        <button class="btn btn-primary w-100 mt-3 icon-btn justify-content-center" type="submit"><i data-lucide="user-plus"></i><span>Registrarse</span></button>
+        {% if GOOGLE_AUTH_ENABLED %}<a class="btn btn-google w-100 mt-2 icon-btn justify-content-center" href="{% provider_login_url 'google' process='login' %}"><i data-lucide="chrome"></i><span>Registrarse con Google</span></a>{% else %}<button class="btn btn-google w-100 mt-2 icon-btn justify-content-center" type="button" disabled><i data-lucide="chrome"></i><span>Google pendiente de configurar</span></button>{% endif %}
+        <p class="form-footer">¿Ya tienes cuenta? <a href="{% url 'account_login' %}">Inicia sesión</a></p>
     </form>
 </section>
 {% endblock %}

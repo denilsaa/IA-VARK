@@ -1,62 +1,75 @@
 {% extends "base.html" %}
 
-{% block title %}Resultado VARK | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Resultado VARK | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero">
-    <div>
-        <p class="eyebrow">Resultado del diagn&oacute;stico</p>
-        <h1>Tu estilo principal es {{ perfil.estilo_display }}</h1>
-        <p>{{ recomendacion.descripcion }}</p>
+<section class="result-summary-shell">
+    <div class="result-summary-hero">
+        <div class="result-summary-copy">
+            <p class="eyebrow">Resultado del diagnóstico</p>
+            <h1>Tu estilo predominante es <span>{{ perfil.estilo_display }}</span></h1>
+            <p class="result-lead">{{ recomendacion.descripcion }}</p>
+
+            <div class="hero-highlight-row">
+                <div class="hero-stat-card">
+                    <small>Dominancia principal</small>
+                    <strong>{{ estilo_principal_info.porcentaje }}%</strong>
+                    <span>{{ estilo_principal_info.nombre }}</span>
+                </div>
+                {% if estilo_secundario %}
+                <div class="hero-stat-card soft">
+                    <small>Estilo complementario</small>
+                    <strong>{{ estilo_secundario.porcentaje }}%</strong>
+                    <span>{{ estilo_secundario.nombre }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="result-summary-badge">
+            <div class="style-badge-large">
+                <i data-lucide="{{ estilo_principal_info.icono }}"></i>
+                <span>{{ perfil.estilo_display }}</span>
+            </div>
+        </div>
     </div>
-</section>
 
-<section class="section-band">
-    <div class="container">
-        <div class="result-grid">
-            <article class="feature-card result-card">
-                <i data-lucide="eye"></i>
-                <h3>Visual</h3>
-                <strong>{{ perfil.puntaje_visual }} puntos</strong>
-                <p>{{ porcentajes.visual }}%</p>
-            </article>
+    <div class="result-layout-grid">
+        <div class="analysis-card">
+            <div class="analysis-head">
+                <p class="eyebrow">Lectura de tu perfil</p>
+                <h2>Así se distribuyen tus estilos</h2>
+            </div>
 
-            <article class="feature-card result-card">
-                <i data-lucide="volume-2"></i>
-                <h3>Auditivo</h3>
-                <strong>{{ perfil.puntaje_auditivo }} puntos</strong>
-                <p>{{ porcentajes.auditivo }}%</p>
-            </article>
-
-            <article class="feature-card result-card">
-                <i data-lucide="book-open"></i>
-                <h3>Lectura/Escritura</h3>
-                <strong>{{ perfil.puntaje_lectura }} puntos</strong>
-                <p>{{ porcentajes.lectura }}%</p>
-            </article>
-
-            <article class="feature-card result-card">
-                <i data-lucide="activity"></i>
-                <h3>Kinest&eacute;sico</h3>
-                <strong>{{ perfil.puntaje_kinestesico }} puntos</strong>
-                <p>{{ porcentajes.kinestesico }}%</p>
-            </article>
+            <div class="score-breakdown">
+                {% for item in resumen_estilos %}
+                    <div class="score-breakdown-item {% if item.clave == perfil.estilo_principal %}active{% endif %}">
+                        <div class="score-breakdown-top">
+                            <div class="style-label">
+                                <i data-lucide="{{ item.icono }}"></i>
+                                <span>{{ item.nombre }}</span>
+                            </div>
+                            <div class="style-score">{{ item.puntaje }} pts · {{ item.porcentaje }}%</div>
+                        </div>
+                        <div class="score-bar-track">
+                            <div class="score-bar-fill" style="width: {{ item.porcentaje }}%;"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
 
-        <div class="form-panel wide-panel mt-4">
-            <p class="eyebrow">{{ recomendacion.titulo }}</p>
-            <h2>Recomendaciones para estudiar Anatom&iacute;a</h2>
-
-            {% if recomendacion_llm %}
-                <div class="ai-box">
-                    <div class="ai-box-title">
-                        <i data-lucide="sparkles"></i>
-                        <strong>Recomendaci&oacute;n generada por IA</strong>
-                    </div>
-                    <p>{{ recomendacion_llm }}</p>
-                </div>
+        <div class="analysis-card emphasis-card">
+            <p class="eyebrow">Interpretación principal</p>
+            <h2>¿Qué significa que seas {{ perfil.estilo_display }}?</h2>
+            <p>Tu mayor fortaleza está en la forma en que procesas la información usando {{ perfil.estilo_display|lower }}. Esto significa que, cuando estudias con estrategias alineadas a ese estilo, entiendes más rápido, recuerdas mejor y mantienes mayor concentración.</p>
+            {% if estilo_secundario %}
+                <p class="support-text">Además, tu segundo estilo más fuerte es <strong>{{ estilo_secundario.nombre }}</strong>, por lo que puedes combinar ambos para aprender de manera más completa.</p>
             {% endif %}
+        </div>
 
+        <div class="analysis-card result-advice-card">
+            <p class="eyebrow">Recomendación base</p>
+            <h2>Cómo te conviene estudiar Anatomía I</h2>
             <ul class="clean-list">
                 {% for estrategia in recomendacion.estrategias %}
                     <li>
@@ -65,18 +78,32 @@
                     </li>
                 {% endfor %}
             </ul>
-
-            <div class="form-actions">
-                <a href="{% url 'vark:test' %}" class="btn btn-outline-primary">
-                    Repetir test
-                </a>
-
-                <a href="{% url 'usuarios:dashboard' %}" class="btn btn-primary icon-btn">
-                    <i data-lucide="layout-dashboard"></i>
-                    <span>Ir al dashboard</span>
-                </a>
-            </div>
         </div>
+
+        <div class="analysis-card llm-card">
+            <p class="eyebrow">Explicación personalizada con IA</p>
+            <h2>¿Por qué este estilo puede ayudarte a aprender mejor?</h2>
+            {% if estado_ia == "ok" and recomendacion_llm %}
+                <div class="ai-answer-copy">{{ recomendacion_llm|linebreaksbr }}</div>
+            {% else %}
+                <div class="retry-state">
+                    <i data-lucide="sparkles"></i>
+                    <p>{{ mensaje_ia|default:"No pudimos generar la explicación personalizada con IA. Vuelve a intentarlo." }}</p>
+                    <a href="{% url 'vark:resultado' %}" class="btn btn-outline-primary icon-btn">
+                        <i data-lucide="refresh-cw"></i>
+                        <span>Volver a intentar</span>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="form-actions justify-content-center mt-4">
+        <a href="{% url 'vark:test' %}" class="btn btn-outline-primary">Repetir test</a>
+        <a href="{% url 'usuarios:dashboard' %}" class="btn btn-primary icon-btn">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Ir al dashboard</span>
+        </a>
     </div>
 </section>
 {% endblock %}

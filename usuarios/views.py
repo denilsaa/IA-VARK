@@ -248,3 +248,6 @@ def obtener_temas_fuertes_y_debiles(simulacros):
             debiles.append(tema)
 
     return fuertes[:5], debiles[:5]
+
+def pagina_no_encontrada(request, exception=None):
+    return render(request, "404.html", status=404)

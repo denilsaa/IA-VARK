@@ -14,15 +14,7 @@
 </section>
 
 <section class="section-band">
-    <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
+    <div class="page-inner">
         <div class="form-actions mb-4">
             <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary">
                 Volver al dashboard
