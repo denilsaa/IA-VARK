@@ -1119,14 +1119,20 @@ def generar_y_guardar_imagen_local(prompt, carpeta, nombre_archivo, aspect_ratio
     LOCAL_IMAGE_API_URL=https://TU-TUNEL.trycloudflare.com/generate-anatomy
     LOCAL_IMAGE_JOB_BASE_URL=https://TU-TUNEL.trycloudflare.com
     """
-    api_url = os.getenv("LOCAL_IMAGE_API_URL", "").strip().rstrip("/")
-    job_base_url = os.getenv("LOCAL_IMAGE_JOB_BASE_URL", "").strip().rstrip("/")
+    api_url = os.getenv("LOCAL_IMAGE_API_URL", "").replace("\ufeff", "").strip().rstrip("/")
+    job_base_url = os.getenv("LOCAL_IMAGE_JOB_BASE_URL", "").replace("\ufeff", "").strip().rstrip("/")
 
-    if not api_url:
-        return "", "Falta LOCAL_IMAGE_API_URL en Render."
-    if not job_base_url:
+    # Fix de producción: si Render no expone LOCAL_IMAGE_API_URL por cualquier motivo,
+    # pero sí existe LOCAL_IMAGE_JOB_BASE_URL, se arma automáticamente el endpoint.
+    if not api_url and job_base_url:
+        api_url = f"{job_base_url}/generate-anatomy"
+
+    if not job_base_url and api_url:
         # Si no lo pusiste, lo inferimos quitando /generate-anatomy.
         job_base_url = api_url.replace("/generate-anatomy", "").rstrip("/")
+
+    if not api_url:
+        return "", "Falta LOCAL_IMAGE_API_URL o LOCAL_IMAGE_JOB_BASE_URL en Render."
 
     ruta_relativa = f"rutas_generadas/{carpeta}/{limpiar_nombre_archivo(nombre_archivo)}"
     ruta_absoluta = Path(settings.MEDIA_ROOT) / ruta_relativa
