@@ -5,9 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 
-from anatomia.models import TemaAnatomia
-
-from .forms import MaterialEstudioForm
+from .forms import MaterialEstudioForm, obtener_temas_principales, obtener_subtemas
 from .models import MaterialEstudio
 from .services import procesar_material
 
@@ -25,7 +23,7 @@ def subir_material(request):
 
             materiales_creados = []
 
-            for index, archivo in enumerate(archivos, start=1):
+            for archivo in archivos:
                 titulo_base = form.cleaned_data.get("titulo") or "Material de estudio"
                 titulo = titulo_base
 
@@ -69,12 +67,8 @@ def subir_material(request):
         form = MaterialEstudioForm(user=request.user)
 
     subtema_dataset = {
-        tema.nombre: list(
-            TemaAnatomia.objects.filter(tema_padre=tema, activo=True)
-            .order_by("orden", "nombre")
-            .values_list("nombre", flat=True)
-        )
-        for tema in TemaAnatomia.temas_principales()
+        tema_nombre: list(obtener_subtemas(tema_nombre))
+        for tema_nombre, _ in obtener_temas_principales()
     }
 
     return render(

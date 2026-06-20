@@ -231,12 +231,35 @@
 
         function updateSubtemas() {
             if (!temaSelect || !subtemaSelect) return;
+
             const tema = temaSelect.value;
             const previo = subtemaSelect.dataset.current || subtemaSelect.value || "";
             const items = subtemaDataset[tema] || [];
-            subtemaSelect.innerHTML = '<option value="">Selecciona un subtema</option>';
+
+            subtemaSelect.innerHTML = "";
+
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = tema ? "Selecciona un subtema" : "Primero selecciona un tema";
+            subtemaSelect.appendChild(placeholder);
+
+            if (!tema) {
+                subtemaSelect.disabled = true;
+                return;
+            }
+
+            subtemaSelect.disabled = false;
+
+            if (!items.length) {
+                const opt = document.createElement("option");
+                opt.value = "";
+                opt.textContent = "No hay subtemas para este tema";
+                subtemaSelect.appendChild(opt);
+                return;
+            }
+
             items.forEach((item) => {
-                const opt = document.createElement('option');
+                const opt = document.createElement("option");
                 opt.value = item;
                 opt.textContent = item;
                 if (item === previo) opt.selected = true;
@@ -283,11 +306,9 @@
                 if (!textarea) return;
                 const topic = button.dataset.topic;
                 const current = textarea.value.trim();
-                const topics = current ? current.split("
-").map(t => t.trim()) : [];
+                const topics = current ? current.split("\n").map(t => t.trim()) : [];
                 if (!topics.includes(topic)) {
-                    textarea.value = current ? `${current}
-${topic}` : topic;
+                    textarea.value = current ? `${current}\n${topic}` : topic;
                 }
                 textarea.focus();
             });

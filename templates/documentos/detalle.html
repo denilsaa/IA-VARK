@@ -3,174 +3,669 @@
 {% block title %}Detalle material | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero">
-    <div>
-        <p class="eyebrow">Detalle del material</p>
-        <h1>{{ material.titulo }}</h1>
-        <p>
-            Revisa el estado del procesamiento, el texto extraído y el análisis generado por IA.
-        </p>
-    </div>
-</section>
+<style>
+/* Estilos SOLO para detalle de material. No reemplazar static/css/app.css. */
+.material-detail-shell {
+    display: grid;
+    gap: 24px;
+    padding-bottom: 72px;
+}
 
-<section class="section-band">
-    <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
+.material-detail-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    padding: clamp(26px, 4vw, 42px);
+    border-radius: 32px;
+    border: 1px solid rgba(207, 227, 224, .92);
+    background:
+        radial-gradient(circle at top right, rgba(15, 148, 136, .14), transparent 15rem),
+        linear-gradient(135deg, #ffffff 0%, #f5fbfa 100%);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .07);
+}
 
-        <div class="form-panel wide-panel material-detail-panel">
-            <div class="material-detail-header enhanced-detail-header">
-                <div class="material-icon large">
+.material-detail-hero-copy {
+    max-width: 780px;
+}
+
+.material-detail-hero h1 {
+    margin: 0;
+    color: #0d2d2b;
+    font-size: clamp(2.3rem, 4vw, 4rem);
+    line-height: .98;
+    letter-spacing: -.06em;
+}
+
+.material-detail-hero p:last-child {
+    margin: 14px 0 0;
+    max-width: 68ch;
+    color: #4f6766;
+    font-size: 1.03rem;
+    line-height: 1.65;
+}
+
+.material-detail-hero-status {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 210px;
+    padding: 16px;
+    border-radius: 22px;
+    border: 1px solid rgba(207, 227, 224, .92);
+    background: rgba(255, 255, 255, .78);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, .06);
+}
+
+.detail-status-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 17px;
+    color: #fff;
+    background: linear-gradient(135deg, #0f8f86, #08756f);
+}
+
+.material-detail-hero-status small {
+    display: block;
+    color: #647b79;
+    font-size: .76rem;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.material-detail-hero-status strong {
+    display: block;
+    margin-top: 4px;
+    color: #0d2d2b;
+    font-size: 1.1rem;
+}
+
+.material-detail-hero-status.status-error .detail-status-icon {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+}
+
+.material-detail-hero-status.status-pendiente .detail-status-icon,
+.material-detail-hero-status.status-procesando .detail-status-icon {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+}
+
+.material-detail-alert {
+    display: flex;
+    gap: 14px;
+    padding: 18px 20px;
+    border-radius: 22px;
+    border: 1px solid rgba(248, 113, 113, .35);
+    background: #fff7f5;
+    color: #9f2d20;
+}
+
+.material-detail-alert p {
+    margin: 5px 0 0;
+}
+
+.material-detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    align-items: start;
+}
+
+.material-detail-main-card,
+.material-detail-side .material-side-card {
+    border-radius: 30px;
+    border: 1px solid rgba(207, 227, 224, .92);
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .07);
+}
+
+.material-detail-main-card {
+    padding: clamp(22px, 3vw, 32px);
+}
+
+.material-detail-title-row {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.material-detail-file-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 64px;
+    width: 64px;
+    height: 64px;
+    border-radius: 22px;
+    color: #0f8f86;
+    background: #e8f7f4;
+}
+
+.material-detail-file-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+.material-detail-title-row h2 {
+    margin: 0;
+    color: #0d2d2b;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    line-height: 1.04;
+    letter-spacing: -.05em;
+}
+
+.material-muted {
+    margin: 8px 0 0;
+    color: #607675;
+}
+
+.material-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.material-meta-card {
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(207, 227, 224, .84);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fcfb 100%);
+}
+
+.material-meta-card span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 9px;
+    color: #0f8f86;
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.material-meta-card span svg {
+    width: 16px;
+    height: 16px;
+}
+
+.material-meta-card strong {
+    display: block;
+    color: #183936;
+    font-size: .98rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.material-context-card,
+.material-ai-panel,
+.material-empty-analysis,
+.material-extracted-text {
+    margin-top: 22px;
+    padding: 22px;
+    border-radius: 26px;
+    border: 1px solid rgba(207, 227, 224, .92);
+    background: #fbfefd;
+}
+
+.material-ai-panel {
+    border-color: rgba(246, 189, 59, .45);
+    background:
+        radial-gradient(circle at top right, rgba(246, 189, 59, .10), transparent 14rem),
+        #fffdf7;
+}
+
+.material-section-headline {
+    display: flex;
+    gap: 13px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.material-section-headline > span {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 15px;
+    color: #fff;
+    background: linear-gradient(135deg, #0f8f86, #08756f);
+}
+
+.material-section-headline h3 {
+    margin: 0;
+    color: #0d2d2b;
+    font-size: 1.35rem;
+    letter-spacing: -.035em;
+}
+
+.material-soft-block {
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(207, 227, 224, .84);
+    background: #fff;
+}
+
+.material-soft-block + .material-soft-block,
+.material-file-strip {
+    margin-top: 14px;
+}
+
+.material-soft-block strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #0d2d2b;
+}
+
+.material-soft-block p,
+.material-soft-block div {
+    margin: 0;
+    color: #4f6766;
+    line-height: 1.65;
+}
+
+.material-file-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 20px;
+    background: #eef8f6;
+    border: 1px dashed #acd8d3;
+}
+
+.material-file-strip > div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.material-file-strip svg {
+    width: 24px;
+    height: 24px;
+    color: #0f8f86;
+}
+
+.material-file-strip strong,
+.material-file-strip small {
+    display: block;
+}
+
+.material-file-strip small {
+    color: #607675;
+    overflow-wrap: anywhere;
+}
+
+.material-ai-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.material-ai-card {
+    padding: 18px;
+    border-radius: 22px;
+    border: 1px solid rgba(207, 227, 224, .9);
+    background: rgba(255, 255, 255, .92);
+}
+
+.material-ai-card.featured {
+    grid-column: span 2;
+}
+
+.material-ai-card > svg {
+    width: 24px;
+    height: 24px;
+    color: #0f8f86;
+    margin-bottom: 10px;
+}
+
+.material-ai-card h4 {
+    margin: 0 0 10px;
+    color: #0d2d2b;
+    font-size: 1.05rem;
+}
+
+.material-ai-card div,
+.material-ai-card p {
+    margin: 0;
+    color: #526c6a;
+    line-height: 1.68;
+}
+
+.material-empty-analysis {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    background: #fffaf0;
+    border-color: rgba(246, 189, 59, .45);
+}
+
+.material-empty-analysis > svg {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    color: #b7791f;
+}
+
+.material-empty-analysis strong {
+    color: #0d2d2b;
+}
+
+.material-empty-analysis p {
+    margin: 5px 0 0;
+    color: #607675;
+}
+
+.material-extracted-text {
+    padding: 0;
+    overflow: hidden;
+}
+
+.material-extracted-text summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 20px;
+    cursor: pointer;
+    font-weight: 900;
+    color: #0d2d2b;
+    list-style: none;
+}
+
+.material-extracted-text summary::-webkit-details-marker {
+    display: none;
+}
+
+.material-extracted-text summary span {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.material-extracted-body {
+    max-height: 420px;
+    overflow: auto;
+    padding: 0 20px 20px;
+    color: #526c6a;
+    line-height: 1.7;
+}
+
+.material-detail-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(207, 227, 224, .9);
+}
+
+.material-detail-actions form {
+    margin: 0;
+}
+
+.material-detail-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.material-detail-side {
+    display: grid;
+    gap: 16px;
+    position: sticky;
+    top: 96px;
+}
+
+.material-side-card {
+    padding: 22px;
+}
+
+.material-side-card > svg {
+    width: 28px;
+    height: 28px;
+    color: #0f8f86;
+    margin-bottom: 12px;
+}
+
+.material-side-card h3 {
+    margin: 0 0 8px;
+    color: #0d2d2b;
+    font-size: 1.18rem;
+}
+
+.material-side-card p {
+    margin: 0;
+    color: #607675;
+    line-height: 1.62;
+}
+
+.material-side-card.success-side {
+    background:
+        radial-gradient(circle at top right, rgba(15, 148, 136, .10), transparent 10rem),
+        #ffffff;
+}
+
+@media (max-width: 1100px) {
+    .material-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .material-detail-side {
+        position: static;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 860px) {
+    .material-detail-hero,
+    .material-file-strip,
+    .material-detail-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .material-detail-hero-status {
+        width: 100%;
+    }
+
+    .material-meta-grid,
+    .material-ai-grid,
+    .material-detail-side {
+        grid-template-columns: 1fr;
+    }
+
+    .material-ai-card.featured {
+        grid-column: span 1;
+    }
+
+    .material-detail-actions {
+        justify-content: stretch;
+    }
+
+    .material-detail-actions .btn,
+    .material-detail-actions form {
+        width: 100%;
+    }
+}
+
+</style>
+
+<section class="material-detail-shell app-container">
+    <section class="material-detail-hero">
+        <div class="material-detail-hero-copy">
+            <p class="eyebrow">Detalle del material</p>
+            <h1>{{ material.titulo }}</h1>
+            <p>Revisa el estado del archivo, el tema detectado y el análisis generado por IA para enriquecer tu ruta de aprendizaje.</p>
+        </div>
+
+        <div class="material-detail-hero-status status-{{ material.estado }}">
+            <span class="detail-status-icon">
+                <i data-lucide="{% if material.estado == 'procesado' %}badge-check{% elif material.estado == 'error' %}triangle-alert{% else %}loader-circle{% endif %}"></i>
+            </span>
+            <div>
+                <small>Estado actual</small>
+                <strong>{{ material.get_estado_display }}</strong>
+            </div>
+        </div>
+    </section>
+
+    {% if material.estado == "error" %}
+        <div class="material-detail-alert error-alert">
+            <i data-lucide="triangle-alert"></i>
+            <div>
+                <strong>No se pudo procesar el material</strong>
+                <p>{{ material.error_procesamiento }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    <section class="material-detail-layout">
+        <article class="material-detail-main-card">
+            <div class="material-detail-title-row">
+                <div class="material-detail-file-icon">
                     <i data-lucide="{{ material.tipo_icono }}"></i>
                 </div>
-
                 <div>
                     <p class="eyebrow">{{ material.get_tipo_display }}</p>
                     <h2>{{ material.titulo }}</h2>
-                    <span class="material-status-badge status-{{ material.estado }}">
-                        {{ material.get_estado_display }}
-                    </span>
+                    <p class="material-muted">Material registrado para análisis académico de Anatomía I.</p>
                 </div>
             </div>
 
-            <div class="processing-timeline mt-4">
-                <div class="timeline-step is-complete">
-                    <span>1</span>
-                    <strong>Archivo guardado</strong>
-                    <small>{{ material.nombre_archivo }}</small>
+            <div class="material-meta-grid">
+                <div class="material-meta-card">
+                    <span><i data-lucide="book-open"></i> Tema</span>
+                    <strong>{{ material.tema|default:"Sin tema registrado" }}</strong>
                 </div>
-                <div class="timeline-step {% if material.estado == 'procesado' or material.estado == 'error' %}is-complete{% else %}is-current{% endif %}">
-                    <span>2</span>
-                    <strong>Texto extraído</strong>
-                    <small>{% if material.texto_extraido %}Contenido disponible{% else %}Pendiente{% endif %}</small>
+                <div class="material-meta-card">
+                    <span><i data-lucide="file"></i> Archivo</span>
+                    <strong>{{ material.nombre_archivo }}</strong>
                 </div>
-                <div class="timeline-step {% if material.estado == 'procesado' %}is-complete{% elif material.estado == 'error' %}is-error{% else %}is-current{% endif %}">
-                    <span>3</span>
-                    <strong>Análisis IA</strong>
-                    <small>{% if material.estado == 'procesado' %}Resumen generado{% elif material.estado == 'error' %}Requiere revisión{% else %}En proceso{% endif %}</small>
+                <div class="material-meta-card">
+                    <span><i data-lucide="calendar-plus"></i> Subido</span>
+                    <strong>{{ material.creado|date:"d/m/Y H:i" }}</strong>
                 </div>
-            </div>
-
-            {% if material.estado == "error" %}
-                <div class="alert alert-danger mt-4">
-                    <strong>No se pudo procesar el material.</strong><br>
-                    {{ material.error_procesamiento|default:"Intenta reprocesar el archivo o subir una versión más legible." }}
-                </div>
-            {% endif %}
-
-            <div class="detail-grid mt-4">
-                <div>
-                    <strong>Tema general</strong>
-                    <p>{{ material.tema|default:"Sin tema registrado" }}</p>
-                </div>
-
-                <div>
-                    <strong>Archivo</strong>
-                    <p>{{ material.nombre_archivo }}</p>
-                </div>
-
-                <div>
-                    <strong>Subido</strong>
-                    <p>{{ material.creado|date:"d/m/Y H:i" }}</p>
-                </div>
-
-                <div>
-                    <strong>Actualizado</strong>
-                    <p>{{ material.actualizado|date:"d/m/Y H:i" }}</p>
+                <div class="material-meta-card">
+                    <span><i data-lucide="refresh-cw"></i> Actualizado</span>
+                    <strong>{{ material.actualizado|date:"d/m/Y H:i" }}</strong>
                 </div>
             </div>
 
-            {% if material.archivo %}
-                <div class="file-preview-panel mt-4">
-                    <div class="file-preview-info">
-                        <i data-lucide="paperclip"></i>
+            {% if material.temario_examen or material.descripcion or material.archivo %}
+                <section class="material-context-card">
+                    <div class="material-section-headline">
+                        <span><i data-lucide="target"></i></span>
                         <div>
-                            <strong>Archivo guardado</strong>
-                            <p>{{ material.nombre_archivo }}</p>
+                            <p class="eyebrow">Contexto enviado a la IA</p>
+                            <h3>Información usada para enfocar el análisis</h3>
                         </div>
                     </div>
-                    <a href="{{ material.archivo.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                        Abrir archivo
-                    </a>
-                </div>
-            {% endif %}
 
-            {% if material.temario_examen %}
-                <div class="text-preview mt-4">
-                    <strong>Temas que entran al examen</strong>
-                    <p>{{ material.temario_examen|linebreaks }}</p>
-                </div>
-            {% endif %}
+                    {% if material.temario_examen %}
+                        <div class="material-soft-block">
+                            <strong>Lo importante del documento o foto</strong>
+                            <div>{{ material.temario_examen|linebreaks }}</div>
+                        </div>
+                    {% endif %}
 
-            {% if material.descripcion %}
-                <div class="text-preview mt-4">
-                    <strong>Descripción</strong>
-                    <p>{{ material.descripcion }}</p>
-                </div>
+                    {% if material.descripcion %}
+                        <div class="material-soft-block">
+                            <strong>Nota adicional</strong>
+                            <p>{{ material.descripcion }}</p>
+                        </div>
+                    {% endif %}
+
+                    {% if material.archivo %}
+                        <div class="material-file-strip">
+                            <div>
+                                <i data-lucide="paperclip"></i>
+                                <div>
+                                    <strong>Archivo guardado</strong>
+                                    <small>{{ material.nombre_archivo }}</small>
+                                </div>
+                            </div>
+                            <a href="{{ material.archivo.url }}" target="_blank" class="btn btn-outline-primary btn-sm">Abrir archivo</a>
+                        </div>
+                    {% endif %}
+                </section>
             {% endif %}
 
             {% if material.tiene_analisis_ia %}
-                <div class="ai-analysis mt-4 material-ai-result">
-                    <div class="ai-box-title">
-                        <i data-lucide="sparkles"></i>
-                        <strong>Análisis generado por IA</strong>
+                <section class="material-ai-panel">
+                    <div class="material-section-headline">
+                        <span><i data-lucide="sparkles"></i></span>
+                        <div>
+                            <p class="eyebrow">Análisis generado por IA</p>
+                            <h3>Resumen, temas clave y preguntas sugeridas</h3>
+                        </div>
                     </div>
-                    <p class="analysis-helper-text">
-                        Este análisis se usará para enriquecer tu ruta de aprendizaje, actividades y simulacros.
-                    </p>
 
-                    {% if material.resumen_ia %}
-                        <div class="text-preview mt-4">
-                            <strong>Resumen enfocado</strong>
-                            <p>{{ material.resumen_ia|linebreaks }}</p>
-                        </div>
-                    {% endif %}
+                    <div class="material-ai-grid">
+                        {% if material.resumen_ia %}
+                            <article class="material-ai-card featured">
+                                <i data-lucide="align-left"></i>
+                                <h4>Resumen enfocado</h4>
+                                <div>{{ material.resumen_ia|linebreaks }}</div>
+                            </article>
+                        {% endif %}
 
-                    {% if material.temas_clave_ia %}
-                        <div class="text-preview mt-4">
-                            <strong>Temas clave detectados</strong>
-                            <p>{{ material.temas_clave_ia|linebreaks }}</p>
-                        </div>
-                    {% endif %}
+                        {% if material.temas_clave_ia %}
+                            <article class="material-ai-card">
+                                <i data-lucide="list-checks"></i>
+                                <h4>Temas clave detectados</h4>
+                                <div>{{ material.temas_clave_ia|linebreaks }}</div>
+                            </article>
+                        {% endif %}
 
-                    {% if material.preguntas_sugeridas_ia %}
-                        <div class="text-preview mt-4">
-                            <strong>Preguntas sugeridas</strong>
-                            <p>{{ material.preguntas_sugeridas_ia|linebreaks }}</p>
-                        </div>
-                    {% endif %}
+                        {% if material.preguntas_sugeridas_ia %}
+                            <article class="material-ai-card">
+                                <i data-lucide="circle-help"></i>
+                                <h4>Preguntas sugeridas</h4>
+                                <div>{{ material.preguntas_sugeridas_ia|linebreaks }}</div>
+                            </article>
+                        {% endif %}
 
-                    {% if material.recomendacion_ia %}
-                        <div class="text-preview mt-4">
-                            <strong>Recomendación de estudio</strong>
-                            <p>{{ material.recomendacion_ia|linebreaks }}</p>
-                        </div>
-                    {% endif %}
-                </div>
+                        {% if material.recomendacion_ia %}
+                            <article class="material-ai-card featured">
+                                <i data-lucide="graduation-cap"></i>
+                                <h4>Recomendación de estudio</h4>
+                                <div>{{ material.recomendacion_ia|linebreaks }}</div>
+                            </article>
+                        {% endif %}
+                    </div>
+                </section>
             {% else %}
-                <div class="info-box mt-4">
-                    <div class="ai-box-title">
-                        <i data-lucide="info"></i>
-                        <strong>Aún no hay análisis IA disponible</strong>
+                <section class="material-empty-analysis">
+                    <i data-lucide="hourglass"></i>
+                    <div>
+                        <strong>Análisis pendiente</strong>
+                        <p>El material fue registrado, pero todavía no tiene análisis IA disponible.</p>
                     </div>
-                    <p>Si el archivo fue guardado correctamente, intenta reprocesarlo para generar resumen, temas clave y preguntas sugeridas.</p>
-                </div>
+                </section>
             {% endif %}
 
             {% if material.texto_extraido %}
-                <details class="text-preview mt-4">
-                    <summary><strong>Ver texto extraído</strong></summary>
-                    <p class="mt-4">{{ material.texto_extraido|linebreaks }}</p>
+                <details class="material-extracted-text">
+                    <summary>
+                        <span><i data-lucide="scan-text"></i> Ver texto extraído</span>
+                        <i data-lucide="chevron-down"></i>
+                    </summary>
+                    <div class="material-extracted-body">
+                        {{ material.texto_extraido|linebreaks }}
+                    </div>
                 </details>
             {% endif %}
 
-            <div class="form-actions">
+            <div class="material-detail-actions">
                 <a href="{% url 'documentos:lista' %}" class="btn btn-outline-primary">
+                    <i data-lucide="arrow-left"></i>
                     Volver a materiales
                 </a>
 
@@ -190,7 +685,27 @@
                     </button>
                 </form>
             </div>
-        </div>
-    </div>
+        </article>
+
+        <aside class="material-detail-side">
+            <article class="material-side-card success-side">
+                <i data-lucide="route"></i>
+                <h3>¿Qué hace este análisis?</h3>
+                <p>Ayuda a que la ruta, mapas y simulacros usen el contenido real que subiste.</p>
+            </article>
+
+            <article class="material-side-card">
+                <i data-lucide="shield-check"></i>
+                <h3>Estado controlado</h3>
+                <p>Si el archivo falla o la IA no responde, el sistema muestra mensajes claros sin romper el flujo.</p>
+            </article>
+
+            <article class="material-side-card">
+                <i data-lucide="lightbulb"></i>
+                <h3>Mejor resultado</h3>
+                <p>Sube archivos legibles y escribe con precisión qué parte del tema entra al examen.</p>
+            </article>
+        </aside>
+    </section>
 </section>
 {% endblock %}

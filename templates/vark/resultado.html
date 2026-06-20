@@ -3,6 +3,501 @@
 {% block title %}Resultado VARK | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
+<style>
+    /* =========================================================
+       RESULTADO VARK PREMIUM - estilos embebidos para evitar caché
+       ========================================================= */
+    .vark-result-pro {
+        width: min(1180px, calc(100% - 28px));
+        margin: 0 auto 64px;
+        display: grid;
+        gap: 22px;
+    }
+
+    .vark-result-hero {
+        position: relative;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: minmax(0, 1.12fr) minmax(260px, .42fr);
+        gap: 24px;
+        align-items: stretch;
+        padding: clamp(26px, 4vw, 44px);
+        border: 1px solid rgba(207, 227, 224, .95);
+        border-radius: 32px;
+        background:
+            radial-gradient(circle at 82% 16%, rgba(15, 143, 134, .14), transparent 18rem),
+            linear-gradient(135deg, #ffffff 0%, #f3fbfa 100%);
+        box-shadow: 0 24px 70px rgba(18, 40, 39, .10);
+    }
+
+    .vark-hero-copy h1 {
+        max-width: 860px;
+        margin: 8px 0 0;
+        color: #0d2d2b;
+        font-size: clamp(2.3rem, 5vw, 4.6rem);
+        line-height: .98;
+        font-weight: 950;
+        letter-spacing: -.065em;
+    }
+
+    .vark-hero-copy h1 span { color: #0f8f86; }
+
+    .vark-hero-copy p:not(.eyebrow) {
+        max-width: 720px;
+        margin-top: 16px;
+        color: #526d6a;
+        font-size: 1.08rem;
+        line-height: 1.72;
+    }
+
+    .vark-hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 22px;
+    }
+
+    .vark-style-card {
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        gap: 8px;
+        min-height: 250px;
+        padding: 24px;
+        border: 1px solid rgba(15, 118, 110, .14);
+        border-radius: 26px;
+        text-align: center;
+        background: rgba(255,255,255,.86);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 16px 40px rgba(18,40,39,.07);
+    }
+
+    .vark-style-icon {
+        display: grid;
+        place-items: center;
+        width: 74px;
+        height: 74px;
+        border-radius: 24px;
+        color: #fff;
+        background: linear-gradient(135deg, #0f8f86, #08756f);
+        box-shadow: 0 18px 36px rgba(15, 118, 110, .26);
+    }
+
+    .vark-style-icon svg { width: 34px; height: 34px; }
+    .vark-style-card small {
+        color: #607875;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+    }
+    .vark-style-card strong {
+        color: #0d2d2b;
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        line-height: 1;
+        font-weight: 950;
+    }
+    .vark-style-card > span { color: #0f8f86; font-weight: 850; }
+
+    .secondary-style-pill,
+    .mini-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        color: #24514f;
+        background: #eaf8f5;
+        font-size: .84rem;
+        font-weight: 850;
+        white-space: nowrap;
+    }
+
+    .vark-next-step-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 20px 22px;
+        border: 1px solid rgba(15, 118, 110, .16);
+        border-radius: 24px;
+        background: linear-gradient(135deg, #ffffff 0%, #f1fbf9 100%);
+        box-shadow: 0 16px 45px rgba(18, 40, 39, .07);
+    }
+
+    .vark-next-step-card h2,
+    .vark-panel h2,
+    .vark-action-card h2,
+    .vark-modules-card h2,
+    .vark-ai-summary h2 {
+        margin: 4px 0 10px;
+        color: #0d2d2b;
+        font-size: clamp(1.45rem, 2.4vw, 2.15rem);
+        line-height: 1.12;
+        font-weight: 950;
+        letter-spacing: -.04em;
+    }
+
+    .vark-next-step-card p { margin: 0; color: #5a706e; line-height: 1.6; }
+
+    .vark-result-grid-main {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+        gap: 20px;
+    }
+
+    .vark-panel {
+        padding: clamp(20px, 2.4vw, 28px);
+        border: 1px solid rgba(219, 232, 230, .95);
+        border-radius: 24px;
+        background: rgba(255, 255, 255, .96);
+        box-shadow: 0 12px 36px rgba(18, 40, 39, .065);
+    }
+
+    .panel-heading-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+
+    .meaning-panel p {
+        color: #4d6764;
+        font-size: 1.02rem;
+        line-height: 1.75;
+    }
+
+    .blend-box {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        margin-top: 16px;
+        padding: 16px;
+        border-radius: 16px;
+        color: #244b49;
+        background: #edf8f6;
+        font-weight: 700;
+        line-height: 1.55;
+    }
+
+    .blend-box svg { width: 22px; height: 22px; color: #0f8f86; }
+
+    .score-breakdown,
+    .pro-score-breakdown {
+        display: grid;
+        gap: 14px;
+    }
+
+    .score-breakdown-item {
+        padding: 14px;
+        border: 1px solid #dbe8e6;
+        border-radius: 18px;
+        background: #f9fdfc;
+    }
+
+    .score-breakdown-item.active {
+        border-color: rgba(15,143,134,.45);
+        box-shadow: 0 14px 32px rgba(15,143,134,.10);
+    }
+
+    .score-breakdown-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .style-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #0d2d2b;
+        font-weight: 900;
+    }
+
+    .style-score {
+        color: #607875;
+        font-weight: 800;
+        font-size: .92rem;
+    }
+
+    .score-bar-track {
+        height: 10px;
+        border-radius: 999px;
+        background: #e4efed;
+        overflow: hidden;
+    }
+
+    .score-bar-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #0f8f86, #f6bd3b);
+    }
+
+    /* Bloque nuevo premium */
+    .vark-action-zone {
+        display: grid;
+        gap: 22px;
+        margin-top: 4px;
+    }
+
+    .vark-action-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px;
+    }
+
+    .vark-action-card,
+    .vark-modules-card,
+    .vark-ai-summary {
+        position: relative;
+        overflow: hidden;
+        padding: 26px;
+        border-radius: 28px;
+        border: 1px solid rgba(207, 227, 224, .95);
+        background:
+            radial-gradient(circle at top right, rgba(15, 148, 136, .08), transparent 13rem),
+            #ffffff;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, .06);
+    }
+
+    .vark-action-card::before,
+    .vark-modules-card::before,
+    .vark-ai-summary::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto auto 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #0f8f86, #f6bd3b);
+    }
+
+    .vark-card-icon,
+    .vark-ai-icon {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+        border-radius: 16px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #0f8f86, #08756f);
+        box-shadow: 0 14px 28px rgba(15, 143, 134, .22);
+    }
+
+    .vark-card-icon.danger {
+        background: linear-gradient(135deg, #f26b4f, #d94c32);
+        box-shadow: 0 14px 28px rgba(242, 107, 79, .20);
+    }
+
+    .vark-card-icon svg,
+    .vark-ai-icon svg { width: 23px; height: 23px; }
+
+    .vark-card-kicker {
+        margin: 0 0 8px;
+        color: #f26b4f;
+        font-size: .78rem;
+        font-weight: 900;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .vark-clean-list {
+        display: grid;
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .vark-clean-list li {
+        position: relative;
+        padding-left: 34px;
+        color: #3f5d5b;
+        line-height: 1.55;
+    }
+
+    .vark-clean-list li::before {
+        position: absolute;
+        left: 0;
+        top: 1px;
+        display: grid;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        font-size: .86rem;
+        font-weight: 900;
+    }
+
+    .vark-clean-list.success li::before { content: "✓"; color: #08756f; background: #e6f7f4; }
+    .vark-clean-list.danger li::before { content: "×"; color: #c2412d; background: #fff1ed; }
+
+    .vark-example-list { display: grid; gap: 14px; }
+
+    .vark-example-item {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 15px;
+        border-radius: 20px;
+        background: #f7fcfb;
+        border: 1px solid rgba(207, 227, 224, .82);
+    }
+
+    .vark-example-item span {
+        display: grid;
+        place-items: center;
+        flex: 0 0 38px;
+        width: 38px;
+        height: 38px;
+        border-radius: 14px;
+        background: #0f8f86;
+        color: #ffffff;
+        font-size: .84rem;
+        font-weight: 900;
+    }
+
+    .vark-example-item strong { display: block; color: #0d2d2b; font-size: 1.02rem; margin-bottom: 4px; }
+    .vark-example-item p { margin: 0; color: #526c6a; line-height: 1.5; }
+
+    .vark-routine { display: grid; gap: 12px; }
+
+    .vark-routine div {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: 14px;
+        align-items: center;
+        padding: 14px;
+        border-radius: 18px;
+        background: #f7fcfb;
+        border: 1px solid rgba(207, 227, 224, .82);
+    }
+
+    .vark-routine span {
+        display: inline-flex;
+        justify-content: center;
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: #e6f7f4;
+        color: #08756f;
+        font-weight: 900;
+        font-size: .88rem;
+    }
+
+    .vark-routine p { margin: 0; color: #526c6a; line-height: 1.45; }
+
+    .vark-modules-card {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        align-items: center;
+    }
+
+    .vark-module-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    .vark-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 14px;
+        border-radius: 999px;
+        border: 1px solid #b8ddd8;
+        background: #effaf8;
+        color: #08756f;
+        text-decoration: none;
+        font-weight: 900;
+        transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .vark-chip:hover {
+        transform: translateY(-2px);
+        background: #ffffff;
+        box-shadow: 0 12px 24px rgba(15, 143, 134, .12);
+    }
+
+    .vark-chip svg { width: 18px; height: 18px; }
+
+    .vark-ai-summary {
+        display: grid;
+        grid-template-columns: 58px 1fr;
+        gap: 18px;
+        background:
+            radial-gradient(circle at top right, rgba(246, 189, 59, .10), transparent 15rem),
+            linear-gradient(180deg, #ffffff 0%, #f6fbfa 100%);
+    }
+
+    .vark-ai-summary p:last-child,
+    .vark-ai-summary .ai-answer-copy {
+        max-width: 78ch;
+        margin: 0;
+        color: #3f5d5b;
+        font-size: 1.02rem;
+        line-height: 1.75;
+    }
+
+    .retry-state {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 18px;
+        background: #fff8ed;
+        border: 1px solid #fde6bd;
+        color: #7a4a08;
+    }
+
+    .vark-next-actions {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+    }
+
+    .vark-next-actions .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    @media (max-width: 1050px) {
+        .vark-result-hero,
+        .vark-result-grid-main,
+        .vark-action-grid {
+            grid-template-columns: 1fr;
+        }
+        .vark-next-step-card,
+        .vark-modules-card {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+        .vark-module-chips { justify-content: flex-start; }
+    }
+
+    @media (max-width: 620px) {
+        .vark-result-pro { width: min(100% - 18px, 1180px); gap: 18px; }
+        .vark-result-hero,
+        .vark-action-card,
+        .vark-modules-card,
+        .vark-ai-summary,
+        .vark-panel {
+            padding: 20px;
+            border-radius: 22px;
+        }
+        .vark-ai-summary { grid-template-columns: 1fr; }
+        .vark-routine div { grid-template-columns: 1fr; }
+        .panel-heading-row { flex-direction: column; }
+        .vark-hero-actions .btn,
+        .vark-next-actions .btn,
+        .vark-next-step-card .btn { width: 100%; justify-content: center; }
+    }
+</style>
+
 <section class="vark-result-pro">
     <div class="vark-result-hero">
         <div class="vark-hero-copy">
@@ -67,7 +562,7 @@
                             <div class="style-score">{{ item.puntaje }} pts · {{ item.porcentaje }}%</div>
                         </div>
                         <div class="score-bar-track">
-                            <div class="score-bar-fill" style="width: {{ item.porcentaje }}%;"></div>
+                            <div class="score-bar-fill" style="--score-width: {{ item.porcentaje|default:0 }}%;"></div>
                         </div>
                     </article>
                 {% endfor %}
@@ -89,124 +584,92 @@
         </section>
     </div>
 
-    <section class="vark-panel mt-4">
-        <div class="panel-heading-row">
-            <div>
-                <p class="eyebrow">Guía práctica</p>
-                <h2>Cómo estudiar Anatomía I con tu estilo</h2>
-            </div>
-            <span class="mini-chip">Acciones concretas</span>
-        </div>
-
-        <div class="vark-practice-grid">
-            <article class="vark-advice-card">
-                <div class="advice-icon"><i data-lucide="badge-check"></i></div>
-                <h3>Fortalezas que debes aprovechar</h3>
-                <ul class="vark-check-list">
-                    {% for item in recomendacion.fortalezas %}
-                        <li><i data-lucide="check"></i><span>{{ item }}</span></li>
-                    {% endfor %}
-                </ul>
-            </article>
-
-            <article class="vark-advice-card">
-                <div class="advice-icon"><i data-lucide="list-checks"></i></div>
-                <h3>Técnicas recomendadas</h3>
-                <ul class="vark-check-list">
-                    {% for item in recomendacion.estrategias %}
-                        <li><i data-lucide="check"></i><span>{{ item }}</span></li>
-                    {% endfor %}
-                </ul>
-            </article>
-
-            <article class="vark-advice-card warning-card">
-                <div class="advice-icon"><i data-lucide="triangle-alert"></i></div>
-                <h3>Evita estudiar así</h3>
-                <ul class="vark-check-list warning-list">
-                    {% for item in recomendacion.evitar %}
-                        <li><i data-lucide="x"></i><span>{{ item }}</span></li>
-                    {% endfor %}
-                </ul>
-            </article>
-        </div>
-    </section>
-
-    <section class="vark-panel mt-4">
-        <div class="panel-heading-row">
-            <div>
-                <p class="eyebrow">Ejemplos para Anatomía I</p>
-                <h2>Esto es lo que puedes hacer con tu resultado</h2>
-            </div>
-            <span class="mini-chip">Retroalimentación accionable</span>
-        </div>
-
-        <div class="anatomy-example-grid">
-            {% for ejemplo in recomendacion.ejemplos_anatomia %}
-                <article class="anatomy-example-card">
-                    <span>{{ forloop.counter }}</span>
-                    <p>{{ ejemplo }}</p>
-                </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="vark-panel mt-4">
-        <div class="panel-heading-row">
-            <div>
-                <p class="eyebrow">Plan rápido de estudio</p>
-                <h2>Rutina de 20 minutos según tu estilo</h2>
-            </div>
-            <span class="mini-chip">Antes de un examen</span>
-        </div>
-
-        <div class="quick-plan-timeline">
-            {% for paso in recomendacion.plan_rapido %}
-                <article>
-                    <strong>{{ forloop.counter }}</strong>
-                    <span>{{ paso }}</span>
-                </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <div class="vark-result-grid-main mt-4">
-        <section class="vark-panel resources-panel">
-            <p class="eyebrow">Recursos recomendados del sistema</p>
-            <h2>Usa más estos módulos</h2>
-            <div class="resource-pill-grid">
-                {% for recurso in recomendacion.recursos_sistema %}
-                    <span><i data-lucide="sparkles"></i>{{ recurso }}</span>
-                {% endfor %}
-            </div>
-        </section>
-
-        <section class="vark-panel llm-card-pro">
-            <p class="eyebrow">Explicación personalizada con IA</p>
-            <h2>Recomendación adicional</h2>
-            {% if estado_ia == "ok" and recomendacion_llm %}
-                <div class="ai-answer-copy">{{ recomendacion_llm|linebreaksbr }}</div>
-            {% else %}
-                <div class="retry-state">
-                    <i data-lucide="sparkles"></i>
-                    <p>{{ mensaje_ia|default:"No pudimos generar la explicación personalizada con IA. Vuelve a intentarlo." }}</p>
-                    <a href="{% url 'vark:resultado' %}" class="btn btn-outline-primary icon-btn">
-                        <i data-lucide="refresh-cw"></i>
-                        <span>Volver a intentar</span>
-                    </a>
+    <section class="vark-action-zone">
+        <div class="vark-action-grid">
+            <article class="vark-action-card">
+                <div class="vark-card-icon">
+                    <i data-lucide="badge-check"></i>
                 </div>
-            {% endif %}
-        </section>
-    </div>
+                <p class="vark-card-kicker">Hábitos recomendados</p>
+                <h2>Estudia así</h2>
+                <ul class="vark-clean-list success">
+                    {% for item in recomendacion.estrategias %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </article>
 
-    <div class="form-actions justify-content-center mt-4">
-        <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary icon-btn">
-            <i data-lucide="layout-dashboard"></i>
-            <span>Ir al dashboard</span>
-        </a>
-        <a href="{{ siguiente_paso.url }}" class="btn btn-primary icon-btn">
-            <i data-lucide="{{ siguiente_paso.icono }}"></i>
-            <span>{{ siguiente_paso.label }}</span>
-        </a>
-    </div>
+            <article class="vark-action-card danger-card">
+                <div class="vark-card-icon danger">
+                    <i data-lucide="triangle-alert"></i>
+                </div>
+                <p class="vark-card-kicker">Errores que debes evitar</p>
+                <h2>Evita estudiar así</h2>
+                <ul class="vark-clean-list danger">
+                    {% for item in recomendacion.evitar %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </article>
+
+        </div>
+
+        <section class="vark-modules-card">
+            <div>
+                <p class="vark-card-kicker">Recursos recomendados del sistema</p>
+                <h2>Usa estos módulos para reforzar tu estilo</h2>
+            </div>
+
+            <div class="vark-module-chips">
+                {% for recurso in recomendacion.recursos_sistema %}
+                    <a href="{% url 'rutas:ruta_aprendizaje' %}" class="vark-chip">
+                        <i data-lucide="sparkles"></i>
+                        {{ recurso }}
+                    </a>
+                {% endfor %}
+                <a href="{% url 'examenes:generar' %}" class="vark-chip">
+                    <i data-lucide="clipboard-check"></i>
+                    Simulacros
+                </a>
+                <a href="{% url 'documentos:lista' %}" class="vark-chip">
+                    <i data-lucide="folder-open"></i>
+                    Materiales
+                </a>
+            </div>
+        </section>
+
+        <section class="vark-ai-summary">
+            <div class="vark-ai-icon">
+                <i data-lucide="sparkles"></i>
+            </div>
+
+            <div>
+                <p class="vark-card-kicker">Explicación personalizada con IA</p>
+                <h2>Recomendación adicional</h2>
+                {% if estado_ia == "ok" and recomendacion_llm %}
+                    <div class="ai-answer-copy">{{ recomendacion_llm|linebreaksbr }}</div>
+                {% else %}
+                    <div class="retry-state">
+                        <p>{{ mensaje_ia|default:"No pudimos generar la explicación personalizada con IA. Vuelve a intentarlo." }}</p>
+                        <a href="{% url 'vark:resultado' %}" class="btn btn-outline-primary icon-btn">
+                            <i data-lucide="refresh-cw"></i>
+                            <span>Volver a intentar</span>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <div class="vark-next-actions">
+            <a href="{% url 'usuarios:dashboard' %}" class="btn btn-outline-primary icon-btn">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Ir al dashboard</span>
+            </a>
+            <a href="{{ siguiente_paso.url }}" class="btn btn-primary icon-btn">
+                <i data-lucide="{{ siguiente_paso.icono }}"></i>
+                <span>{{ siguiente_paso.label }}</span>
+            </a>
+        </div>
+    </section>
 </section>
 {% endblock %}

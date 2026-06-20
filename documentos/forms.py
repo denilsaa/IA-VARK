@@ -3,8 +3,50 @@ import os
 from django import forms
 
 from anatomia.models import TemaAnatomia
+try:
+    from anatomia.dataset_anatomia import ANATOMIA_I_DATASET
+except Exception:  # pragma: no cover
+    ANATOMIA_I_DATASET = []
 
 from .models import MaterialEstudio
+
+
+def dataset_temas_principales():
+    return [item.get("nombre", "") for item in ANATOMIA_I_DATASET if item.get("nombre")]
+
+
+def dataset_subtemas_por_tema():
+    return {
+        item.get("nombre", ""): item.get("subtemas", [])
+        for item in ANATOMIA_I_DATASET
+        if item.get("nombre")
+    }
+
+
+def obtener_temas_principales():
+    temas_db = list(TemaAnatomia.temas_principales())
+    if temas_db:
+        return [(tema.nombre, tema.nombre) for tema in temas_db]
+    return [(nombre, nombre) for nombre in dataset_temas_principales()]
+
+
+def obtener_subtemas(tema_nombre):
+    if not tema_nombre:
+        return []
+
+    subtemas_db = list(
+        TemaAnatomia.objects.filter(
+            tema_padre__nombre=tema_nombre,
+            activo=True,
+        )
+        .order_by("orden", "nombre")
+        .values_list("nombre", flat=True)
+    )
+
+    if subtemas_db:
+        return subtemas_db
+
+    return dataset_subtemas_por_tema().get(tema_nombre, [])
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -100,10 +142,7 @@ class MaterialEstudioForm(forms.ModelForm):
         user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
-        tema_choices = [("", "Selecciona un tema")] + [
-            (tema.nombre, tema.nombre)
-            for tema in TemaAnatomia.temas_principales()
-        ]
+        tema_choices = [("", "Selecciona un tema")] + obtener_temas_principales()
         self.fields["tema_principal"].choices = tema_choices
 
         tema_inicial = ""
@@ -121,14 +160,7 @@ class MaterialEstudioForm(forms.ModelForm):
 
         subtema_choices = [("", "Selecciona un subtema")]
         if tema_seleccionado:
-            subtemas = TemaAnatomia.objects.filter(
-                tema_padre__nombre=tema_seleccionado,
-                activo=True,
-            ).order_by("orden", "nombre")
-            subtema_choices = [("", "Selecciona un subtema")] + [
-                (subtema.nombre, subtema.nombre)
-                for subtema in subtemas
-            ]
+            subtema_choices += [(subtema, subtema) for subtema in obtener_subtemas(tema_seleccionado)]
 
         valores_choices = {valor for valor, _ in subtema_choices}
         if subtema_seleccionado and subtema_seleccionado not in valores_choices:
@@ -153,11 +185,8 @@ class MaterialEstudioForm(forms.ModelForm):
         if not tema:
             raise forms.ValidationError("Selecciona el tema al que pertenece el material.")
 
-        existe = TemaAnatomia.objects.filter(
-            nombre=tema, tema_padre__isnull=True, activo=True
-        ).exists()
-
-        if not existe:
+        temas_validos = {valor for valor, _ in obtener_temas_principales()}
+        if tema not in temas_validos:
             raise forms.ValidationError("Selecciona un tema válido.")
 
         return tema
@@ -169,11 +198,8 @@ class MaterialEstudioForm(forms.ModelForm):
         if not subtema:
             return ""
 
-        existe = TemaAnatomia.objects.filter(
-            nombre=subtema, tema_padre__nombre=tema, activo=True
-        ).exists()
-
-        if not existe:
+        subtemas_validos = set(obtener_subtemas(tema))
+        if subtemas_validos and subtema not in subtemas_validos:
             raise forms.ValidationError("Selecciona un subtema válido para el tema elegido.")
 
         return subtema
