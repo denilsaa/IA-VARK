@@ -123,691 +123,647 @@
                 <h2>Recursos concretos para aprender</h2>
             </div>
 
-            <div class="learning-roadmap mt-4">
-                {% for dia in dias_ruta %}
-                    <article class="roadmap-step {% if forloop.counter|divisibleby:2 %}is-right{% else %}is-left{% endif %}">
-                        <div class="roadmap-card-wrap">
-                            <section class="roadmap-card {% if dia.progreso and dia.progreso.completado %}is-complete{% endif %}">
-                                <div class="roadmap-card-top">
-                                    <span class="roadmap-chip">Día {{ dia.dia }}</span>
-                                    <span class="roadmap-state {% if dia.progreso and dia.progreso.completado %}done{% else %}pending{% endif %}">
-                                        {% if dia.progreso and dia.progreso.completado %}
-                                            Completado
-                                        {% else %}
-                                            Pendiente
-                                        {% endif %}
-                                    </span>
-                                </div>
+            <div class="route-path-shell mt-4">
+                <div class="route-path-legend">
+                    <span><i data-lucide="mouse-pointer-click"></i> Presiona un círculo para abrir el contenido completo del día</span>
+                    <span><i data-lucide="route"></i> Camino personalizado según tu perfil VARK</span>
+                </div>
 
-                                <h3>{{ dia.titulo }}</h3>
-                                <p class="roadmap-objective">{{ dia.objetivo }}</p>
+                <div class="route-path-stage">
+                    {% for dia in dias_ruta %}
+                        <article class="route-path-step {% cycle 'path-left' 'path-right' %} {% if dia.progreso and dia.progreso.completado %}is-complete{% endif %} {% if not forloop.last %}has-next{% endif %}">
+                            <div class="route-path-ribbon" aria-hidden="true"></div>
 
-                                <div class="roadmap-user-meta">
-                                    <span><i data-lucide="scan-eye"></i> {{ perfil_vark.estilo_display }}</span>
-                                    <span><i data-lucide="book-open"></i> {{ dia.tema_principal }}</span>
-                                    <span><i data-lucide="clock-3"></i> {{ dia.minutos }} min</span>
-                                    <span><i data-lucide="layers"></i> {{ dia.recurso_vark }}</span>
-                                </div>
+                            <button type="button"
+                                    class="route-path-node"
+                                    data-open-route-day="route-day-modal-{{ dia.dia }}"
+                                    aria-label="Abrir contenido del día {{ dia.dia }}">
+                                <span class="route-path-day">Día {{ dia.dia }}</span>
+                                <strong>{{ dia.titulo }}</strong>
+                                <p>{{ dia.objetivo|truncatechars:105 }}</p>
+                                <small>Ver contenido completo</small>
+                            </button>
 
-                                <div class="roadmap-mini-grid">
-                                    <div class="roadmap-mini-item">
-                                        <strong>Tema principal</strong>
-                                        <p>{{ dia.tema_principal }}</p>
-                                    </div>
-                                    <div class="roadmap-mini-item">
-                                        <strong>Recurso VARK</strong>
-                                        <p>{{ dia.recurso_vark }}</p>
-                                    </div>
-                                    <div class="roadmap-mini-item">
-                                        <strong>Uso de materiales</strong>
-                                        <p>{{ dia.uso_materiales }}</p>
-                                    </div>
-                                    <div class="roadmap-mini-item">
-                                        <strong>Tiempo sugerido</strong>
-                                        <p>{{ dia.minutos }} min</p>
-                                    </div>
-                                </div>
-
-                                {% if dia.enfoque_vark %}
-                                    <div class="roadmap-highlight">
-                                        <i data-lucide="sparkles"></i>
-                                        <span>{{ dia.enfoque_vark }}</span>
-                                    </div>
-                                {% endif %}
-
-                                {% if dia.progreso and dia.progreso.quiz_total %}
-                                    <div class="roadmap-quiz-note">
-                                        <i data-lucide="badge-check"></i>
-                                        <span>
-                                            Mini quiz guardado: {{ dia.progreso.quiz_texto }}
-                                            {% if dia.progreso.quiz_porcentaje != None %}
-                                                ({{ dia.progreso.quiz_porcentaje }}%)
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                {% endif %}
-
-                                <div class="roadmap-actions">
-                                    <form method="post" action="{% url 'rutas:actualizar_progreso' %}">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="dia" value="{{ dia.dia }}">
-                                        {% if dia.progreso and dia.progreso.completado %}
-                                            <input type="hidden" name="accion" value="pendiente">
-                                            <button type="submit" class="btn btn-outline-primary btn-sm">Marcar pendiente</button>
-                                        {% else %}
-                                            <input type="hidden" name="accion" value="completar">
-                                            <button type="submit" class="btn btn-primary btn-sm">Marcar completado</button>
-                                        {% endif %}
-                                    </form>
-                                </div>
-
-                                <details class="roadmap-details">
-                                    <summary>
-                                        <span>Ver recursos completos del día</span>
-                                        <i data-lucide="chevron-down"></i>
-                                    </summary>
-                                    <div class="roadmap-full-detail">
-                    <article class="form-panel route-day-card roadmap-original-content">
-                        <div class="route-day-header">
-                            <div class="route-day-number">{{ dia.dia }}</div>
-                            <div>
-                                <p class="eyebrow">Día {{ dia.dia }}</p>
-                                <h3>{{ dia.titulo }}</h3>
-                                <p>{{ dia.objetivo }}</p>
-                            </div>
-                        </div>
-
-                        <div class="day-progress-box mt-4 {% if dia.progreso and dia.progreso.completado %}is-complete{% endif %}">
-                            <div>
-                                <strong>
-                                    {% if dia.progreso and dia.progreso.completado %}
-                                        Día completado
-                                    {% else %}
-                                        Día pendiente
-                                    {% endif %}
-                                </strong>
-                                <p>
-                                    {% if dia.progreso and dia.progreso.quiz_total %}
-                                        Mini quiz guardado: {{ dia.progreso.quiz_texto }}
-                                        {% if dia.progreso.quiz_porcentaje != None %}({{ dia.progreso.quiz_porcentaje }}%){% endif %}
-                                    {% else %}
-                                        Mini quiz aún no guardado.
-                                    {% endif %}
-                                </p>
-                            </div>
-
-                            <form method="post" action="{% url 'rutas:actualizar_progreso' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="dia" value="{{ dia.dia }}">
+                            <div class="route-path-status">
                                 {% if dia.progreso and dia.progreso.completado %}
-                                    <input type="hidden" name="accion" value="pendiente">
-                                    <button type="submit" class="btn btn-outline-primary btn-sm">Marcar pendiente</button>
+                                    <span class="status-dot done"><i data-lucide="check"></i></span>
+                                    <strong>Completado</strong>
                                 {% else %}
-                                    <input type="hidden" name="accion" value="completar">
-                                    <button type="submit" class="btn btn-primary btn-sm">Marcar completado</button>
+                                    <span class="status-dot pending"><i data-lucide="clock-3"></i></span>
+                                    <strong>Pendiente</strong>
                                 {% endif %}
-                            </form>
-                        </div>
+                            </div>
 
-                        <div class="detail-grid mt-4">
-                            <div>
-                                <strong>Tema principal</strong>
-                                <p>{{ dia.tema_principal }}</p>
-                            </div>
-                            <div>
-                                <strong>Tiempo sugerido</strong>
-                                <p>{{ dia.minutos }} min</p>
-                            </div>
-                            <div>
-                                <strong>Recurso dominante</strong>
-                                <p>{{ dia.recurso_vark }}</p>
-                            </div>
-                            <div>
-                                <strong>Uso de materiales</strong>
-                                <p>{{ dia.uso_materiales }}</p>
-                            </div>
-                        </div>
-
-                        {% if dia.enfoque_vark %}
-                            <div class="info-box mt-4">
-                                <div class="ai-box-title"><i data-lucide="blend"></i><strong>Adaptación VARK</strong></div>
-                                <p>{{ dia.enfoque_vark }}</p>
-                            </div>
-                        {% endif %}
-
-                        <div class="resource-grid mt-4">
-                            {% if dia.recursos.audio.habilitado %}
-                                <section class="resource-card">
-                                    <div class="resource-card-header">
-                                        <i data-lucide="volume-2"></i>
-                                        <strong>{{ dia.recursos.audio.titulo }}</strong>
-                                    </div>
-                                    <p class="audio-ready">
-                                        Audio explicativo listo para escuchar. El guion está oculto para no saturar la ruta.
-                                    </p>
-                                    {% if dia.recursos.audio.pasos_clave %}
-                                        <ul class="clean-list mt-3">
-                                            {% for paso in dia.recursos.audio.pasos_clave %}
-                                                <li><i data-lucide="check"></i><span>{{ paso }}</span></li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                    <div class="form-actions mt-3">
-                                        <button type="button" class="btn btn-primary icon-btn" onclick="playStudyAudio('{{ dia.recursos.audio.guion|escapejs }}')">
-                                            <i data-lucide="play"></i>
-                                            <span>Escuchar audio</span>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-primary icon-btn" onclick="stopStudyAudio()">
-                                            <i data-lucide="square"></i>
-                                            <span>Detener</span>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-primary icon-btn" data-toggle-target="audio-summary-{{ dia.dia }}">
-                                            <i data-lucide="file-text"></i>
-                                            <span>Ver guion</span>
-                                        </button>
-                                    </div>
-
-                                    <div class="audio-summary mt-3 collapsible-box" id="audio-summary-{{ dia.dia }}">
-                                        <p>{{ dia.recursos.audio.guion }}</p>
-                                    </div>
-                                </section>
-                            {% endif %}
-                            {% if dia.recursos.visual.habilitado %}
-                                <section class="resource-card visual-card-premium resource-span-2">
-                                    <div class="resource-card-header map-premium-title">
-                                        <i data-lucide="map"></i>
+                            <div class="route-day-modal" id="route-day-modal-{{ dia.dia }}" aria-hidden="true">
+                                <div class="route-day-modal-backdrop" data-close-route-day></div>
+                                <section class="route-day-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="route-day-title-{{ dia.dia }}">
+                                    <header class="route-day-modal-header">
                                         <div>
-                                            <strong>{{ dia.recursos.visual.titulo }}</strong>
-                                            <p>Mapa mental HTML premium: texto real, ramas claras y lectura activa.</p>
+                                            <p class="eyebrow">Contenido completo</p>
+                                            <h2 id="route-day-title-{{ dia.dia }}">Día {{ dia.dia }}: {{ dia.titulo }}</h2>
+                                            <p>{{ dia.objetivo }}</p>
                                         </div>
-                                    </div>
+                                        <button type="button" class="route-day-modal-close" data-close-route-day aria-label="Cerrar contenido del día">
+                                            &times;
+                                        </button>
+                                    </header>
 
-                                    <div class="visual-meta-strip mt-3">
-                                        <span><i data-lucide="target"></i> Nodo central: {{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</span>
-                                        <span><i data-lucide="git-branch"></i> 4 ramas guiadas</span>
-                                        <span><i data-lucide="eye"></i> Sin texto falso en imágenes</span>
-                                    </div>
+                                    <div class="route-day-modal-body">
+                            <article class="form-panel route-day-card">
+                                                    <div class="route-day-header">
+                                                        <div class="route-day-number">{{ dia.dia }}</div>
+                                                        <div>
+                                                            <p class="eyebrow">Día {{ dia.dia }}</p>
+                                                            <h3>{{ dia.titulo }}</h3>
+                                                            <p>{{ dia.objetivo }}</p>
+                                                        </div>
+                                                    </div>
 
-                                    {% if dia.recursos.visual.descripcion %}
-                                        <p class="visual-resource-description">{{ dia.recursos.visual.descripcion }}</p>
-                                    {% endif %}
-
-                                    <div class="mindmap-elite mt-3" id="generated-map-{{ dia.dia }}">
-                                        <div class="map-bg-orbit orbit-one"></div>
-                                        <div class="map-bg-orbit orbit-two"></div>
-
-                                        <div class="map-hero-node">
-                                            <span class="map-pill">Tema central</span>
-                                            <h3>{{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</h3>
-                                            <p>{{ dia.tema_principal }}</p>
-                                        </div>
-
-                                        <div class="map-connector-line"></div>
-
-                                        <div class="mindmap-elite-grid">
-                                            {% if dia.recursos.visual.ramas %}
-                                                {% for rama in dia.recursos.visual.ramas %}
-                                                    <article class="map-branch-card branch-tone-{{ forloop.counter }}">
-                                                        <div class="map-branch-head">
-                                                            <span class="map-index">{{ forloop.counter }}</span>
-                                                            <div>
-                                                                <small>Rama de estudio</small>
-                                                                <h4>{{ rama.titulo }}</h4>
-                                                            </div>
+                                                    <div class="day-progress-box mt-4 {% if dia.progreso and dia.progreso.completado %}is-complete{% endif %}">
+                                                        <div>
+                                                            <strong>
+                                                                {% if dia.progreso and dia.progreso.completado %}
+                                                                    Día completado
+                                                                {% else %}
+                                                                    Día pendiente
+                                                                {% endif %}
+                                                            </strong>
+                                                            <p>
+                                                                {% if dia.progreso and dia.progreso.quiz_total %}
+                                                                    Mini quiz guardado: {{ dia.progreso.quiz_texto }}
+                                                                    {% if dia.progreso.quiz_porcentaje != None %}({{ dia.progreso.quiz_porcentaje }}%){% endif %}
+                                                                {% else %}
+                                                                    Mini quiz aún no guardado.
+                                                                {% endif %}
+                                                            </p>
                                                         </div>
 
-                                                        {% if rama.detalle %}
-                                                            <p class="map-branch-detail">{{ rama.detalle }}</p>
+                                                        <form method="post" action="{% url 'rutas:actualizar_progreso' %}">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="dia" value="{{ dia.dia }}">
+                                                            {% if dia.progreso and dia.progreso.completado %}
+                                                                <input type="hidden" name="accion" value="pendiente">
+                                                                <button type="submit" class="btn btn-outline-primary btn-sm">Marcar pendiente</button>
+                                                            {% else %}
+                                                                <input type="hidden" name="accion" value="completar">
+                                                                <button type="submit" class="btn btn-primary btn-sm">Marcar completado</button>
+                                                            {% endif %}
+                                                        </form>
+                                                    </div>
+
+                                                    <div class="detail-grid mt-4">
+                                                        <div>
+                                                            <strong>Tema principal</strong>
+                                                            <p>{{ dia.tema_principal }}</p>
+                                                        </div>
+                                                        <div>
+                                                            <strong>Tiempo sugerido</strong>
+                                                            <p>{{ dia.minutos }} min</p>
+                                                        </div>
+                                                        <div>
+                                                            <strong>Recurso dominante</strong>
+                                                            <p>{{ dia.recurso_vark }}</p>
+                                                        </div>
+                                                        <div>
+                                                            <strong>Uso de materiales</strong>
+                                                            <p>{{ dia.uso_materiales }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {% if dia.enfoque_vark %}
+                                                        <div class="info-box mt-4">
+                                                            <div class="ai-box-title"><i data-lucide="blend"></i><strong>Adaptación VARK</strong></div>
+                                                            <p>{{ dia.enfoque_vark }}</p>
+                                                        </div>
+                                                    {% endif %}
+
+                                                    <div class="resource-grid mt-4">
+                                                        {% if dia.recursos.audio.habilitado %}
+                                                            <section class="resource-card">
+                                                                <div class="resource-card-header">
+                                                                    <i data-lucide="volume-2"></i>
+                                                                    <strong>{{ dia.recursos.audio.titulo }}</strong>
+                                                                </div>
+                                                                <p class="audio-ready">
+                                                                    Audio explicativo listo para escuchar. El guion está oculto para no saturar la ruta.
+                                                                </p>
+                                                                {% if dia.recursos.audio.pasos_clave %}
+                                                                    <ul class="clean-list mt-3">
+                                                                        {% for paso in dia.recursos.audio.pasos_clave %}
+                                                                            <li><i data-lucide="check"></i><span>{{ paso }}</span></li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                {% endif %}
+                                                                <div class="form-actions mt-3">
+                                                                    <button type="button" class="btn btn-primary icon-btn" onclick="playStudyAudio('{{ dia.recursos.audio.guion|escapejs }}')">
+                                                                        <i data-lucide="play"></i>
+                                                                        <span>Escuchar audio</span>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-primary icon-btn" onclick="stopStudyAudio()">
+                                                                        <i data-lucide="square"></i>
+                                                                        <span>Detener</span>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-primary icon-btn" data-toggle-target="audio-summary-{{ dia.dia }}">
+                                                                        <i data-lucide="file-text"></i>
+                                                                        <span>Ver guion</span>
+                                                                    </button>
+                                                                </div>
+
+                                                                <div class="audio-summary mt-3 collapsible-box" id="audio-summary-{{ dia.dia }}">
+                                                                    <p>{{ dia.recursos.audio.guion }}</p>
+                                                                </div>
+                                                            </section>
+                                                        {% endif %}
+                                                        {% if dia.recursos.visual.habilitado %}
+                                                            <section class="resource-card visual-card-premium resource-span-2">
+                                                                <div class="resource-card-header map-premium-title">
+                                                                    <i data-lucide="map"></i>
+                                                                    <div>
+                                                                        <strong>{{ dia.recursos.visual.titulo }}</strong>
+                                                                        <p>Mapa mental HTML premium: texto real, ramas claras y lectura activa.</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="visual-meta-strip mt-3">
+                                                                    <span><i data-lucide="target"></i> Nodo central: {{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</span>
+                                                                    <span><i data-lucide="git-branch"></i> 4 ramas guiadas</span>
+                                                                    <span><i data-lucide="eye"></i> Sin texto falso en imágenes</span>
+                                                                </div>
+
+                                                                {% if dia.recursos.visual.descripcion %}
+                                                                    <p class="visual-resource-description">{{ dia.recursos.visual.descripcion }}</p>
+                                                                {% endif %}
+
+                                                                <div class="mindmap-elite mt-3" id="generated-map-{{ dia.dia }}">
+                                                                    <div class="map-bg-orbit orbit-one"></div>
+                                                                    <div class="map-bg-orbit orbit-two"></div>
+
+                                                                    <div class="map-hero-node">
+                                                                        <span class="map-pill">Tema central</span>
+                                                                        <h3>{{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</h3>
+                                                                        <p>{{ dia.tema_principal }}</p>
+                                                                    </div>
+
+                                                                    <div class="map-connector-line"></div>
+
+                                                                    <div class="mindmap-elite-grid">
+                                                                        {% if dia.recursos.visual.ramas %}
+                                                                            {% for rama in dia.recursos.visual.ramas %}
+                                                                                <article class="map-branch-card branch-tone-{{ forloop.counter }}">
+                                                                                    <div class="map-branch-head">
+                                                                                        <span class="map-index">{{ forloop.counter }}</span>
+                                                                                        <div>
+                                                                                            <small>Rama de estudio</small>
+                                                                                            <h4>{{ rama.titulo }}</h4>
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    {% if rama.detalle %}
+                                                                                        <p class="map-branch-detail">{{ rama.detalle }}</p>
+                                                                                    {% endif %}
+
+                                                                                    {% if rama.subpuntos %}
+                                                                                        <ul class="map-point-list">
+                                                                                            {% for subpunto in rama.subpuntos %}
+                                                                                                <li>{{ subpunto }}</li>
+                                                                                            {% endfor %}
+                                                                                        </ul>
+                                                                                    {% else %}
+                                                                                        <ul class="map-point-list">
+                                                                                            <li>Idea clave conectada con el objetivo del día.</li>
+                                                                                            <li>Repasar con lectura, observación y práctica.</li>
+                                                                                        </ul>
+                                                                                    {% endif %}
+
+                                                                                    {% if rama.estudio_activo %}
+                                                                                        <div class="map-active-task">
+                                                                                            <i data-lucide="pencil-line"></i>
+                                                                                            <span>{{ rama.estudio_activo }}</span>
+                                                                                        </div>
+                                                                                    {% endif %}
+                                                                                </article>
+                                                                            {% endfor %}
+                                                                        {% else %}
+                                                                            {% for item in dia.recursos.visual.apoyo_visual %}
+                                                                                <article class="map-branch-card branch-tone-{{ forloop.counter }}">
+                                                                                    <div class="map-branch-head">
+                                                                                        <span class="map-index">{{ forloop.counter }}</span>
+                                                                                        <div>
+                                                                                            <small>Clave visual</small>
+                                                                                            <h4>{{ item }}</h4>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <p class="map-branch-detail">Idea priorizada por el sistema para estudiar el tema.</p>
+                                                                                    <ul class="map-point-list">
+                                                                                        <li>Relacionar con el tema central.</li>
+                                                                                        <li>Convertir en pregunta de repaso.</li>
+                                                                                    </ul>
+                                                                                </article>
+                                                                            {% endfor %}
+                                                                        {% endif %}
+                                                                    </div>
+
+                                                                    <div class="map-study-footer">
+                                                                        <div>
+                                                                            <strong>Cómo estudiarlo</strong>
+                                                                            <span>{{ dia.recursos.visual.instruccion_estudio|default:"Lee el nodo central, recorre las ramas en orden y convierte cada subpunto en una pregunta." }}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <strong>Enfoque VARK</strong>
+                                                                            <span>Visual + lectura + práctica activa.</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="form-actions mt-3">
+                                                                    <button type="button"
+                                                                            class="btn btn-primary btn-sm"
+                                                                            data-open-visual="generated-map-modal-{{ dia.dia }}">
+                                                                        Ver mapa en grande
+                                                                    </button>
+                                                                </div>
+
+                                                                <div class="visual-modal-source" id="generated-map-modal-{{ dia.dia }}">
+                                                                    <div class="mindmap-elite modal-map-elite">
+                                                                        <div class="map-bg-orbit orbit-one"></div>
+                                                                        <div class="map-bg-orbit orbit-two"></div>
+                                                                        <div class="map-hero-node">
+                                                                            <span class="map-pill">Tema central</span>
+                                                                            <h3>{{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</h3>
+                                                                            <p>{{ dia.tema_principal }}</p>
+                                                                        </div>
+                                                                        <div class="map-connector-line"></div>
+                                                                        <div class="mindmap-elite-grid">
+                                                                            {% if dia.recursos.visual.ramas %}
+                                                                                {% for rama in dia.recursos.visual.ramas %}
+                                                                                    <article class="map-branch-card branch-tone-{{ forloop.counter }}">
+                                                                                        <div class="map-branch-head">
+                                                                                            <span class="map-index">{{ forloop.counter }}</span>
+                                                                                            <div>
+                                                                                                <small>Rama de estudio</small>
+                                                                                                <h4>{{ rama.titulo }}</h4>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        {% if rama.detalle %}<p class="map-branch-detail">{{ rama.detalle }}</p>{% endif %}
+                                                                                        {% if rama.subpuntos %}
+                                                                                            <ul class="map-point-list">
+                                                                                                {% for subpunto in rama.subpuntos %}<li>{{ subpunto }}</li>{% endfor %}
+                                                                                            </ul>
+                                                                                        {% endif %}
+                                                                                    </article>
+                                                                                {% endfor %}
+                                                                            {% else %}
+                                                                                {% for item in dia.recursos.visual.apoyo_visual %}
+                                                                                    <article class="map-branch-card branch-tone-{{ forloop.counter }}">
+                                                                                        <div class="map-branch-head">
+                                                                                            <span class="map-index">{{ forloop.counter }}</span>
+                                                                                            <div>
+                                                                                                <small>Clave visual</small>
+                                                                                                <h4>{{ item }}</h4>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <p class="map-branch-detail">Idea priorizada por el sistema para estudiar el tema.</p>
+                                                                                    </article>
+                                                                                {% endfor %}
+                                                                            {% endif %}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </section>
                                                         {% endif %}
 
-                                                        {% if rama.subpuntos %}
-                                                            <ul class="map-point-list">
-                                                                {% for subpunto in rama.subpuntos %}
-                                                                    <li>{{ subpunto }}</li>
+                                                        {% if dia.recursos.kinestesico.habilitado %}
+                                                            <section class="resource-card">
+                                                                <div class="resource-card-header">
+                                                                    <i data-lucide="activity"></i>
+                                                                    <strong>{{ dia.recursos.kinestesico.titulo }}</strong>
+                                                                </div>
+                                                                <p>{{ dia.recursos.kinestesico.instrucciones }}</p>
+                                                                {% if dia.recursos.kinestesico.preguntas %}
+                                                                    <ul class="clean-list mt-3">
+                                                                        {% for pregunta in dia.recursos.kinestesico.preguntas %}
+                                                                            <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                {% endif %}
+                                                            </section>
+                                                        {% endif %}
+
+                                                        {% if dia.recursos.lectura.habilitado %}
+                                                            <section class="resource-card">
+                                                                <div class="resource-card-header">
+                                                                    <i data-lucide="book-text"></i>
+                                                                    <strong>{{ dia.recursos.lectura.titulo }}</strong>
+                                                                </div>
+                                                                <p>{{ dia.recursos.lectura.resumen }}</p>
+                                                                {% if dia.recursos.lectura.glosario %}
+                                                                    <ul class="clean-list mt-3">
+                                                                        {% for item in dia.recursos.lectura.glosario %}
+                                                                            <li><i data-lucide="bookmark"></i><span>{{ item }}</span></li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                {% endif %}
+                                                            </section>
+                                                        {% endif %}
+                                                    </div>
+                                                    {% if dia.recursos.imagen_anatomica.habilitado %}
+                                                        <section class="form-panel wide-panel mt-4 anatomical-panel">
+                                                            <div class="resource-card-header anatomy-title-premium">
+                                                                <i data-lucide="image"></i>
+                                                                <div>
+                                                                    <strong>{{ dia.recursos.imagen_anatomica.titulo }}</strong>
+                                                                    <p>Lámina anatómica con prompt controlado, marcadores externos y práctica guiada.</p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="visual-meta-strip mt-3">
+                                                                <span><i data-lucide="scan-eye"></i> Vista: {{ dia.recursos.imagen_anatomica.tipo_vista|default:"anatómica didáctica" }}</span>
+                                                                {% if dia.recursos.imagen_anatomica.categoria_visual %}
+                                                                    <span><i data-lucide="layers"></i> Categoría: {{ dia.recursos.imagen_anatomica.categoria_visual }}</span>
+                                                                {% endif %}
+                                                                <span><i data-lucide="badge-check"></i> Marcadores HTML</span>
+                                                            </div>
+
+                                                            {% if dia.recursos.imagen_anatomica.descripcion %}
+                                                                <p class="visual-resource-description">{{ dia.recursos.imagen_anatomica.descripcion }}</p>
+                                                            {% endif %}
+
+                                                            {% if dia.recursos.imagen_anatomica.image_url %}
+                                                                <div class="generated-anatomy-card mt-3">
+                                                                    <div class="anatomy-image-wrap">
+                                                                        <img src="{{ dia.recursos.imagen_anatomica.image_url }}"
+                                                                             alt="{{ dia.recursos.imagen_anatomica.titulo }}"
+                                                                             class="study-generated-image">
+                                                                        {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
+                                                                            <button type="button"
+                                                                                    class="anatomy-marker"
+                                                                                    data-x="{{ marcador.x|default:'50' }}"
+                                                                                    data-y="{{ marcador.y|default:'50' }}"
+                                                                                    title="{{ marcador.nombre }}: {{ marcador.pista }}">
+                                                                                {{ marcador.id }}
+                                                                            </button>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                </div>
+
+                                                                {% if dia.recursos.imagen_anatomica.marcadores %}
+                                                                    <div class="marker-legend-grid mt-3">
+                                                                        {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
+                                                                            <details class="marker-study-card">
+                                                                                <summary><span class="marker-dot-mini">{{ marcador.id }}</span> {{ marcador.nombre }}</summary>
+                                                                                {% if marcador.pista %}<p><strong>Pista:</strong> {{ marcador.pista }}</p>{% endif %}
+                                                                                {% if marcador.detalle %}<p><strong>Detalle:</strong> {{ marcador.detalle }}</p>{% endif %}
+                                                                            </details>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                {% endif %}
+
+                                                                <div class="form-actions mt-3">
+                                                                    <button type="button"
+                                                                            class="btn btn-primary btn-sm"
+                                                                            data-open-visual="generated-anatomy-{{ dia.dia }}">
+                                                                        Ver lámina en grande
+                                                                    </button>
+                                                                </div>
+
+                                                                <div class="visual-modal-source" id="generated-anatomy-{{ dia.dia }}">
+                                                                    <div class="anatomy-image-wrap modal-anatomy-wrap">
+                                                                        <img src="{{ dia.recursos.imagen_anatomica.image_url }}"
+                                                                             alt="{{ dia.recursos.imagen_anatomica.titulo }}"
+                                                                             class="study-generated-image">
+                                                                        {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
+                                                                            <span class="anatomy-marker" data-x="{{ marcador.x|default:'50' }}" data-y="{{ marcador.y|default:'50' }}">{{ marcador.id }}</span>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                </div>
+
+                                                                {% if dia.recursos.imagen_anatomica.historial_generacion %}
+                                                                    <details class="generation-history-card mt-3">
+                                                                        <summary>
+                                                                            <span><i data-lucide="history"></i> Historial de generación IA</span>
+                                                                            <small>{{ dia.recursos.imagen_anatomica.historial_generacion.estado|upper }}</small>
+                                                                        </summary>
+                                                                        <div class="generation-history-grid">
+                                                                            <div><strong>Proveedor</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.proveedor }}</span></div>
+                                                                            <div><strong>Motor</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.motor }}</span></div>
+                                                                            <div><strong>Categoría detectada</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.categoria }}</span></div>
+                                                                            <div><strong>Persistencia</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.persistencia }}</span></div>
+                                                                            <div><strong>Generado en</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.generado_en }}</span></div>
+                                                                            <div><strong>Dependencia</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.dependencia_runtime }}</span></div>
+                                                                        </div>
+                                                                        {% if dia.recursos.imagen_anatomica.historial_generacion.prompt_resumen %}
+                                                                            <div class="generation-prompt-box mt-3">
+                                                                                <strong>Prompt controlado usado</strong>
+                                                                                <p>{{ dia.recursos.imagen_anatomica.historial_generacion.prompt_resumen }}</p>
+                                                                            </div>
+                                                                        {% endif %}
+                                                                        {% if dia.recursos.imagen_anatomica.historial_generacion.detalle %}
+                                                                            <div class="generation-detail-box mt-2">
+                                                                                <strong>Detalle</strong>
+                                                                                <p>{{ dia.recursos.imagen_anatomica.historial_generacion.detalle }}</p>
+                                                                            </div>
+                                                                        {% endif %}
+                                                                    </details>
+                                                                {% endif %}
+                                                            {% else %}
+                                                                <div class="image-pending-box premium-pending-box mt-3">
+                                                                    <div>
+                                                                        <i data-lucide="image-off"></i>
+                                                                        <strong>Lámina pendiente de generación</strong>
+                                                                    </div>
+                                                                    <p>
+                                                                        El sistema ya preparó el prompt anatómico y los marcadores de práctica.
+                                                                        Regenera la ruta cuando el proveedor de imágenes esté disponible.
+                                                                        {% if dia.recursos.imagen_anatomica.image_error %}
+                                                                            <br><small><strong>Detalle técnico:</strong> {{ dia.recursos.imagen_anatomica.image_error }}</small>
+                                                                        {% endif %}
+                                                                    </p>
+                                                                    {% if dia.recursos.imagen_anatomica.prompt_imagen %}
+                                                                        <details class="generation-prompt-box mt-3">
+                                                                            <summary>Ver prompt controlado preparado</summary>
+                                                                            <p>{{ dia.recursos.imagen_anatomica.prompt_imagen }}</p>
+                                                                        </details>
+                                                                    {% endif %}
+                                                                </div>
+                                                            {% endif %}
+
+                                                            <div class="practice-lab mt-4">
+                                                                <div class="practice-lab-header">
+                                                                    <div>
+                                                                        <p class="eyebrow">Modo práctica</p>
+                                                                        <h3>Observa, responde y verifica</h3>
+                                                                        {% if dia.recursos.imagen_anatomica.modo_practica %}
+                                                                            <p>{{ dia.recursos.imagen_anatomica.modo_practica }}</p>
+                                                                        {% else %}
+                                                                            <p>Primero observa la lámina sin ayudas, luego responde y finalmente revela las pistas y respuestas esperadas.</p>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    <div class="practice-score-chip">
+                                                                        <span>{% if dia.recursos.imagen_anatomica.preguntas_guiadas %}{{ dia.recursos.imagen_anatomica.preguntas_guiadas|length }}{% else %}{{ dia.recursos.imagen_anatomica.preguntas|length }}{% endif %}</span>
+                                                                        <small>retos</small>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="practice-steps">
+                                                                    <div><strong>1</strong><span>Observa la imagen 30 segundos sin leer la leyenda.</span></div>
+                                                                    <div><strong>2</strong><span>Responde cada pregunta con tus palabras.</span></div>
+                                                                    <div><strong>3</strong><span>Revela pista y respuesta para corregirte.</span></div>
+                                                                </div>
+
+                                                                {% if dia.recursos.imagen_anatomica.preguntas_guiadas %}
+                                                                    <div class="practice-question-grid mt-3">
+                                                                        {% for pregunta in dia.recursos.imagen_anatomica.preguntas_guiadas %}
+                                                                            <article class="practice-question-card">
+                                                                                <div class="practice-question-top">
+                                                                                    <span class="practice-number">{{ forloop.counter }}</span>
+                                                                                    <strong>{{ pregunta.pregunta }}</strong>
+                                                                                </div>
+                                                                                <details class="practice-reveal">
+                                                                                    <summary>Ver pista</summary>
+                                                                                    <p>{{ pregunta.pista }}</p>
+                                                                                </details>
+                                                                                <details class="practice-reveal answer-reveal">
+                                                                                    <summary>Ver respuesta esperada</summary>
+                                                                                    <p>{{ pregunta.respuesta }}</p>
+                                                                                </details>
+                                                                            </article>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                {% elif dia.recursos.imagen_anatomica.preguntas %}
+                                                                    <div class="practice-question-grid mt-3">
+                                                                        {% for pregunta in dia.recursos.imagen_anatomica.preguntas %}
+                                                                            <article class="practice-question-card">
+                                                                                <div class="practice-question-top">
+                                                                                    <span class="practice-number">{{ forloop.counter }}</span>
+                                                                                    <strong>{{ pregunta }}</strong>
+                                                                                </div>
+                                                                                <details class="practice-reveal">
+                                                                                    <summary>Ver pista</summary>
+                                                                                    <p>Observa los marcadores de la lámina y ubica la estructura relacionada con la pregunta.</p>
+                                                                                </details>
+                                                                                <details class="practice-reveal answer-reveal">
+                                                                                    <summary>Ver respuesta esperada</summary>
+                                                                                    <p>Contrasta tu respuesta con la leyenda de marcadores y explica la relación anatómica principal.</p>
+                                                                                </details>
+                                                                            </article>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                {% endif %}
+
+                                                                {% if dia.recursos.imagen_anatomica.marcadores %}
+                                                                    <div class="practice-marker-review mt-3">
+                                                                        <strong>Repaso rápido de marcadores</strong>
+                                                                        <div class="practice-marker-list">
+                                                                            {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
+                                                                                <span><b>{{ marcador.id }}</b> {{ marcador.nombre }}</span>
+                                                                            {% endfor %}
+                                                                        </div>
+                                                                    </div>
+                                                                {% endif %}
+                                                            </div>
+                                                        </section>
+                                                    {% endif %}
+
+
+                                                    {% if dia.mini_quiz %}
+                                                        <section class="form-panel wide-panel mt-4 quiz-panel" data-quiz-day="{{ dia.dia }}">
+                                                            <div class="resource-card-header">
+                                                                <i data-lucide="clipboard-check"></i>
+                                                                <strong>Mini quiz evaluable del día</strong>
+                                                            </div>
+                                                            <p>Responde las preguntas y presiona calificar para ver tu resultado.</p>
+
+                                                            <div class="quiz-list">
+                                                                {% for pregunta in dia.mini_quiz %}
+                                                                    <div class="quiz-question" data-question>
+                                                                        <strong>{{ forloop.counter }}. {{ pregunta.pregunta }}</strong>
+                                                                        <div class="quiz-options mt-3">
+                                                                            {% for opcion in pregunta.opciones %}
+                                                                                <label class="quiz-option">
+                                                                                    <input type="radio"
+                                                                                           name="quiz-{{ dia.dia }}-{{ forloop.parentloop.counter }}"
+                                                                                           value="{{ opcion|escape }}"
+                                                                                           data-correct="{% if opcion == pregunta.respuesta_correcta %}true{% else %}false{% endif %}">
+                                                                                    <span>{{ opcion }}</span>
+                                                                                </label>
+                                                                            {% endfor %}
+                                                                        </div>
+                                                                        <div class="quiz-explanation">
+                                                                            <strong>Respuesta correcta:</strong> {{ pregunta.respuesta_correcta }}<br>
+                                                                            {{ pregunta.explicacion }}
+                                                                        </div>
+                                                                    </div>
+                                                                {% endfor %}
+                                                            </div>
+
+                                                            <div class="form-actions mt-3 quiz-actions">
+                                                                <button type="button" class="btn btn-primary icon-btn" onclick="gradeQuiz(this)">
+                                                                    <i data-lucide="check-circle"></i>
+                                                                    <span>Calificar mini quiz</span>
+                                                                </button>
+                                                                <strong class="quiz-score"></strong>
+
+                                                                <form method="post" action="{% url 'rutas:actualizar_progreso' %}" class="quiz-save-form">
+                                                                    {% csrf_token %}
+                                                                    <input type="hidden" name="dia" value="{{ dia.dia }}">
+                                                                    <input type="hidden" name="accion" value="guardar_quiz">
+                                                                    <input type="hidden" name="quiz_puntaje" value="">
+                                                                    <input type="hidden" name="quiz_total" value="">
+                                                                    <button type="submit" class="btn btn-outline-primary icon-btn">
+                                                                        <i data-lucide="save"></i>
+                                                                        <span>Guardar resultado</span>
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </section>
+                                                    {% endif %}
+
+                                                    {% if dia.actividades %}
+                                                        <div class="text-preview mt-4">
+                                                            <strong>Actividades</strong>
+                                                            <ul class="clean-list mt-3">
+                                                                {% for actividad in dia.actividades %}
+                                                                    <li><i data-lucide="circle-dot"></i><span>{{ actividad }}</span></li>
                                                                 {% endfor %}
                                                             </ul>
-                                                        {% else %}
-                                                            <ul class="map-point-list">
-                                                                <li>Idea clave conectada con el objetivo del día.</li>
-                                                                <li>Repasar con lectura, observación y práctica.</li>
-                                                            </ul>
-                                                        {% endif %}
-
-                                                        {% if rama.estudio_activo %}
-                                                            <div class="map-active-task">
-                                                                <i data-lucide="pencil-line"></i>
-                                                                <span>{{ rama.estudio_activo }}</span>
-                                                            </div>
-                                                        {% endif %}
-                                                    </article>
-                                                {% endfor %}
-                                            {% else %}
-                                                {% for item in dia.recursos.visual.apoyo_visual %}
-                                                    <article class="map-branch-card branch-tone-{{ forloop.counter }}">
-                                                        <div class="map-branch-head">
-                                                            <span class="map-index">{{ forloop.counter }}</span>
-                                                            <div>
-                                                                <small>Clave visual</small>
-                                                                <h4>{{ item }}</h4>
-                                                            </div>
                                                         </div>
-                                                        <p class="map-branch-detail">Idea priorizada por el sistema para estudiar el tema.</p>
-                                                        <ul class="map-point-list">
-                                                            <li>Relacionar con el tema central.</li>
-                                                            <li>Convertir en pregunta de repaso.</li>
-                                                        </ul>
-                                                    </article>
-                                                {% endfor %}
-                                            {% endif %}
-                                        </div>
+                                                    {% endif %}
 
-                                        <div class="map-study-footer">
-                                            <div>
-                                                <strong>Cómo estudiarlo</strong>
-                                                <span>{{ dia.recursos.visual.instruccion_estudio|default:"Lee el nodo central, recorre las ramas en orden y convierte cada subpunto en una pregunta." }}</span>
-                                            </div>
-                                            <div>
-                                                <strong>Enfoque VARK</strong>
-                                                <span>Visual + lectura + práctica activa.</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                                    {% if dia.autoevaluacion %}
+                                                        <div class="text-preview mt-4">
+                                                            <strong>Autoevaluación</strong>
+                                                            <ul class="clean-list mt-3">
+                                                                {% for pregunta in dia.autoevaluacion %}
+                                                                    <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        </div>
+                                                    {% endif %}
 
-                                    <div class="form-actions mt-3">
-                                        <button type="button"
-                                                class="btn btn-primary btn-sm"
-                                                data-open-visual="generated-map-modal-{{ dia.dia }}">
-                                            Ver mapa en grande
-                                        </button>
-                                    </div>
+                                                    {% if dia.producto_esperado %}
+                                                        <div class="info-box mt-4">
+                                                            <div class="ai-box-title"><i data-lucide="target"></i><strong>Producto esperado</strong></div>
+                                                            <p>{{ dia.producto_esperado }}</p>
+                                                        </div>
+                                                    {% endif %}
 
-                                    <div class="visual-modal-source" id="generated-map-modal-{{ dia.dia }}">
-                                        <div class="mindmap-elite modal-map-elite">
-                                            <div class="map-bg-orbit orbit-one"></div>
-                                            <div class="map-bg-orbit orbit-two"></div>
-                                            <div class="map-hero-node">
-                                                <span class="map-pill">Tema central</span>
-                                                <h3>{{ dia.recursos.visual.nodo_central|default:dia.tema_principal }}</h3>
-                                                <p>{{ dia.tema_principal }}</p>
-                                            </div>
-                                            <div class="map-connector-line"></div>
-                                            <div class="mindmap-elite-grid">
-                                                {% if dia.recursos.visual.ramas %}
-                                                    {% for rama in dia.recursos.visual.ramas %}
-                                                        <article class="map-branch-card branch-tone-{{ forloop.counter }}">
-                                                            <div class="map-branch-head">
-                                                                <span class="map-index">{{ forloop.counter }}</span>
-                                                                <div>
-                                                                    <small>Rama de estudio</small>
-                                                                    <h4>{{ rama.titulo }}</h4>
-                                                                </div>
-                                                            </div>
-                                                            {% if rama.detalle %}<p class="map-branch-detail">{{ rama.detalle }}</p>{% endif %}
-                                                            {% if rama.subpuntos %}
-                                                                <ul class="map-point-list">
-                                                                    {% for subpunto in rama.subpuntos %}<li>{{ subpunto }}</li>{% endfor %}
-                                                                </ul>
-                                                            {% endif %}
-                                                        </article>
-                                                    {% endfor %}
-                                                {% else %}
-                                                    {% for item in dia.recursos.visual.apoyo_visual %}
-                                                        <article class="map-branch-card branch-tone-{{ forloop.counter }}">
-                                                            <div class="map-branch-head">
-                                                                <span class="map-index">{{ forloop.counter }}</span>
-                                                                <div>
-                                                                    <small>Clave visual</small>
-                                                                    <h4>{{ item }}</h4>
-                                                                </div>
-                                                            </div>
-                                                            <p class="map-branch-detail">Idea priorizada por el sistema para estudiar el tema.</p>
-                                                        </article>
-                                                    {% endfor %}
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-                            {% endif %}
-
-                            {% if dia.recursos.kinestesico.habilitado %}
-                                <section class="resource-card">
-                                    <div class="resource-card-header">
-                                        <i data-lucide="activity"></i>
-                                        <strong>{{ dia.recursos.kinestesico.titulo }}</strong>
-                                    </div>
-                                    <p>{{ dia.recursos.kinestesico.instrucciones }}</p>
-                                    {% if dia.recursos.kinestesico.preguntas %}
-                                        <ul class="clean-list mt-3">
-                                            {% for pregunta in dia.recursos.kinestesico.preguntas %}
-                                                <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </section>
-                            {% endif %}
-
-                            {% if dia.recursos.lectura.habilitado %}
-                                <section class="resource-card">
-                                    <div class="resource-card-header">
-                                        <i data-lucide="book-text"></i>
-                                        <strong>{{ dia.recursos.lectura.titulo }}</strong>
-                                    </div>
-                                    <p>{{ dia.recursos.lectura.resumen }}</p>
-                                    {% if dia.recursos.lectura.glosario %}
-                                        <ul class="clean-list mt-3">
-                                            {% for item in dia.recursos.lectura.glosario %}
-                                                <li><i data-lucide="bookmark"></i><span>{{ item }}</span></li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </section>
-                            {% endif %}
-                        </div>
-                        {% if dia.recursos.imagen_anatomica.habilitado %}
-                            <section class="form-panel wide-panel mt-4 anatomical-panel">
-                                <div class="resource-card-header anatomy-title-premium">
-                                    <i data-lucide="image"></i>
-                                    <div>
-                                        <strong>{{ dia.recursos.imagen_anatomica.titulo }}</strong>
-                                        <p>Lámina anatómica con prompt controlado, marcadores externos y práctica guiada.</p>
-                                    </div>
-                                </div>
-
-                                <div class="visual-meta-strip mt-3">
-                                    <span><i data-lucide="scan-eye"></i> Vista: {{ dia.recursos.imagen_anatomica.tipo_vista|default:"anatómica didáctica" }}</span>
-                                    {% if dia.recursos.imagen_anatomica.categoria_visual %}
-                                        <span><i data-lucide="layers"></i> Categoría: {{ dia.recursos.imagen_anatomica.categoria_visual }}</span>
-                                    {% endif %}
-                                    <span><i data-lucide="badge-check"></i> Marcadores HTML</span>
-                                </div>
-
-                                {% if dia.recursos.imagen_anatomica.descripcion %}
-                                    <p class="visual-resource-description">{{ dia.recursos.imagen_anatomica.descripcion }}</p>
-                                {% endif %}
-
-                                {% if dia.recursos.imagen_anatomica.image_url %}
-                                    <div class="generated-anatomy-card mt-3">
-                                        <div class="anatomy-image-wrap">
-                                            <img src="{{ dia.recursos.imagen_anatomica.image_url }}"
-                                                 alt="{{ dia.recursos.imagen_anatomica.titulo }}"
-                                                 class="study-generated-image">
-                                            {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
-                                                <button type="button"
-                                                        class="anatomy-marker"
-                                                        data-x="{{ marcador.x|default:'50' }}"
-                                                        data-y="{{ marcador.y|default:'50' }}"
-                                                        title="{{ marcador.nombre }}: {{ marcador.pista }}">
-                                                    {{ marcador.id }}
-                                                </button>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-
-                                    {% if dia.recursos.imagen_anatomica.marcadores %}
-                                        <div class="marker-legend-grid mt-3">
-                                            {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
-                                                <details class="marker-study-card">
-                                                    <summary><span class="marker-dot-mini">{{ marcador.id }}</span> {{ marcador.nombre }}</summary>
-                                                    {% if marcador.pista %}<p><strong>Pista:</strong> {{ marcador.pista }}</p>{% endif %}
-                                                    {% if marcador.detalle %}<p><strong>Detalle:</strong> {{ marcador.detalle }}</p>{% endif %}
-                                                </details>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-
-                                    <div class="form-actions mt-3">
-                                        <button type="button"
-                                                class="btn btn-primary btn-sm"
-                                                data-open-visual="generated-anatomy-{{ dia.dia }}">
-                                            Ver lámina en grande
-                                        </button>
-                                    </div>
-
-                                    <div class="visual-modal-source" id="generated-anatomy-{{ dia.dia }}">
-                                        <div class="anatomy-image-wrap modal-anatomy-wrap">
-                                            <img src="{{ dia.recursos.imagen_anatomica.image_url }}"
-                                                 alt="{{ dia.recursos.imagen_anatomica.titulo }}"
-                                                 class="study-generated-image">
-                                            {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
-                                                <span class="anatomy-marker" data-x="{{ marcador.x|default:'50' }}" data-y="{{ marcador.y|default:'50' }}">{{ marcador.id }}</span>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-
-                                    {% if dia.recursos.imagen_anatomica.historial_generacion %}
-                                        <details class="generation-history-card mt-3">
-                                            <summary>
-                                                <span><i data-lucide="history"></i> Historial de generación IA</span>
-                                                <small>{{ dia.recursos.imagen_anatomica.historial_generacion.estado|upper }}</small>
-                                            </summary>
-                                            <div class="generation-history-grid">
-                                                <div><strong>Proveedor</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.proveedor }}</span></div>
-                                                <div><strong>Motor</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.motor }}</span></div>
-                                                <div><strong>Categoría detectada</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.categoria }}</span></div>
-                                                <div><strong>Persistencia</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.persistencia }}</span></div>
-                                                <div><strong>Generado en</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.generado_en }}</span></div>
-                                                <div><strong>Dependencia</strong><span>{{ dia.recursos.imagen_anatomica.historial_generacion.dependencia_runtime }}</span></div>
-                                            </div>
-                                            {% if dia.recursos.imagen_anatomica.historial_generacion.prompt_resumen %}
-                                                <div class="generation-prompt-box mt-3">
-                                                    <strong>Prompt controlado usado</strong>
-                                                    <p>{{ dia.recursos.imagen_anatomica.historial_generacion.prompt_resumen }}</p>
-                                                </div>
-                                            {% endif %}
-                                            {% if dia.recursos.imagen_anatomica.historial_generacion.detalle %}
-                                                <div class="generation-detail-box mt-2">
-                                                    <strong>Detalle</strong>
-                                                    <p>{{ dia.recursos.imagen_anatomica.historial_generacion.detalle }}</p>
-                                                </div>
-                                            {% endif %}
-                                        </details>
-                                    {% endif %}
-                                {% else %}
-                                    <div class="image-pending-box premium-pending-box mt-3">
-                                        <div>
-                                            <i data-lucide="image-off"></i>
-                                            <strong>Lámina pendiente de generación</strong>
-                                        </div>
-                                        <p>
-                                            El sistema ya preparó el prompt anatómico y los marcadores de práctica.
-                                            Regenera la ruta cuando el proveedor de imágenes esté disponible.
-                                            {% if dia.recursos.imagen_anatomica.image_error %}
-                                                <br><small><strong>Detalle técnico:</strong> {{ dia.recursos.imagen_anatomica.image_error }}</small>
-                                            {% endif %}
-                                        </p>
-                                        {% if dia.recursos.imagen_anatomica.prompt_imagen %}
-                                            <details class="generation-prompt-box mt-3">
-                                                <summary>Ver prompt controlado preparado</summary>
-                                                <p>{{ dia.recursos.imagen_anatomica.prompt_imagen }}</p>
-                                            </details>
-                                        {% endif %}
-                                    </div>
-                                {% endif %}
-
-                                <div class="practice-lab mt-4">
-                                    <div class="practice-lab-header">
-                                        <div>
-                                            <p class="eyebrow">Modo práctica</p>
-                                            <h3>Observa, responde y verifica</h3>
-                                            {% if dia.recursos.imagen_anatomica.modo_practica %}
-                                                <p>{{ dia.recursos.imagen_anatomica.modo_practica }}</p>
-                                            {% else %}
-                                                <p>Primero observa la lámina sin ayudas, luego responde y finalmente revela las pistas y respuestas esperadas.</p>
-                                            {% endif %}
-                                        </div>
-                                        <div class="practice-score-chip">
-                                            <span>{% if dia.recursos.imagen_anatomica.preguntas_guiadas %}{{ dia.recursos.imagen_anatomica.preguntas_guiadas|length }}{% else %}{{ dia.recursos.imagen_anatomica.preguntas|length }}{% endif %}</span>
-                                            <small>retos</small>
-                                        </div>
-                                    </div>
-
-                                    <div class="practice-steps">
-                                        <div><strong>1</strong><span>Observa la imagen 30 segundos sin leer la leyenda.</span></div>
-                                        <div><strong>2</strong><span>Responde cada pregunta con tus palabras.</span></div>
-                                        <div><strong>3</strong><span>Revela pista y respuesta para corregirte.</span></div>
-                                    </div>
-
-                                    {% if dia.recursos.imagen_anatomica.preguntas_guiadas %}
-                                        <div class="practice-question-grid mt-3">
-                                            {% for pregunta in dia.recursos.imagen_anatomica.preguntas_guiadas %}
-                                                <article class="practice-question-card">
-                                                    <div class="practice-question-top">
-                                                        <span class="practice-number">{{ forloop.counter }}</span>
-                                                        <strong>{{ pregunta.pregunta }}</strong>
-                                                    </div>
-                                                    <details class="practice-reveal">
-                                                        <summary>Ver pista</summary>
-                                                        <p>{{ pregunta.pista }}</p>
-                                                    </details>
-                                                    <details class="practice-reveal answer-reveal">
-                                                        <summary>Ver respuesta esperada</summary>
-                                                        <p>{{ pregunta.respuesta }}</p>
-                                                    </details>
+                                                    <form method="post" action="{% url 'rutas:actualizar_progreso' %}" class="notes-form mt-4">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="dia" value="{{ dia.dia }}">
+                                                        <input type="hidden" name="accion" value="guardar_notas">
+                                                        <label><strong>Notas personales del día</strong></label>
+                                                        <textarea name="notas" rows="3" placeholder="Escribe qué aprendiste, qué te falta repasar o qué duda te quedó...">{% if dia.progreso %}{{ dia.progreso.notas }}{% endif %}</textarea>
+                                                        <div class="form-actions mt-2">
+                                                            <button type="submit" class="btn btn-outline-primary btn-sm">Guardar notas</button>
+                                                        </div>
+                                                    </form>
                                                 </article>
-                                            {% endfor %}
-                                        </div>
-                                    {% elif dia.recursos.imagen_anatomica.preguntas %}
-                                        <div class="practice-question-grid mt-3">
-                                            {% for pregunta in dia.recursos.imagen_anatomica.preguntas %}
-                                                <article class="practice-question-card">
-                                                    <div class="practice-question-top">
-                                                        <span class="practice-number">{{ forloop.counter }}</span>
-                                                        <strong>{{ pregunta }}</strong>
-                                                    </div>
-                                                    <details class="practice-reveal">
-                                                        <summary>Ver pista</summary>
-                                                        <p>Observa los marcadores de la lámina y ubica la estructura relacionada con la pregunta.</p>
-                                                    </details>
-                                                    <details class="practice-reveal answer-reveal">
-                                                        <summary>Ver respuesta esperada</summary>
-                                                        <p>Contrasta tu respuesta con la leyenda de marcadores y explica la relación anatómica principal.</p>
-                                                    </details>
-                                                </article>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-
-                                    {% if dia.recursos.imagen_anatomica.marcadores %}
-                                        <div class="practice-marker-review mt-3">
-                                            <strong>Repaso rápido de marcadores</strong>
-                                            <div class="practice-marker-list">
-                                                {% for marcador in dia.recursos.imagen_anatomica.marcadores %}
-                                                    <span><b>{{ marcador.id }}</b> {{ marcador.nombre }}</span>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </section>
-                        {% endif %}
-
-
-                        {% if dia.mini_quiz %}
-                            <section class="form-panel wide-panel mt-4 quiz-panel" data-quiz-day="{{ dia.dia }}">
-                                <div class="resource-card-header">
-                                    <i data-lucide="clipboard-check"></i>
-                                    <strong>Mini quiz evaluable del día</strong>
-                                </div>
-                                <p>Responde las preguntas y presiona calificar para ver tu resultado.</p>
-
-                                <div class="quiz-list">
-                                    {% for pregunta in dia.mini_quiz %}
-                                        <div class="quiz-question" data-question>
-                                            <strong>{{ forloop.counter }}. {{ pregunta.pregunta }}</strong>
-                                            <div class="quiz-options mt-3">
-                                                {% for opcion in pregunta.opciones %}
-                                                    <label class="quiz-option">
-                                                        <input type="radio"
-                                                               name="quiz-{{ dia.dia }}-{{ forloop.parentloop.counter }}"
-                                                               value="{{ opcion|escape }}"
-                                                               data-correct="{% if opcion == pregunta.respuesta_correcta %}true{% else %}false{% endif %}">
-                                                        <span>{{ opcion }}</span>
-                                                    </label>
-                                                {% endfor %}
-                                            </div>
-                                            <div class="quiz-explanation">
-                                                <strong>Respuesta correcta:</strong> {{ pregunta.respuesta_correcta }}<br>
-                                                {{ pregunta.explicacion }}
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-
-                                <div class="form-actions mt-3 quiz-actions">
-                                    <button type="button" class="btn btn-primary icon-btn" onclick="gradeQuiz(this)">
-                                        <i data-lucide="check-circle"></i>
-                                        <span>Calificar mini quiz</span>
-                                    </button>
-                                    <strong class="quiz-score"></strong>
-
-                                    <form method="post" action="{% url 'rutas:actualizar_progreso' %}" class="quiz-save-form">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="dia" value="{{ dia.dia }}">
-                                        <input type="hidden" name="accion" value="guardar_quiz">
-                                        <input type="hidden" name="quiz_puntaje" value="">
-                                        <input type="hidden" name="quiz_total" value="">
-                                        <button type="submit" class="btn btn-outline-primary icon-btn">
-                                            <i data-lucide="save"></i>
-                                            <span>Guardar resultado</span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </section>
-                        {% endif %}
-
-                        {% if dia.actividades %}
-                            <div class="text-preview mt-4">
-                                <strong>Actividades</strong>
-                                <ul class="clean-list mt-3">
-                                    {% for actividad in dia.actividades %}
-                                        <li><i data-lucide="circle-dot"></i><span>{{ actividad }}</span></li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        {% endif %}
-
-                        {% if dia.autoevaluacion %}
-                            <div class="text-preview mt-4">
-                                <strong>Autoevaluación</strong>
-                                <ul class="clean-list mt-3">
-                                    {% for pregunta in dia.autoevaluacion %}
-                                        <li><i data-lucide="help-circle"></i><span>{{ pregunta }}</span></li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        {% endif %}
-
-                        {% if dia.producto_esperado %}
-                            <div class="info-box mt-4">
-                                <div class="ai-box-title"><i data-lucide="target"></i><strong>Producto esperado</strong></div>
-                                <p>{{ dia.producto_esperado }}</p>
-                            </div>
-                        {% endif %}
-
-                        <form method="post" action="{% url 'rutas:actualizar_progreso' %}" class="notes-form mt-4">
-                            {% csrf_token %}
-                            <input type="hidden" name="dia" value="{{ dia.dia }}">
-                            <input type="hidden" name="accion" value="guardar_notas">
-                            <label><strong>Notas personales del día</strong></label>
-                            <textarea name="notas" rows="3" placeholder="Escribe qué aprendiste, qué te falta repasar o qué duda te quedó...">{% if dia.progreso %}{{ dia.progreso.notas }}{% endif %}</textarea>
-                            <div class="form-actions mt-2">
-                                <button type="submit" class="btn btn-outline-primary btn-sm">Guardar notas</button>
-                            </div>
-                        </form>
-                    </article>
                                     </div>
-                                </details>
-                            </section>
-                        </div>
-
-                        <div class="roadmap-center">
-                            <div class="roadmap-node {% if dia.progreso and dia.progreso.completado %}is-complete{% endif %}">
-                                <span>{{ dia.dia }}</span>
+                                </section>
                             </div>
-                        </div>
-                    </article>
-                {% endfor %}
+                        </article>
+                    {% endfor %}
+                </div>
             </div>
 
             {% if ruta.recomendaciones_lista %}
@@ -838,10 +794,9 @@
                     <p class="eyebrow">Vista previa sin datos IA</p>
                     <h2>Aún no tienes una ruta generada</h2>
                     <p>
-                        Cuando Gemini responda, aquí aparecerá tu camino personalizado con los días,
-                        el perfil VARK, el tema de Anatomía I, los recursos recomendados y el avance real.
+                        Mientras Gemini genera tu ruta, esta pantalla muestra cómo se verá el camino:
+                        círculos interactivos por día y contenido completo al presionar cada punto.
                     </p>
-
                     <form method="post" class="mt-4">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-primary icon-btn">
@@ -851,45 +806,107 @@
                     </form>
                 </div>
 
-                <div class="demo-roadmap" aria-label="Vista previa de ruta de aprendizaje sin datos">
-                    <article class="demo-roadmap-step is-left">
-                        <div class="demo-roadmap-card">
-                            <span class="roadmap-chip">Día 1</span>
-                            <h3>Diagnóstico inicial</h3>
-                            <p>Se mostrará el primer tema priorizado y el recurso VARK dominante.</p>
-                            <div class="roadmap-user-meta">
-                                <span><i data-lucide="scan-eye"></i> Perfil VARK</span>
-                                <span><i data-lucide="clock-3"></i> Tiempo diario</span>
-                            </div>
-                        </div>
-                        <div class="demo-roadmap-node">1</div>
-                    </article>
+                <div class="route-path-shell preview-mode mt-4">
+                    <div class="route-path-legend">
+                        <span><i data-lucide="mouse-pointer-click"></i> Presiona un círculo para ver el ejemplo</span>
+                        <span><i data-lucide="route"></i> Vista previa visual</span>
+                    </div>
 
-                    <article class="demo-roadmap-step is-right">
-                        <div class="demo-roadmap-card">
-                            <span class="roadmap-chip">Día 2</span>
-                            <h3>Recurso personalizado</h3>
-                            <p>Aquí se visualizará audio, mapa mental, lectura o práctica guiada.</p>
-                            <div class="roadmap-user-meta">
-                                <span><i data-lucide="book-open"></i> Tema</span>
-                                <span><i data-lucide="layers"></i> Recurso</span>
+                    <div class="route-path-stage">
+                        <article class="route-path-step path-left has-next">
+                            <div class="route-path-ribbon" aria-hidden="true"></div>
+                            <button type="button" class="route-path-node" data-open-route-day="preview-route-day-1">
+                                <span class="route-path-day">Día 1</span>
+                                <strong>Diagnóstico inicial</strong>
+                                <p>Se mostrará el tema principal, objetivo del día y recurso VARK dominante.</p>
+                                <small>Ver ejemplo</small>
+                            </button>
+                            <div class="route-day-modal" id="preview-route-day-1" aria-hidden="true">
+                                <div class="route-day-modal-backdrop" data-close-route-day></div>
+                                <section class="route-day-modal-dialog" role="dialog" aria-modal="true">
+                                    <header class="route-day-modal-header">
+                                        <div>
+                                            <p class="eyebrow">Vista previa</p>
+                                            <h2>Día 1: Diagnóstico inicial</h2>
+                                            <p>Aquí aparecerá el contenido real cuando la IA genere la ruta.</p>
+                                        </div>
+                                        <button type="button" class="route-day-modal-close" data-close-route-day>&times;</button>
+                                    </header>
+                                    <div class="route-day-modal-body">
+                                        <div class="detail-grid mt-2">
+                                            <div><strong>Tema principal</strong><p>Se completará con el tema actual del estudiante.</p></div>
+                                            <div><strong>Tiempo sugerido</strong><p>Según el tiempo disponible.</p></div>
+                                            <div><strong>Recurso dominante</strong><p>Visual, auditivo, lectura/escritura o kinestésico.</p></div>
+                                            <div><strong>Uso de materiales</strong><p>PDF, imagen, DOCX, TXT o texto manual.</p></div>
+                                        </div>
+                                    </div>
+                                </section>
                             </div>
-                        </div>
-                        <div class="demo-roadmap-node">2</div>
-                    </article>
+                        </article>
 
-                    <article class="demo-roadmap-step is-left">
-                        <div class="demo-roadmap-card">
-                            <span class="roadmap-chip">Día 3</span>
-                            <h3>Mini quiz y avance</h3>
-                            <p>Se mostrará el estado completado, notas personales y resultado del mini quiz.</p>
-                            <div class="roadmap-user-meta">
-                                <span><i data-lucide="badge-check"></i> Progreso</span>
-                                <span><i data-lucide="clipboard-check"></i> Quiz</span>
+                        <article class="route-path-step path-right has-next">
+                            <div class="route-path-ribbon" aria-hidden="true"></div>
+                            <button type="button" class="route-path-node" data-open-route-day="preview-route-day-2">
+                                <span class="route-path-day">Día 2</span>
+                                <strong>Recurso personalizado</strong>
+                                <p>El sistema mostrará audio, mapa mental, lectura o práctica según VARK.</p>
+                                <small>Ver ejemplo</small>
+                            </button>
+                            <div class="route-day-modal" id="preview-route-day-2" aria-hidden="true">
+                                <div class="route-day-modal-backdrop" data-close-route-day></div>
+                                <section class="route-day-modal-dialog" role="dialog" aria-modal="true">
+                                    <header class="route-day-modal-header">
+                                        <div>
+                                            <p class="eyebrow">Vista previa</p>
+                                            <h2>Día 2: Recurso personalizado</h2>
+                                            <p>El contenido se adaptará al perfil VARK y al tema de Anatomía I.</p>
+                                        </div>
+                                        <button type="button" class="route-day-modal-close" data-close-route-day>&times;</button>
+                                    </header>
+                                    <div class="route-day-modal-body">
+                                        <div class="info-box mt-2">
+                                            <div class="ai-box-title"><i data-lucide="sparkles"></i><strong>Ejemplo de contenido</strong></div>
+                                            <p>Visual: mapa mental. Auditivo: audio. Lectura/escritura: resumen. Kinestésico: actividad práctica.</p>
+                                        </div>
+                                    </div>
+                                </section>
                             </div>
-                        </div>
-                        <div class="demo-roadmap-node">3</div>
-                    </article>
+                        </article>
+
+                        <article class="route-path-step path-left">
+                            <div class="route-path-ribbon" aria-hidden="true"></div>
+                            <button type="button" class="route-path-node" data-open-route-day="preview-route-day-3">
+                                <span class="route-path-day">Día 3</span>
+                                <strong>Mini quiz y avance</strong>
+                                <p>Se visualizará el progreso, la autoevaluación y las notas personales.</p>
+                                <small>Ver ejemplo</small>
+                            </button>
+                            <div class="route-day-modal" id="preview-route-day-3" aria-hidden="true">
+                                <div class="route-day-modal-backdrop" data-close-route-day></div>
+                                <section class="route-day-modal-dialog" role="dialog" aria-modal="true">
+                                    <header class="route-day-modal-header">
+                                        <div>
+                                            <p class="eyebrow">Vista previa</p>
+                                            <h2>Día 3: Mini quiz y avance</h2>
+                                            <p>Cuando existan datos, aquí estarán las preguntas, actividades y notas.</p>
+                                        </div>
+                                        <button type="button" class="route-day-modal-close" data-close-route-day>&times;</button>
+                                    </header>
+                                    <div class="route-day-modal-body">
+                                        <div class="text-preview mt-2">
+                                            <strong>Secciones esperadas</strong>
+                                            <ul class="clean-list mt-3">
+                                                <li><i data-lucide="check"></i><span>Mini quiz evaluable</span></li>
+                                                <li><i data-lucide="check"></i><span>Actividades del día</span></li>
+                                                <li><i data-lucide="check"></i><span>Autoevaluación</span></li>
+                                                <li><i data-lucide="check"></i><span>Notas personales</span></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </article>
+                    </div>
                 </div>
             </div>
         {% endif %}
@@ -2346,6 +2363,393 @@
     word-break: break-word;
 }
 
+
+
+/* =========================================================
+   RUTA VISUAL EN CAMINO ZIGZAG - SOLO FRONTEND
+   ========================================================= */
+.route-path-shell {
+    max-width: 1040px;
+    margin-inline: auto;
+}
+
+.route-path-legend {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 0 0 20px;
+    padding: 14px 18px;
+    border: 1px solid rgba(219, 232, 230, .95);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .78);
+    box-shadow: 0 14px 30px rgba(18, 40, 39, .06);
+}
+
+.route-path-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-2);
+    font-weight: 800;
+    font-size: .92rem;
+}
+
+.route-path-legend svg {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+}
+
+.route-path-stage {
+    position: relative;
+    display: grid;
+    gap: 8px;
+    padding: 22px 0 34px;
+}
+
+.route-path-step {
+    position: relative;
+    min-height: 260px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1fr);
+    align-items: center;
+}
+
+.route-path-ribbon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 76px;
+    left: 10%;
+    right: 10%;
+    z-index: 0;
+    filter: drop-shadow(0 20px 24px rgba(18, 40, 39, .12));
+}
+
+.route-path-step.path-left .route-path-ribbon {
+    clip-path: polygon(0 28%, 88% 28%, 100% 50%, 88% 72%, 0 72%, 8% 50%);
+}
+
+.route-path-step.path-right .route-path-ribbon {
+    clip-path: polygon(12% 28%, 100% 28%, 92% 50%, 100% 72%, 12% 72%, 0 50%);
+}
+
+.route-path-step:nth-child(4n+1) .route-path-ribbon {
+    background: linear-gradient(90deg, var(--primary), var(--primary-2));
+}
+
+.route-path-step:nth-child(4n+2) .route-path-ribbon {
+    background: linear-gradient(90deg, #14b8a6, #0891b2);
+}
+
+.route-path-step:nth-child(4n+3) .route-path-ribbon {
+    background: linear-gradient(90deg, var(--amber), var(--accent));
+}
+
+.route-path-step:nth-child(4n+4) .route-path-ribbon {
+    background: linear-gradient(90deg, #7c3aed, var(--primary-2));
+}
+
+.route-path-step.has-next::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -28px;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 70px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(15,118,110,.20), rgba(15,118,110,.03));
+    z-index: 0;
+}
+
+.route-path-node {
+    position: relative;
+    z-index: 2;
+    width: 260px;
+    height: 260px;
+    border-radius: 999px;
+    border: 10px solid #ffffff;
+    background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.98), rgba(255,255,255,.78) 38%, transparent 39%),
+        linear-gradient(180deg, #ffffff 0%, #f8fffd 100%);
+    box-shadow: 0 26px 60px rgba(15, 23, 42, .16);
+    color: var(--ink);
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.route-path-step.path-left .route-path-node {
+    grid-column: 1 / 2;
+    justify-self: center;
+}
+
+.route-path-step.path-right .route-path-node {
+    grid-column: 3 / 4;
+    justify-self: center;
+}
+
+.route-path-node:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 30px 70px rgba(15, 23, 42, .20);
+    border-color: rgba(15, 118, 110, .24);
+}
+
+.route-path-step.is-complete .route-path-node {
+    border-color: rgba(15, 118, 110, .28);
+    background: linear-gradient(180deg, #ffffff 0%, #effffb 100%);
+}
+
+.route-path-day {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: rgba(15, 118, 110, .11);
+    color: var(--primary);
+    font-size: .82rem;
+    font-weight: 950;
+}
+
+.route-path-node strong {
+    display: block;
+    max-width: 190px;
+    color: var(--ink);
+    font-size: 1.04rem;
+    font-weight: 950;
+    line-height: 1.18;
+}
+
+.route-path-node p {
+    max-width: 200px;
+    margin: 0;
+    color: var(--muted);
+    font-size: .82rem;
+    line-height: 1.35;
+}
+
+.route-path-node small {
+    color: var(--primary);
+    font-size: .74rem;
+    font-weight: 900;
+}
+
+.route-path-status {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-self: center;
+    gap: 9px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.88);
+    border: 1px solid rgba(219, 232, 230, .9);
+    box-shadow: 0 16px 32px rgba(18, 40, 39, .08);
+    color: var(--ink-2);
+}
+
+.route-path-step.path-left .route-path-status { grid-column: 3 / 4; }
+.route-path-step.path-right .route-path-status { grid-column: 1 / 2; }
+
+.status-dot {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+}
+
+.status-dot svg { width: 16px; height: 16px; }
+.status-dot.done { background: rgba(15,118,110,.13); color: var(--primary); }
+.status-dot.pending { background: rgba(245,184,65,.18); color: #b77900; }
+
+.route-day-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    z-index: 10050;
+}
+
+.route-day-modal.is-open {
+    display: block;
+}
+
+.route-modal-open {
+    overflow: hidden;
+}
+
+.route-day-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, .64);
+    backdrop-filter: blur(4px);
+}
+
+.route-day-modal-dialog {
+    position: relative;
+    z-index: 2;
+    width: min(1180px, calc(100vw - 28px));
+    max-height: calc(100vh - 28px);
+    margin: 14px auto;
+    overflow: auto;
+    border-radius: 30px;
+    background: #ffffff;
+    box-shadow: 0 34px 100px rgba(15, 23, 42, .34);
+    border: 1px solid rgba(255,255,255,.80);
+}
+
+.route-day-modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 22px 24px;
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.93));
+    border-bottom: 1px solid rgba(219, 232, 230, .92);
+    backdrop-filter: blur(10px);
+}
+
+.route-day-modal-header h2 {
+    margin: 0 0 4px;
+    color: var(--ink);
+    font-size: clamp(1.35rem, 2.5vw, 2.1rem);
+}
+
+.route-day-modal-header p:last-child {
+    margin: 0;
+    color: var(--muted);
+}
+
+.route-day-modal-close {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: 1px solid rgba(219, 232, 230, .95);
+    background: #ffffff;
+    color: var(--ink);
+    font-size: 1.7rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(18, 40, 39, .08);
+}
+
+.route-day-modal-body {
+    padding: 24px;
+    background:
+        radial-gradient(circle at top left, rgba(15,118,110,.08), transparent 28%),
+        linear-gradient(180deg, #fbfefd 0%, #ffffff 100%);
+}
+
+.route-day-modal-body .route-day-card {
+    margin: 0;
+    box-shadow: none;
+}
+
+.route-empty-showcase {
+    display: grid;
+    gap: 24px;
+}
+
+.route-empty-copy {
+    padding: 28px;
+    border-radius: 26px;
+    border: 1px solid rgba(219, 232, 230, .95);
+    background:
+        radial-gradient(circle at top left, rgba(15,118,110,.10), transparent 28%),
+        linear-gradient(180deg, #ffffff 0%, #f8fffd 100%);
+    box-shadow: 0 18px 42px rgba(18, 40, 39, .08);
+}
+
+.preview-mode .route-path-node {
+    background: linear-gradient(180deg, #ffffff 0%, #f9fcfc 100%);
+}
+
+.visual-modal {
+    z-index: 12050 !important;
+}
+
+@media (max-width: 1050px) {
+    .route-path-step {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 230px;
+        padding-block: 20px;
+    }
+
+    .route-path-ribbon {
+        left: 4%;
+        right: 4%;
+        height: 58px;
+    }
+
+    .route-path-step.path-left .route-path-node,
+    .route-path-step.path-right .route-path-node,
+    .route-path-step.path-left .route-path-status,
+    .route-path-step.path-right .route-path-status {
+        grid-column: 1 / 2;
+    }
+
+    .route-path-status {
+        margin-top: 12px;
+    }
+}
+
+@media (max-width: 720px) {
+    .route-path-legend {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .route-path-step {
+        min-height: auto;
+        padding-block: 18px 34px;
+    }
+
+    .route-path-ribbon {
+        display: none;
+    }
+
+    .route-path-step.has-next::after {
+        bottom: -20px;
+        height: 45px;
+    }
+
+    .route-path-node {
+        width: min(100%, 330px);
+        height: auto;
+        min-height: 220px;
+        border-radius: 34px;
+    }
+
+    .route-day-modal-dialog {
+        width: calc(100vw - 16px);
+        max-height: calc(100vh - 16px);
+        margin: 8px auto;
+        border-radius: 22px;
+    }
+
+    .route-day-modal-header {
+        padding: 18px;
+    }
+
+    .route-day-modal-body {
+        padding: 16px;
+    }
+}
 </style>
 
 <script type="module">
@@ -2502,6 +2906,43 @@
         });
     });
 
+</script>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        function closeRouteDayModals() {
+            document.querySelectorAll(".route-day-modal.is-open").forEach(function(modal) {
+                modal.classList.remove("is-open");
+                modal.setAttribute("aria-hidden", "true");
+            });
+            document.body.classList.remove("route-modal-open");
+        }
+
+        document.querySelectorAll("[data-open-route-day]").forEach(function(button) {
+            button.addEventListener("click", function() {
+                const modalId = button.getAttribute("data-open-route-day");
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                closeRouteDayModals();
+                modal.classList.add("is-open");
+                modal.setAttribute("aria-hidden", "false");
+                document.body.classList.add("route-modal-open");
+                if (window.lucide) { lucide.createIcons(); }
+            });
+        });
+
+        document.querySelectorAll("[data-close-route-day]").forEach(function(button) {
+            button.addEventListener("click", closeRouteDayModals);
+        });
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape") {
+                closeRouteDayModals();
+            }
+        });
+    });
 </script>
 
 {% if ruta %}
