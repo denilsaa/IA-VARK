@@ -123,9 +123,91 @@
                 <h2>Recursos concretos para aprender</h2>
             </div>
 
-            <div class="route-list">
+            <div class="learning-roadmap mt-4">
                 {% for dia in dias_ruta %}
-                    <article class="form-panel route-day-card">
+                    <article class="roadmap-step {% if forloop.counter|divisibleby:2 %}is-right{% else %}is-left{% endif %}">
+                        <div class="roadmap-card-wrap">
+                            <section class="roadmap-card {% if dia.progreso and dia.progreso.completado %}is-complete{% endif %}">
+                                <div class="roadmap-card-top">
+                                    <span class="roadmap-chip">Día {{ dia.dia }}</span>
+                                    <span class="roadmap-state {% if dia.progreso and dia.progreso.completado %}done{% else %}pending{% endif %}">
+                                        {% if dia.progreso and dia.progreso.completado %}
+                                            Completado
+                                        {% else %}
+                                            Pendiente
+                                        {% endif %}
+                                    </span>
+                                </div>
+
+                                <h3>{{ dia.titulo }}</h3>
+                                <p class="roadmap-objective">{{ dia.objetivo }}</p>
+
+                                <div class="roadmap-user-meta">
+                                    <span><i data-lucide="scan-eye"></i> {{ perfil_vark.estilo_display }}</span>
+                                    <span><i data-lucide="book-open"></i> {{ dia.tema_principal }}</span>
+                                    <span><i data-lucide="clock-3"></i> {{ dia.minutos }} min</span>
+                                    <span><i data-lucide="layers"></i> {{ dia.recurso_vark }}</span>
+                                </div>
+
+                                <div class="roadmap-mini-grid">
+                                    <div class="roadmap-mini-item">
+                                        <strong>Tema principal</strong>
+                                        <p>{{ dia.tema_principal }}</p>
+                                    </div>
+                                    <div class="roadmap-mini-item">
+                                        <strong>Recurso VARK</strong>
+                                        <p>{{ dia.recurso_vark }}</p>
+                                    </div>
+                                    <div class="roadmap-mini-item">
+                                        <strong>Uso de materiales</strong>
+                                        <p>{{ dia.uso_materiales }}</p>
+                                    </div>
+                                    <div class="roadmap-mini-item">
+                                        <strong>Tiempo sugerido</strong>
+                                        <p>{{ dia.minutos }} min</p>
+                                    </div>
+                                </div>
+
+                                {% if dia.enfoque_vark %}
+                                    <div class="roadmap-highlight">
+                                        <i data-lucide="sparkles"></i>
+                                        <span>{{ dia.enfoque_vark }}</span>
+                                    </div>
+                                {% endif %}
+
+                                {% if dia.progreso and dia.progreso.quiz_total %}
+                                    <div class="roadmap-quiz-note">
+                                        <i data-lucide="badge-check"></i>
+                                        <span>
+                                            Mini quiz guardado: {{ dia.progreso.quiz_texto }}
+                                            {% if dia.progreso.quiz_porcentaje != None %}
+                                                ({{ dia.progreso.quiz_porcentaje }}%)
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                {% endif %}
+
+                                <div class="roadmap-actions">
+                                    <form method="post" action="{% url 'rutas:actualizar_progreso' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="dia" value="{{ dia.dia }}">
+                                        {% if dia.progreso and dia.progreso.completado %}
+                                            <input type="hidden" name="accion" value="pendiente">
+                                            <button type="submit" class="btn btn-outline-primary btn-sm">Marcar pendiente</button>
+                                        {% else %}
+                                            <input type="hidden" name="accion" value="completar">
+                                            <button type="submit" class="btn btn-primary btn-sm">Marcar completado</button>
+                                        {% endif %}
+                                    </form>
+                                </div>
+
+                                <details class="roadmap-details">
+                                    <summary>
+                                        <span>Ver recursos completos del día</span>
+                                        <i data-lucide="chevron-down"></i>
+                                    </summary>
+                                    <div class="roadmap-full-detail">
+                    <article class="form-panel route-day-card roadmap-original-content">
                         <div class="route-day-header">
                             <div class="route-day-number">{{ dia.dia }}</div>
                             <div>
@@ -714,6 +796,17 @@
                             </div>
                         </form>
                     </article>
+                                    </div>
+                                </details>
+                            </section>
+                        </div>
+
+                        <div class="roadmap-center">
+                            <div class="roadmap-node {% if dia.progreso and dia.progreso.completado %}is-complete{% endif %}">
+                                <span>{{ dia.dia }}</span>
+                            </div>
+                        </div>
+                    </article>
                 {% endfor %}
             </div>
 
@@ -740,19 +833,64 @@
                 </form>
             </div>
         {% else %}
-            <div class="empty-state mt-4">
-                <i data-lucide="route"></i>
-                <h2>Aún no tienes una ruta generada</h2>
-                <p>
-                    Presiona el botón para que Gemini genere la ruta con audio, mapas, láminas anatómicas y ejercicios.
-                </p>
-                <form method="post" class="mt-4">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary icon-btn">
-                        <i data-lucide="sparkles"></i>
-                        <span>Generar ruta con Gemini</span>
-                    </button>
-                </form>
+            <div class="route-empty-showcase mt-4">
+                <div class="route-empty-copy">
+                    <p class="eyebrow">Vista previa sin datos IA</p>
+                    <h2>Aún no tienes una ruta generada</h2>
+                    <p>
+                        Cuando Gemini responda, aquí aparecerá tu camino personalizado con los días,
+                        el perfil VARK, el tema de Anatomía I, los recursos recomendados y el avance real.
+                    </p>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary icon-btn">
+                            <i data-lucide="sparkles"></i>
+                            <span>Generar ruta con Gemini</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="demo-roadmap" aria-label="Vista previa de ruta de aprendizaje sin datos">
+                    <article class="demo-roadmap-step is-left">
+                        <div class="demo-roadmap-card">
+                            <span class="roadmap-chip">Día 1</span>
+                            <h3>Diagnóstico inicial</h3>
+                            <p>Se mostrará el primer tema priorizado y el recurso VARK dominante.</p>
+                            <div class="roadmap-user-meta">
+                                <span><i data-lucide="scan-eye"></i> Perfil VARK</span>
+                                <span><i data-lucide="clock-3"></i> Tiempo diario</span>
+                            </div>
+                        </div>
+                        <div class="demo-roadmap-node">1</div>
+                    </article>
+
+                    <article class="demo-roadmap-step is-right">
+                        <div class="demo-roadmap-card">
+                            <span class="roadmap-chip">Día 2</span>
+                            <h3>Recurso personalizado</h3>
+                            <p>Aquí se visualizará audio, mapa mental, lectura o práctica guiada.</p>
+                            <div class="roadmap-user-meta">
+                                <span><i data-lucide="book-open"></i> Tema</span>
+                                <span><i data-lucide="layers"></i> Recurso</span>
+                            </div>
+                        </div>
+                        <div class="demo-roadmap-node">2</div>
+                    </article>
+
+                    <article class="demo-roadmap-step is-left">
+                        <div class="demo-roadmap-card">
+                            <span class="roadmap-chip">Día 3</span>
+                            <h3>Mini quiz y avance</h3>
+                            <p>Se mostrará el estado completado, notas personales y resultado del mini quiz.</p>
+                            <div class="roadmap-user-meta">
+                                <span><i data-lucide="badge-check"></i> Progreso</span>
+                                <span><i data-lucide="clipboard-check"></i> Quiz</span>
+                            </div>
+                        </div>
+                        <div class="demo-roadmap-node">3</div>
+                    </article>
+                </div>
             </div>
         {% endif %}
     </div>
