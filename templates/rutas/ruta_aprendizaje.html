@@ -2727,6 +2727,132 @@
     }
 }
 
+/* =========================================================
+   FIX MODAL RUTA: encima del navbar y dentro de márgenes
+   ========================================================= */
+
+.route-day-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483000 !important;
+    display: none;
+    padding: 96px 24px 24px !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+}
+
+.route-day-modal.is-open {
+    display: block !important;
+}
+
+.route-day-modal-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    background: rgba(15, 23, 42, .68) !important;
+    backdrop-filter: blur(5px) !important;
+}
+
+.route-day-modal-dialog {
+    position: relative !important;
+    z-index: 2 !important;
+    width: min(1120px, calc(100vw - 48px)) !important;
+    max-height: calc(100vh - 125px) !important;
+    margin: 0 auto !important;
+    overflow-y: auto !important;
+    border-radius: 28px !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, .85) !important;
+    box-shadow: 0 38px 110px rgba(15, 23, 42, .38) !important;
+}
+
+.route-day-modal-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 5 !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 18px !important;
+    padding: 24px 28px !important;
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.94)) !important;
+    border-bottom: 1px solid rgba(219, 232, 230, .95) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+.route-day-modal-header h2 {
+    margin: 0 0 8px !important;
+    color: var(--ink) !important;
+    font-size: clamp(1.35rem, 2.2vw, 2rem) !important;
+    line-height: 1.15 !important;
+}
+
+.route-day-modal-header p {
+    margin: 0 !important;
+    color: var(--muted) !important;
+}
+
+.route-day-modal-close {
+    flex: 0 0 auto !important;
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(219, 232, 230, .95) !important;
+    background: #ffffff !important;
+    color: var(--ink) !important;
+    font-size: 1.8rem !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    box-shadow: 0 12px 28px rgba(18, 40, 39, .12) !important;
+}
+
+.route-day-modal-body {
+    padding: 26px 28px 32px !important;
+    background:
+        radial-gradient(circle at top left, rgba(15,118,110,.08), transparent 32%),
+        linear-gradient(180deg, #fbfefd 0%, #ffffff 100%) !important;
+}
+
+.route-day-modal-body .route-day-card {
+    margin: 0 !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+}
+
+.route-modal-open {
+    overflow: hidden !important;
+}
+
+/* evita que el modal visual de mapas/laminas quede debajo */
+.visual-modal {
+    z-index: 2147483100 !important;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+    .route-day-modal {
+        padding: 84px 10px 12px !important;
+    }
+
+    .route-day-modal-dialog {
+        width: calc(100vw - 20px) !important;
+        max-height: calc(100vh - 100px) !important;
+        border-radius: 22px !important;
+    }
+
+    .route-day-modal-header {
+        padding: 18px !important;
+    }
+
+    .route-day-modal-body {
+        padding: 16px !important;
+    }
+
+    .route-day-modal-close {
+        width: 40px !important;
+        height: 40px !important;
+    }
+}
 </style>
 
 <script type="module">
