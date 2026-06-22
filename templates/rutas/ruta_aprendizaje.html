@@ -97,8 +97,127 @@
                             {% if progreso_general.promedio_quiz != None %}
                                 Promedio de mini quizzes: {{ progreso_general.promedio_quiz }}%.
                             {% else %}
-                                Aún no hay mini quizzes guardados.
-                            {% endif %}
+            <div class="route-empty-showcase mt-4">
+                <div class="route-empty-copy">
+                    <p class="eyebrow">Vista previa sin datos IA</p>
+                    <h2>Aún no tienes una ruta generada</h2>
+                    <p>
+                        Mientras Gemini genera tu ruta, esta pantalla muestra cómo se verá el camino:
+                        círculos interactivos por día y contenido completo al presionar cada punto.
+                    </p>
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary icon-btn">
+                            <i data-lucide="sparkles"></i>
+                            <span>Generar ruta con Gemini</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="route-path-shell preview-mode mt-4">
+                    <div class="route-path-legend">
+                        <span><i data-lucide="mouse-pointer-click"></i> Presiona un círculo para ver el ejemplo</span>
+                        <span><i data-lucide="route"></i> Vista previa visual</span>
+                    </div>
+
+                    <div class="route-path-stage">
+                        <article class="route-path-step path-left has-next">
+                            <div class="route-path-ribbon" aria-hidden="true"></div>
+                            <button type="button" class="route-path-node" data-open-route-day="preview-route-day-1">
+                                <span class="route-path-day">Día 1</span>
+                                <strong>Diagnóstico inicial</strong>
+                                <p>Se mostrará el tema principal, objetivo del día y recurso VARK dominante.</p>
+                                <small>Ver ejemplo</small>
+                            </button>
+                            <div class="route-day-modal" id="preview-route-day-1" aria-hidden="true">
+                                <div class="route-day-modal-backdrop" data-close-route-day></div>
+                                <section class="route-day-modal-dialog" role="dialog" aria-modal="true">
+                                    <header class="route-day-modal-header">
+                                        <div>
+                                            <p class="eyebrow">Vista previa</p>
+                                            <h2>Día 1: Diagnóstico inicial</h2>
+                                            <p>Aquí aparecerá el contenido real cuando la IA genere la ruta.</p>
+                                        </div>
+                                        <button type="button" class="route-day-modal-close" data-close-route-day>&times;</button>
+                                    </header>
+                                    <div class="route-day-modal-body">
+                                        <div class="detail-grid mt-2">
+                                            <div><strong>Tema principal</strong><p>Se completará con el tema actual del estudiante.</p></div>
+                                            <div><strong>Tiempo sugerido</strong><p>Según el tiempo disponible.</p></div>
+                                            <div><strong>Recurso dominante</strong><p>Visual, auditivo, lectura/escritura o kinestésico.</p></div>
+                                            <div><strong>Uso de materiales</strong><p>PDF, imagen, DOCX, TXT o texto manual.</p></div>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </article>
+
+                        <article class="route-path-step path-right has-next">
+                            <div class="route-path-ribbon" aria-hidden="true"></div>
+                            <button type="button" class="route-path-node" data-open-route-day="preview-route-day-2">
+                                <span class="route-path-day">Día 2</span>
+                                <strong>Recurso personalizado</strong>
+                                <p>El sistema mostrará audio, mapa mental, lectura o práctica según VARK.</p>
+                                <small>Ver ejemplo</small>
+                            </button>
+                            <div class="route-day-modal" id="preview-route-day-2" aria-hidden="true">
+                                <div class="route-day-modal-backdrop" data-close-route-day></div>
+                                <section class="route-day-modal-dialog" role="dialog" aria-modal="true">
+                                    <header class="route-day-modal-header">
+                                        <div>
+                                            <p class="eyebrow">Vista previa</p>
+                                            <h2>Día 2: Recurso personalizado</h2>
+                                            <p>El contenido se adaptará al perfil VARK y al tema de Anatomía I.</p>
+                                        </div>
+                                        <button type="button" class="route-day-modal-close" data-close-route-day>&times;</button>
+                                    </header>
+                                    <div class="route-day-modal-body">
+                                        <div class="info-box mt-2">
+                                            <div class="ai-box-title"><i data-lucide="sparkles"></i><strong>Ejemplo de contenido</strong></div>
+                                            <p>Visual: mapa mental. Auditivo: audio. Lectura/escritura: resumen. Kinestésico: actividad práctica.</p>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </article>
+
+                        <article class="route-path-step path-left">
+                            <div class="route-path-ribbon" aria-hidden="true"></div>
+                            <button type="button" class="route-path-node" data-open-route-day="preview-route-day-3">
+                                <span class="route-path-day">Día 3</span>
+                                <strong>Mini quiz y avance</strong>
+                                <p>Se visualizará el progreso, la autoevaluación y las notas personales.</p>
+                                <small>Ver ejemplo</small>
+                            </button>
+                            <div class="route-day-modal" id="preview-route-day-3" aria-hidden="true">
+                                <div class="route-day-modal-backdrop" data-close-route-day></div>
+                                <section class="route-day-modal-dialog" role="dialog" aria-modal="true">
+                                    <header class="route-day-modal-header">
+                                        <div>
+                                            <p class="eyebrow">Vista previa</p>
+                                            <h2>Día 3: Mini quiz y avance</h2>
+                                            <p>Cuando existan datos, aquí estarán las preguntas, actividades y notas.</p>
+                                        </div>
+                                        <button type="button" class="route-day-modal-close" data-close-route-day>&times;</button>
+                                    </header>
+                                    <div class="route-day-modal-body">
+                                        <div class="text-preview mt-2">
+                                            <strong>Secciones esperadas</strong>
+                                            <ul class="clean-list mt-3">
+                                                <li><i data-lucide="check"></i><span>Mini quiz evaluable</span></li>
+                                                <li><i data-lucide="check"></i><span>Actividades del día</span></li>
+                                                <li><i data-lucide="check"></i><span>Autoevaluación</span></li>
+                                                <li><i data-lucide="check"></i><span>Notas personales</span></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
                         </p>
                     </div>
                     <div class="progress-bar-wrap">
@@ -789,125 +908,19 @@
                 </form>
             </div>
         {% else %}
-            <div class="route-empty-showcase mt-4">
-                <div class="route-empty-copy">
-                    <p class="eyebrow">Vista previa sin datos IA</p>
-                    <h2>Aún no tienes una ruta generada</h2>
-                    <p>
-                        Mientras Gemini genera tu ruta, esta pantalla muestra cómo se verá el camino:
-                        círculos interactivos por día y contenido completo al presionar cada punto.
-                    </p>
-                    <form method="post" class="mt-4">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary icon-btn">
-                            <i data-lucide="sparkles"></i>
-                            <span>Generar ruta con Gemini</span>
-                        </button>
-                    </form>
-                </div>
-
-                <div class="route-path-shell preview-mode mt-4">
-                    <div class="route-path-legend">
-                        <span><i data-lucide="mouse-pointer-click"></i> Presiona un círculo para ver el ejemplo</span>
-                        <span><i data-lucide="route"></i> Vista previa visual</span>
-                    </div>
-
-                    <div class="route-path-stage">
-                        <article class="route-path-step path-left has-next">
-                            <div class="route-path-ribbon" aria-hidden="true"></div>
-                            <button type="button" class="route-path-node" data-open-route-day="preview-route-day-1">
-                                <span class="route-path-day">Día 1</span>
-                                <strong>Diagnóstico inicial</strong>
-                                <p>Se mostrará el tema principal, objetivo del día y recurso VARK dominante.</p>
-                                <small>Ver ejemplo</small>
-                            </button>
-                            <div class="route-day-modal" id="preview-route-day-1" aria-hidden="true">
-                                <div class="route-day-modal-backdrop" data-close-route-day></div>
-                                <section class="route-day-modal-dialog" role="dialog" aria-modal="true">
-                                    <header class="route-day-modal-header">
-                                        <div>
-                                            <p class="eyebrow">Vista previa</p>
-                                            <h2>Día 1: Diagnóstico inicial</h2>
-                                            <p>Aquí aparecerá el contenido real cuando la IA genere la ruta.</p>
-                                        </div>
-                                        <button type="button" class="route-day-modal-close" data-close-route-day>&times;</button>
-                                    </header>
-                                    <div class="route-day-modal-body">
-                                        <div class="detail-grid mt-2">
-                                            <div><strong>Tema principal</strong><p>Se completará con el tema actual del estudiante.</p></div>
-                                            <div><strong>Tiempo sugerido</strong><p>Según el tiempo disponible.</p></div>
-                                            <div><strong>Recurso dominante</strong><p>Visual, auditivo, lectura/escritura o kinestésico.</p></div>
-                                            <div><strong>Uso de materiales</strong><p>PDF, imagen, DOCX, TXT o texto manual.</p></div>
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-                        </article>
-
-                        <article class="route-path-step path-right has-next">
-                            <div class="route-path-ribbon" aria-hidden="true"></div>
-                            <button type="button" class="route-path-node" data-open-route-day="preview-route-day-2">
-                                <span class="route-path-day">Día 2</span>
-                                <strong>Recurso personalizado</strong>
-                                <p>El sistema mostrará audio, mapa mental, lectura o práctica según VARK.</p>
-                                <small>Ver ejemplo</small>
-                            </button>
-                            <div class="route-day-modal" id="preview-route-day-2" aria-hidden="true">
-                                <div class="route-day-modal-backdrop" data-close-route-day></div>
-                                <section class="route-day-modal-dialog" role="dialog" aria-modal="true">
-                                    <header class="route-day-modal-header">
-                                        <div>
-                                            <p class="eyebrow">Vista previa</p>
-                                            <h2>Día 2: Recurso personalizado</h2>
-                                            <p>El contenido se adaptará al perfil VARK y al tema de Anatomía I.</p>
-                                        </div>
-                                        <button type="button" class="route-day-modal-close" data-close-route-day>&times;</button>
-                                    </header>
-                                    <div class="route-day-modal-body">
-                                        <div class="info-box mt-2">
-                                            <div class="ai-box-title"><i data-lucide="sparkles"></i><strong>Ejemplo de contenido</strong></div>
-                                            <p>Visual: mapa mental. Auditivo: audio. Lectura/escritura: resumen. Kinestésico: actividad práctica.</p>
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-                        </article>
-
-                        <article class="route-path-step path-left">
-                            <div class="route-path-ribbon" aria-hidden="true"></div>
-                            <button type="button" class="route-path-node" data-open-route-day="preview-route-day-3">
-                                <span class="route-path-day">Día 3</span>
-                                <strong>Mini quiz y avance</strong>
-                                <p>Se visualizará el progreso, la autoevaluación y las notas personales.</p>
-                                <small>Ver ejemplo</small>
-                            </button>
-                            <div class="route-day-modal" id="preview-route-day-3" aria-hidden="true">
-                                <div class="route-day-modal-backdrop" data-close-route-day></div>
-                                <section class="route-day-modal-dialog" role="dialog" aria-modal="true">
-                                    <header class="route-day-modal-header">
-                                        <div>
-                                            <p class="eyebrow">Vista previa</p>
-                                            <h2>Día 3: Mini quiz y avance</h2>
-                                            <p>Cuando existan datos, aquí estarán las preguntas, actividades y notas.</p>
-                                        </div>
-                                        <button type="button" class="route-day-modal-close" data-close-route-day>&times;</button>
-                                    </header>
-                                    <div class="route-day-modal-body">
-                                        <div class="text-preview mt-2">
-                                            <strong>Secciones esperadas</strong>
-                                            <ul class="clean-list mt-3">
-                                                <li><i data-lucide="check"></i><span>Mini quiz evaluable</span></li>
-                                                <li><i data-lucide="check"></i><span>Actividades del día</span></li>
-                                                <li><i data-lucide="check"></i><span>Autoevaluación</span></li>
-                                                <li><i data-lucide="check"></i><span>Notas personales</span></li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-                        </article>
-                    </div>
-                </div>
+            <div class="empty-state mt-4">
+                <i data-lucide="route"></i>
+                <h2>Aún no tienes una ruta generada</h2>
+                <p>
+                    Presiona el botón para que Gemini genere la ruta con audio, mapas, láminas anatómicas y ejercicios.
+                </p>
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary icon-btn">
+                        <i data-lucide="sparkles"></i>
+                        <span>Generar ruta con Gemini</span>
+                    </button>
+                </form>
             </div>
         {% endif %}
     </div>
@@ -2366,11 +2379,20 @@
 
 
 /* =========================================================
-   RUTA VISUAL EN CAMINO ZIGZAG - SOLO FRONTEND
+   RUTA VISUAL EN CAMINO ZIGZAG - MEJORA TIPO INFOGRAFÍA
+   Solo frontend: redondos + camino + modal del día
    ========================================================= */
 .route-path-shell {
-    max-width: 1040px;
+    width: min(1180px, 100%);
     margin-inline: auto;
+    padding: clamp(18px, 2vw, 28px) clamp(10px, 2vw, 24px) clamp(34px, 4vw, 64px);
+    border-radius: 34px;
+    background:
+        radial-gradient(circle at 12% 8%, rgba(15,118,110,.10), transparent 30%),
+        radial-gradient(circle at 92% 18%, rgba(20,184,166,.10), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,.72), rgba(248,253,252,.88));
+    border: 1px solid rgba(219, 232, 230, .78);
+    overflow: hidden;
 }
 
 .route-path-legend {
@@ -2379,11 +2401,11 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
-    margin: 0 0 20px;
+    margin: 0 0 28px;
     padding: 14px 18px;
     border: 1px solid rgba(219, 232, 230, .95);
     border-radius: 18px;
-    background: rgba(255, 255, 255, .78);
+    background: rgba(255, 255, 255, .86);
     box-shadow: 0 14px 30px rgba(18, 40, 39, .06);
 }
 
@@ -2392,7 +2414,7 @@
     align-items: center;
     gap: 8px;
     color: var(--ink-2);
-    font-weight: 800;
+    font-weight: 850;
     font-size: .92rem;
 }
 
@@ -2405,79 +2427,98 @@
 .route-path-stage {
     position: relative;
     display: grid;
-    gap: 8px;
-    padding: 22px 0 34px;
+    gap: 0;
+    padding: 8px 0 24px;
+    isolation: isolate;
 }
 
 .route-path-step {
     position: relative;
-    min-height: 260px;
+    min-height: 318px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1fr);
+    grid-template-columns: 300px minmax(0, 1fr) 300px;
     align-items: center;
 }
 
 .route-path-ribbon {
     position: absolute;
     top: 50%;
+    height: 92px;
     transform: translateY(-50%);
-    height: 76px;
-    left: 10%;
-    right: 10%;
     z-index: 0;
-    filter: drop-shadow(0 20px 24px rgba(18, 40, 39, .12));
+    filter: drop-shadow(0 22px 28px rgba(18, 40, 39, .13));
 }
 
 .route-path-step.path-left .route-path-ribbon {
-    clip-path: polygon(0 28%, 88% 28%, 100% 50%, 88% 72%, 0 72%, 8% 50%);
+    left: 185px;
+    right: 55px;
+    clip-path: polygon(0 33%, 88% 33%, 100% 50%, 88% 67%, 0 67%, 7% 50%);
 }
 
 .route-path-step.path-right .route-path-ribbon {
-    clip-path: polygon(12% 28%, 100% 28%, 92% 50%, 100% 72%, 12% 72%, 0 50%);
+    left: 55px;
+    right: 185px;
+    clip-path: polygon(12% 33%, 100% 33%, 93% 50%, 100% 67%, 12% 67%, 0 50%);
 }
 
-.route-path-step:nth-child(4n+1) .route-path-ribbon {
-    background: linear-gradient(90deg, var(--primary), var(--primary-2));
+.route-path-step:nth-child(4n+1) .route-path-ribbon,
+.route-path-step:nth-child(4n+1).has-next::after {
+    background: linear-gradient(90deg, #0f766e, #0d9488);
 }
 
-.route-path-step:nth-child(4n+2) .route-path-ribbon {
+.route-path-step:nth-child(4n+2) .route-path-ribbon,
+.route-path-step:nth-child(4n+2).has-next::after {
     background: linear-gradient(90deg, #14b8a6, #0891b2);
 }
 
-.route-path-step:nth-child(4n+3) .route-path-ribbon {
-    background: linear-gradient(90deg, var(--amber), var(--accent));
+.route-path-step:nth-child(4n+3) .route-path-ribbon,
+.route-path-step:nth-child(4n+3).has-next::after {
+    background: linear-gradient(90deg, #f5b841, #f06445);
 }
 
-.route-path-step:nth-child(4n+4) .route-path-ribbon {
-    background: linear-gradient(90deg, #7c3aed, var(--primary-2));
+.route-path-step:nth-child(4n+4) .route-path-ribbon,
+.route-path-step:nth-child(4n+4).has-next::after {
+    background: linear-gradient(90deg, #7c3aed, #0d9488);
 }
 
 .route-path-step.has-next::after {
     content: "";
     position: absolute;
-    left: 50%;
-    bottom: -28px;
-    transform: translateX(-50%);
-    width: 18px;
-    height: 70px;
-    border-radius: 999px;
-    background: linear-gradient(180deg, rgba(15,118,110,.20), rgba(15,118,110,.03));
+    width: 88px;
+    height: 118px;
+    bottom: -84px;
     z-index: 0;
+    opacity: .92;
+    border-radius: 28px;
+    box-shadow: 0 18px 28px rgba(18, 40, 39, .10);
+    clip-path: polygon(24% 0, 76% 0, 100% 100%, 0 100%);
+}
+
+.route-path-step.path-left.has-next::after {
+    right: 215px;
+    transform: rotate(43deg);
+}
+
+.route-path-step.path-right.has-next::after {
+    left: 215px;
+    transform: rotate(-43deg);
 }
 
 .route-path-node {
     position: relative;
-    z-index: 2;
-    width: 260px;
-    height: 260px;
+    z-index: 3;
+    width: 278px;
+    height: 278px;
     border-radius: 999px;
-    border: 10px solid #ffffff;
+    border: 12px solid #ffffff;
     background:
-        radial-gradient(circle at 30% 20%, rgba(255,255,255,.98), rgba(255,255,255,.78) 38%, transparent 39%),
+        radial-gradient(circle at 32% 20%, rgba(255,255,255,1), rgba(255,255,255,.82) 38%, transparent 39%),
         linear-gradient(180deg, #ffffff 0%, #f8fffd 100%);
-    box-shadow: 0 26px 60px rgba(15, 23, 42, .16);
+    box-shadow:
+        0 32px 72px rgba(15, 23, 42, .15),
+        inset 0 -10px 24px rgba(15, 118, 110, .035);
     color: var(--ink);
-    padding: 28px 24px;
+    padding: 30px 26px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2499,80 +2540,81 @@
 }
 
 .route-path-node:hover {
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: 0 30px 70px rgba(15, 23, 42, .20);
-    border-color: rgba(15, 118, 110, .24);
+    transform: translateY(-7px) scale(1.025);
+    box-shadow:
+        0 38px 84px rgba(15, 23, 42, .20),
+        inset 0 -10px 24px rgba(15, 118, 110, .045);
+    border-color: rgba(15, 118, 110, .28);
 }
 
 .route-path-step.is-complete .route-path-node {
-    border-color: rgba(15, 118, 110, .28);
+    border-color: rgba(15, 118, 110, .34);
     background: linear-gradient(180deg, #ffffff 0%, #effffb 100%);
+}
+
+.route-path-step.is-complete .route-path-node::after {
+    content: "✓";
+    position: absolute;
+    right: 22px;
+    top: 44px;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    font-weight: 950;
+    border: 3px solid #ffffff;
+    box-shadow: 0 12px 24px rgba(15,118,110,.24);
 }
 
 .route-path-day {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 7px 13px;
+    padding: 8px 14px;
     border-radius: 999px;
     background: rgba(15, 118, 110, .11);
     color: var(--primary);
-    font-size: .82rem;
+    font-size: .86rem;
     font-weight: 950;
 }
 
 .route-path-node strong {
-    display: block;
-    max-width: 190px;
+    display: -webkit-box;
+    max-width: 210px;
     color: var(--ink);
-    font-size: 1.04rem;
+    font-size: 1.1rem;
     font-weight: 950;
-    line-height: 1.18;
+    line-height: 1.16;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .route-path-node p {
-    max-width: 200px;
+    display: -webkit-box;
+    max-width: 212px;
     margin: 0;
     color: var(--muted);
-    font-size: .82rem;
-    line-height: 1.35;
+    font-size: .84rem;
+    line-height: 1.34;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .route-path-node small {
     color: var(--primary);
     font-size: .74rem;
-    font-weight: 900;
+    font-weight: 950;
 }
 
+/* El estado ya no aparece atravesando el camino; queda reflejado por el borde/check del círculo */
 .route-path-status {
-    position: relative;
-    z-index: 2;
-    display: inline-flex;
-    align-items: center;
-    justify-self: center;
-    gap: 9px;
-    padding: 10px 14px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.88);
-    border: 1px solid rgba(219, 232, 230, .9);
-    box-shadow: 0 16px 32px rgba(18, 40, 39, .08);
-    color: var(--ink-2);
+    display: none !important;
 }
-
-.route-path-step.path-left .route-path-status { grid-column: 3 / 4; }
-.route-path-step.path-right .route-path-status { grid-column: 1 / 2; }
-
-.status-dot {
-    display: inline-grid;
-    place-items: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
-}
-
-.status-dot svg { width: 16px; height: 16px; }
-.status-dot.done { background: rgba(15,118,110,.13); color: var(--primary); }
-.status-dot.pending { background: rgba(245,184,65,.18); color: #b77900; }
 
 .route-day-modal {
     position: fixed;
@@ -2684,31 +2726,48 @@
 }
 
 @media (max-width: 1050px) {
+    .route-path-shell {
+        overflow: visible;
+    }
+
     .route-path-step {
         grid-template-columns: minmax(0, 1fr);
-        min-height: 230px;
-        padding-block: 20px;
+        min-height: auto;
+        padding-block: 28px 46px;
     }
 
     .route-path-ribbon {
-        left: 4%;
-        right: 4%;
+        left: 6%;
+        right: 6%;
         height: 58px;
     }
 
     .route-path-step.path-left .route-path-node,
-    .route-path-step.path-right .route-path-node,
-    .route-path-step.path-left .route-path-status,
-    .route-path-step.path-right .route-path-status {
+    .route-path-step.path-right .route-path-node {
         grid-column: 1 / 2;
+        justify-self: center;
     }
 
-    .route-path-status {
-        margin-top: 12px;
+    .route-path-step.path-left.has-next::after,
+    .route-path-step.path-right.has-next::after {
+        left: 50%;
+        right: auto;
+        bottom: -34px;
+        width: 18px;
+        height: 80px;
+        border-radius: 999px;
+        transform: translateX(-50%) rotate(0deg);
+        clip-path: none;
+        opacity: .26;
     }
 }
 
 @media (max-width: 720px) {
+    .route-path-shell {
+        padding: 16px;
+        border-radius: 24px;
+    }
+
     .route-path-legend {
         align-items: flex-start;
         flex-direction: column;
@@ -2724,14 +2783,15 @@
     }
 
     .route-path-step.has-next::after {
-        bottom: -20px;
-        height: 45px;
+        bottom: -18px !important;
+        height: 48px !important;
     }
 
     .route-path-node {
-        width: min(100%, 330px);
+        width: 100%;
+        max-width: 330px;
         height: auto;
-        min-height: 220px;
+        min-height: 222px;
         border-radius: 34px;
     }
 
@@ -2750,6 +2810,7 @@
         padding: 16px;
     }
 }
+
 </style>
 
 <script type="module">
