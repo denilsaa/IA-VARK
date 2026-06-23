@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 
 from anatomia.models import DatosAcademicos
 from documentos.models import MaterialEstudio
@@ -270,10 +271,12 @@ def progreso(request):
     ruta = RutaAprendizaje.objects.filter(user=request.user).first()
     progreso_ruta = calcular_progreso_ruta(request.user, ruta)
 
-    simulacros = ExamenGenerado.objects.filter(
-        user=request.user,
-        estado=ExamenGenerado.ESTADO_RESPONDIDO,
-    ).order_by("-actualizado")[:10]
+    simulacros = list(
+        ExamenGenerado.objects.filter(
+            user=request.user,
+            estado=ExamenGenerado.ESTADO_RESPONDIDO,
+        ).order_by("-actualizado")[:10]
+    )
 
     fuertes, debiles = obtener_temas_fuertes_y_debiles(simulacros)
 
@@ -288,6 +291,23 @@ def progreso(request):
             "para ver tu progreso."
         )
 
+    bonus_aprendizaje = construir_bonus_aprendizaje(
+        user=request.user,
+        perfil_vark=perfil_vark,
+        ruta=ruta,
+        progreso_ruta=progreso_ruta,
+        simulacros=simulacros,
+    )
+
+    if request.GET.get("bonus_test") == "1":
+        bonus_aprendizaje["desbloqueado"] = True
+        bonus_aprendizaje["nivel"] = "Bonus de prueba"
+        bonus_aprendizaje["motivo"] = "Modo prueba activado para validar el diseño del bonus."
+        bonus_aprendizaje["razones"] = [
+            "Esta vista permite comprobar cómo se verá el bonus cuando el estudiante lo desbloquee."
+        ]
+        bonus_aprendizaje["progreso_desbloqueo"] = 100
+
     return render(
         request,
         "progreso/progreso.html",
@@ -299,9 +319,9 @@ def progreso(request):
             "recomendacion": recomendacion,
             "ruta": ruta,
             "progreso_ruta": progreso_ruta,
+            "bonus_aprendizaje": bonus_aprendizaje,
         },
     )
-
 
 
 def calcular_progreso_ruta(user, ruta):
@@ -371,6 +391,176 @@ def obtener_temas_fuertes_y_debiles(simulacros):
             debiles.append(tema)
 
     return fuertes[:5], debiles[:5]
+
+def construir_bonus_aprendizaje(user, perfil_vark, ruta, progreso_ruta, simulacros):
+    if perfil_vark:
+        estilo = perfil_vark.estilo_principal
+        estilo_display = perfil_vark.estilo_display
+    else:
+        estilo = "visual"
+        estilo_display = "Visual"
+
+    hoy = timezone.localdate()
+    dias_completados_hoy = 0
+
+    if ruta:
+        dias_completados_hoy = RutaDiaProgreso.objects.filter(
+            user=user,
+            ruta=ruta,
+            completado=True,
+            actualizado__date=hoy,
+        ).count()
+
+    ultimo_simulacro = simulacros[0] if simulacros else None
+    promedio_quiz = progreso_ruta.get("promedio_quiz")
+    porcentaje_ruta = progreso_ruta.get("porcentaje", 0) or 0
+    dias_completados = progreso_ruta.get("dias_completados", 0) or 0
+    quizzes_resueltos = progreso_ruta.get("quizzes_resueltos", 0) or 0
+
+    materiales_procesados = MaterialEstudio.objects.filter(
+        user=user,
+        estado=MaterialEstudio.ESTADO_PROCESADO,
+    ).count()
+
+    razones = []
+    puntaje_bonus = 0
+
+    if dias_completados_hoy >= 2:
+        razones.append(f"Completaste {dias_completados_hoy} días de ruta hoy.")
+        puntaje_bonus += 35
+
+    if promedio_quiz is not None and promedio_quiz >= 85:
+        razones.append(f"Tu promedio de mini quizzes es alto: {promedio_quiz}%.")
+        puntaje_bonus += 35
+
+    if ultimo_simulacro and float(ultimo_simulacro.porcentaje) >= 80:
+        razones.append(f"Tu último simulacro tuvo un resultado destacado: {ultimo_simulacro.porcentaje}%.")
+        puntaje_bonus += 30
+
+    if porcentaje_ruta >= 50:
+        razones.append(f"Ya completaste el {porcentaje_ruta}% de tu ruta.")
+        puntaje_bonus += 25
+
+    if dias_completados >= 3:
+        razones.append(f"Llevas {dias_completados} días completados en tu ruta.")
+        puntaje_bonus += 20
+
+    if materiales_procesados > 0:
+        razones.append("Tienes materiales procesados que pueden reforzar tu aprendizaje.")
+        puntaje_bonus += 15
+
+    if quizzes_resueltos >= 2:
+        razones.append(f"Ya guardaste {quizzes_resueltos} resultados de mini quizzes.")
+        puntaje_bonus += 15
+
+    desbloqueado = bool(
+        dias_completados_hoy >= 2
+        or (promedio_quiz is not None and promedio_quiz >= 85)
+        or (ultimo_simulacro and float(ultimo_simulacro.porcentaje) >= 80)
+        or porcentaje_ruta >= 50
+        or dias_completados >= 3
+    )
+
+    progreso_desbloqueo = min(puntaje_bonus, 100)
+
+    if desbloqueado:
+        nivel = "Bonus desbloqueado"
+        motivo = razones[0] if razones else "Tu avance fue superior al esperado."
+    else:
+        nivel = "Bonus bloqueado"
+        motivo = "Sigue avanzando para desbloquear un recurso especial adaptado a tu estilo VARK."
+        if progreso_desbloqueo < 20:
+            progreso_desbloqueo = 20
+
+    bonus_por_estilo = {
+        "visual": {
+            "estilo": "visual",
+            "color": "visual",
+            "tipo": "Lámina visual anatómica",
+            "titulo": "Lámina bonus para estudiar observando",
+            "descripcion": "Recibe una imagen, mapa o lámina anatómica guiada para reforzar visualmente el tema que estás estudiando.",
+            "icono": "image",
+            "accion": "Ir a mi ruta visual",
+            "accion_url": reverse("rutas:ruta_aprendizaje"),
+            "recursos": [
+                "Lámina anatómica guiada",
+                "Mapa visual del tema",
+                "Marcadores de estructuras importantes",
+            ],
+            "texto_audio": "Bonus visual desbloqueado. Repasa el tema usando una lámina anatómica, observa las estructuras principales y conviértelas en preguntas de estudio.",
+        },
+        "auditivo": {
+            "estilo": "auditivo",
+            "color": "auditivo",
+            "tipo": "Mini podcast educativo",
+            "titulo": "Audio bonus para repasar escuchando",
+            "descripcion": "Recibe una explicación breve tipo podcast para reforzar el tema principal mediante escucha activa.",
+            "icono": "headphones",
+            "accion": "Escuchar mini podcast",
+            "accion_url": reverse("rutas:ruta_aprendizaje"),
+            "recursos": [
+                "Mini podcast de repaso",
+                "Explicación narrada",
+                "Preguntas orales para recordar",
+            ],
+            "texto_audio": "Bonus auditivo desbloqueado. Escucha esta mini clase de repaso. Primero identifica el tema principal, luego recuerda sus estructuras importantes y finalmente responde una pregunta clave con tus propias palabras.",
+        },
+        "lectura": {
+            "estilo": "lectura",
+            "color": "lectura",
+            "tipo": "Ficha de estudio premium",
+            "titulo": "Resumen bonus para estudiar leyendo y escribiendo",
+            "descripcion": "Recibe una ficha rápida con resumen, glosario, conceptos clave y preguntas para repasar antes del examen.",
+            "icono": "book-open",
+            "accion": "Ver mis materiales",
+            "accion_url": reverse("documentos:lista"),
+            "recursos": [
+                "Resumen premium",
+                "Glosario rápido",
+                "Checklist de repaso",
+            ],
+            "texto_audio": "Bonus de lectura y escritura desbloqueado. Crea una ficha rápida con definiciones, ideas clave y preguntas de repaso para convertir el contenido en conocimiento organizado.",
+        },
+        "kinestesico": {
+            "estilo": "kinestesico",
+            "color": "kinestesico",
+            "tipo": "Reto práctico 3D",
+            "titulo": "Reto bonus para aprender haciendo",
+            "descripcion": "Recibe una actividad práctica, reto de identificación o modelo 3D para reforzar el tema mediante interacción.",
+            "icono": "box",
+            "accion": "Abrir reto práctico",
+            "accion_url": reverse("rutas:ruta_aprendizaje"),
+            "recursos": [
+                "Modelo 3D o reto práctico",
+                "Actividad de armado o identificación",
+                "Repaso mediante interacción",
+            ],
+            "texto_audio": "Bonus kinestésico desbloqueado. Refuerza el tema manipulando, identificando o armando una estructura anatómica como si fuera un reto práctico.",
+        },
+    }
+
+    bonus = bonus_por_estilo.get(estilo, bonus_por_estilo["visual"])
+
+    pasos_para_desbloquear = [
+        "Completa al menos 2 días de ruta.",
+        "Guarda resultados de mini quizzes.",
+        "Responde un simulacro y busca superar el 80%.",
+        "Sube materiales para que el sistema pueda reforzar tu estudio.",
+    ]
+
+    bonus.update(
+        {
+            "desbloqueado": desbloqueado,
+            "nivel": nivel,
+            "motivo": motivo,
+            "razones": razones[:4],
+            "progreso_desbloqueo": progreso_desbloqueo,
+            "estilo_display": estilo_display,
+            "pasos_para_desbloquear": pasos_para_desbloquear,
+        }
+    )
+
+    return bonus
 
 def pagina_no_encontrada(request, exception=None):
     return render(request, "404.html", status=404)
