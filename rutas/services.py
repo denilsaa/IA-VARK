@@ -449,6 +449,68 @@ REGLAS OBLIGATORIAS:
         return {}
 
 
+
+
+def es_etiqueta_generica_estudio(texto: str) -> bool:
+    """Detecta textos que NO deben usarse como tema principal.
+
+    Gemini a veces devuelve etiquetas como "Repaso guiado", "Autoevaluación" o
+    "Contenido central" en lugar del tema elegido por el estudiante. Esas frases
+    sirven como títulos internos, pero destruyen la modalidad Lectura/Escritura
+    porque generan apuntes vacíos. Esta función las bloquea.
+    """
+    t = re.sub(r"\s+", " ", str(texto or "").strip().lower())
+    if not t:
+        return True
+    genericos = [
+        "repaso guiado",
+        "autoevaluación",
+        "autoevaluacion",
+        "contenido central",
+        "tema principal",
+        "lectura guiada",
+        "lectura desarrollada",
+        "guía de estudio",
+        "guia de estudio",
+        "definición",
+        "definicion",
+        "ubicación anatómica",
+        "ubicacion anatomica",
+        "relaciones anatómicas",
+        "relaciones anatomicas",
+        "respuesta tipo examen",
+        "producción escrita",
+        "produccion escrita",
+        "práctica escrita",
+        "practica escrita",
+    ]
+    return t in genericos or any(t.startswith(g + ":") for g in genericos)
+
+
+def obtener_tema_canonico_estudio(tema_seleccionado="", tema_llm="", titulo_llm="", punto_dificil="") -> str:
+    """Devuelve el tema real que debe guiar la ruta y la lectura.
+
+    Prioridad:
+    1. Tema elegido en el formulario académico.
+    2. Tema devuelto por Gemini, solo si no es etiqueta genérica.
+    3. Título del día limpio.
+    4. Punto difícil seleccionado.
+    """
+    candidatos = [tema_seleccionado, tema_llm]
+
+    # Si el título viene como "Día 1: Corazón y vasos del tronco", extraemos la parte útil.
+    titulo = str(titulo_llm or "").strip()
+    if ":" in titulo:
+        candidatos.append(titulo.split(":", 1)[1].strip())
+    candidatos.append(titulo)
+    candidatos.append(punto_dificil)
+
+    for candidato in candidatos:
+        c = re.sub(r"^D[ií]a\s*\d+\s*:\s*", "", str(candidato or "").strip(), flags=re.IGNORECASE)
+        if c and not es_etiqueta_generica_estudio(c):
+            return c
+    return "Anatomía I"
+
 def validar_respuesta_ruta(data, dias_planificados, minutos_maximos, datos_academicos=None):
     if not isinstance(data, dict):
         return {}
@@ -465,14 +527,27 @@ def validar_respuesta_ruta(data, dias_planificados, minutos_maximos, datos_acade
         minutos = int(dia.get("minutos") or minutos_maximos)
         minutos = max(5, min(minutos, minutos_maximos))
         recursos = dia.get("recursos") if isinstance(dia.get("recursos"), dict) else {}
-        tema_dia = str(dia.get("tema_principal", "")).strip() or str(getattr(datos_academicos, "tema_actual", "")).strip()
+        tema_seleccionado = str(getattr(datos_academicos, "tema_actual", "") or "").strip()
+        tema_llm = str(dia.get("tema_principal", "") or "").strip()
+        titulo_llm = str(dia.get("titulo", "") or "").strip()
         punto_dificil = str(getattr(datos_academicos, "temas_dificiles", "") or "").strip()
+
+        # IMPORTANTE: para Lectura/Escritura no dejamos que Gemini cambie el tema por
+        # etiquetas genéricas como "Repaso guiado" o "Autoevaluación". El tema real
+        # debe salir del formulario académico, porque ahí el estudiante eligió el
+        # contenido del dataset. Esto evita que la guía escrita se vuelva relleno.
+        tema_dia = obtener_tema_canonico_estudio(
+            tema_seleccionado=tema_seleccionado,
+            tema_llm=tema_llm,
+            titulo_llm=titulo_llm,
+            punto_dificil=punto_dificil,
+        )
 
         plan_limpio.append(
             {
                 "dia": int(dia.get("dia") or index),
-                "titulo": str(dia.get("titulo", f"Día {index}")).strip(),
-                "tema_principal": str(dia.get("tema_principal", "")).strip(),
+                "titulo": str(dia.get("titulo", f"Día {index}: {tema_dia}")).strip(),
+                "tema_principal": tema_dia,
                 "objetivo": str(dia.get("objetivo", "")).strip(),
                 "minutos": minutos,
                 "enfoque_vark": str(dia.get("enfoque_vark", "")).strip(),
