@@ -2937,7 +2937,7 @@ def generar_y_guardar_imagen_gemini_api(prompt, carpeta, nombre_archivo, aspect_
 
             response = client.models.generate_content(
                 model=model,
-                contents=[prompt_final],
+                contents=[prompt_final], 
             )
             for part in obtener_partes_respuesta(response):
                 if guardar_parte_imagen(part, ruta_absoluta):
