@@ -101,6 +101,128 @@
             <p>{{ recomendacion }}</p>
         </div>
 
+        {% if bonus_aprendizaje %}
+            <section class="bonus-learning-card bonus-{{ bonus_aprendizaje.color }}">
+                <div class="bonus-learning-main">
+                    <div class="bonus-badge">
+                        {% if bonus_aprendizaje.desbloqueado %}
+                            <i data-lucide="sparkles"></i>
+                            <span>{{ bonus_aprendizaje.nivel }}</span>
+                        {% else %}
+                            <i data-lucide="lock"></i>
+                            <span>{{ bonus_aprendizaje.nivel }}</span>
+                        {% endif %}
+                    </div>
+
+                    <h2>
+                        {% if bonus_aprendizaje.desbloqueado %}
+                            Recurso especial para tu estilo <span>{{ bonus_aprendizaje.estilo_display }}</span>
+                        {% else %}
+                            Desbloquea un bonus para tu estilo <span>{{ bonus_aprendizaje.estilo_display }}</span>
+                        {% endif %}
+                    </h2>
+
+                    <p>{{ bonus_aprendizaje.descripcion }}</p>
+
+                    <div class="bonus-type-pill">
+                        <i data-lucide="{{ bonus_aprendizaje.icono }}"></i>
+                        <span>{{ bonus_aprendizaje.tipo }}</span>
+                    </div>
+
+                    {% if bonus_aprendizaje.desbloqueado %}
+                        <div class="bonus-reason-box">
+                            <strong>¿Por qué se desbloqueó?</strong>
+
+                            {% if bonus_aprendizaje.razones %}
+                                <ul>
+                                    {% for razon in bonus_aprendizaje.razones %}
+                                        <li>
+                                            <i data-lucide="check-circle"></i>
+                                            <span>{{ razon }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>{{ bonus_aprendizaje.motivo }}</p>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="bonus-locked-message">
+                            {{ bonus_aprendizaje.motivo }}
+                        </div>
+
+                        <div class="bonus-reason-box">
+                            <strong>Cómo desbloquearlo</strong>
+                            <ul>
+                                {% for paso in bonus_aprendizaje.pasos_para_desbloquear %}
+                                    <li>
+                                        <i data-lucide="circle-dot"></i>
+                                        <span>{{ paso }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <div class="bonus-actions">
+                        {% if bonus_aprendizaje.desbloqueado %}
+                            {% if bonus_aprendizaje.estilo == "auditivo" %}
+                                <button type="button"
+                                        class="btn btn-primary btn-sm icon-btn"
+                                        data-bonus-audio="{{ bonus_aprendizaje.texto_audio|escapejs }}">
+                                    <i data-lucide="play"></i>
+                                    <span>Escuchar mini podcast</span>
+                                </button>
+                            {% else %}
+                                <a href="{{ bonus_aprendizaje.accion_url }}" class="btn btn-primary btn-sm icon-btn">
+                                    <i data-lucide="{{ bonus_aprendizaje.icono }}"></i>
+                                    <span>{{ bonus_aprendizaje.accion }}</span>
+                                </a>
+                            {% endif %}
+
+                            <a href="{% url 'rutas:ruta_aprendizaje' %}" class="btn btn-outline-primary btn-sm icon-btn">
+                                <i data-lucide="route"></i>
+                                <span>Continuar ruta</span>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'rutas:ruta_aprendizaje' %}" class="btn btn-primary btn-sm icon-btn">
+                                <i data-lucide="route"></i>
+                                <span>Avanzar en mi ruta</span>
+                            </a>
+                            <a href="{% url 'examenes:generar' %}" class="btn btn-outline-primary btn-sm icon-btn">
+                                <i data-lucide="file-question"></i>
+                                <span>Hacer simulacro</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <aside class="bonus-side-panel">
+                    <div class="bonus-icon-orb">
+                        <i data-lucide="{{ bonus_aprendizaje.icono }}"></i>
+                    </div>
+
+                    <div class="bonus-unlock-meter">
+                        <div class="bonus-unlock-meter-top">
+                            <span>Progreso del bonus</span>
+                            <strong>{{ bonus_aprendizaje.progreso_desbloqueo }}%</strong>
+                        </div>
+                        <div class="bonus-meter-track">
+                            <div class="bonus-meter-fill" style="--bonus-progress: {{ bonus_aprendizaje.progreso_desbloqueo|default:0 }}%;"></div>
+                        </div>
+                    </div>
+
+                    <ul class="bonus-resource-list">
+                        {% for recurso in bonus_aprendizaje.recursos %}
+                            <li>
+                                <i data-lucide="badge-check"></i>
+                                <span>{{ recurso }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </aside>
+            </section>
+        {% endif %}
         {% if simulacros %}
             <div class="section-heading mt-4">
                 <p class="eyebrow">Historial</p>
@@ -177,4 +299,340 @@
         {% endif %}
     </div>
 </section>
+
+<style>
+    .bonus-learning-card {
+        position: relative;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: minmax(0, .92fr) minmax(280px, .58fr);
+        gap: 22px;
+        align-items: stretch;
+        padding: clamp(20px, 3vw, 30px);
+        border-radius: 30px;
+        border: 1px solid rgba(219, 232, 230, .95);
+        background:
+            radial-gradient(circle at 82% 16%, rgba(15, 143, 134, .12), transparent 18rem),
+            linear-gradient(135deg, #ffffff 0%, #f7fcfb 100%);
+        box-shadow: 0 18px 52px rgba(18, 40, 39, .08);
+    }
+
+    .bonus-learning-card::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto auto 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, #0f8f86, #f6bd3b);
+    }
+
+    .bonus-learning-card.bonus-visual {
+        --bonus-main: #0f8f86;
+        --bonus-second: #10bcd6;
+        --bonus-soft: #e7fbf8;
+        --bonus-glow: rgba(15, 143, 134, .20);
+    }
+
+    .bonus-learning-card.bonus-auditivo {
+        --bonus-main: #6d28d9;
+        --bonus-second: #a855f7;
+        --bonus-soft: #f1e9ff;
+        --bonus-glow: rgba(109, 40, 217, .20);
+    }
+
+    .bonus-learning-card.bonus-lectura {
+        --bonus-main: #9f1239;
+        --bonus-second: #d97706;
+        --bonus-soft: #fff1f2;
+        --bonus-glow: rgba(159, 18, 57, .18);
+    }
+
+    .bonus-learning-card.bonus-kinestesico {
+        --bonus-main: #f97316;
+        --bonus-second: #f59e0b;
+        --bonus-soft: #fff7ed;
+        --bonus-glow: rgba(249, 115, 22, .20);
+    }
+
+    .bonus-learning-card.bonus-visual::before,
+    .bonus-learning-card.bonus-auditivo::before,
+    .bonus-learning-card.bonus-lectura::before,
+    .bonus-learning-card.bonus-kinestesico::before {
+        background: linear-gradient(90deg, var(--bonus-main), var(--bonus-second));
+    }
+
+    .bonus-learning-main {
+        position: relative;
+        z-index: 2;
+    }
+
+    .bonus-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        color: var(--bonus-main);
+        background: var(--bonus-soft);
+        font-size: .82rem;
+        font-weight: 950;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+    }
+
+    .bonus-badge svg {
+        width: 17px;
+        height: 17px;
+    }
+
+    .bonus-learning-main h2 {
+        margin: 12px 0 10px;
+        color: #0d2d2b;
+        font-size: clamp(1.55rem, 3vw, 2.45rem);
+        line-height: 1.05;
+        font-weight: 950;
+        letter-spacing: -.05em;
+    }
+
+    .bonus-learning-main h2 span {
+        color: var(--bonus-main);
+    }
+
+    .bonus-learning-main p {
+        margin: 0;
+        color: #526d6a;
+        line-height: 1.62;
+    }
+
+    .bonus-type-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+        padding: 10px 13px;
+        border-radius: 16px;
+        color: #ffffff;
+        background: linear-gradient(135deg, var(--bonus-main), var(--bonus-second));
+        box-shadow: 0 14px 28px var(--bonus-glow);
+        font-weight: 900;
+    }
+
+    .bonus-type-pill svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    .bonus-reason-box {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+        padding: 15px;
+        border-radius: 18px;
+        background: rgba(255,255,255,.78);
+        border: 1px solid rgba(219, 232, 230, .95);
+    }
+
+    .bonus-reason-box strong {
+        color: #0d2d2b;
+    }
+
+    .bonus-reason-box ul {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .bonus-reason-box li {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 9px;
+        align-items: start;
+        color: #526d6a;
+        line-height: 1.45;
+        font-weight: 750;
+    }
+
+    .bonus-reason-box li svg {
+        width: 17px;
+        height: 17px;
+        color: var(--bonus-main);
+        margin-top: 2px;
+    }
+
+    .bonus-side-panel {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        gap: 14px;
+        align-content: center;
+        padding: 18px;
+        border-radius: 24px;
+        background:
+            radial-gradient(circle at center, var(--bonus-glow), transparent 15rem),
+            rgba(255,255,255,.86);
+        border: 1px solid rgba(255,255,255,.88);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 14px 34px rgba(18,40,39,.06);
+    }
+
+    .bonus-icon-orb {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 106px;
+        height: 106px;
+        margin: 0 auto;
+        border-radius: 50%;
+        color: #ffffff;
+        background: linear-gradient(135deg, var(--bonus-main), var(--bonus-second));
+        box-shadow: 0 22px 46px var(--bonus-glow);
+    }
+
+    .bonus-icon-orb::before {
+        content: "";
+        position: absolute;
+        inset: -14px;
+        border-radius: inherit;
+        border: 2px dashed var(--bonus-main);
+        opacity: .25;
+        animation: bonusSpin 16s linear infinite;
+    }
+
+    .bonus-icon-orb svg {
+        width: 44px;
+        height: 44px;
+    }
+
+    .bonus-unlock-meter {
+        display: grid;
+        gap: 8px;
+    }
+
+    .bonus-unlock-meter-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        color: #244241;
+        font-size: .84rem;
+        font-weight: 900;
+    }
+
+    .bonus-meter-track {
+        height: 11px;
+        border-radius: 999px;
+        background: #e4efed;
+        overflow: hidden;
+    }
+
+    .bonus-meter-fill {
+        width: var(--bonus-progress);
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--bonus-main), var(--bonus-second));
+    }
+
+    .bonus-resource-list {
+        display: grid;
+        gap: 9px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .bonus-resource-list li {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 9px;
+        align-items: start;
+        padding: 10px;
+        border-radius: 15px;
+        background: #f7fcfb;
+        border: 1px solid rgba(219, 232, 230, .9);
+        color: #244241;
+        font-weight: 800;
+        line-height: 1.4;
+    }
+
+    .bonus-resource-list li svg {
+        width: 17px;
+        height: 17px;
+        color: var(--bonus-main);
+        margin-top: 2px;
+    }
+
+    .bonus-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .bonus-actions .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .bonus-locked-message {
+        margin-top: 16px;
+        padding: 14px;
+        border-radius: 18px;
+        background: #fff8ed;
+        border: 1px solid #fde6bd;
+        color: #7a4a08;
+        line-height: 1.5;
+    }
+
+    @keyframes bonusSpin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @media (max-width: 900px) {
+        .bonus-learning-card {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .bonus-learning-card {
+            padding: 18px;
+            border-radius: 22px;
+        }
+
+        .bonus-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("[data-bonus-audio]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                const texto = button.getAttribute("data-bonus-audio");
+
+                if (!("speechSynthesis" in window)) {
+                    alert("Tu navegador no soporta reproducción de voz.");
+                    return;
+                }
+
+                window.speechSynthesis.cancel();
+
+                const audio = new SpeechSynthesisUtterance(texto);
+                audio.lang = "es-ES";
+                audio.rate = 0.95;
+                audio.pitch = 1;
+
+                window.speechSynthesis.speak(audio);
+            });
+        });
+    });
+</script>
 {% endblock %}
