@@ -433,6 +433,179 @@
             align-items: flex-start;
         }
     }
+
+    .auth-layout {
+        width: min(1040px, calc(100% - 28px)) !important;
+        margin: 24px auto 52px !important;
+        grid-template-columns: minmax(0, .95fr) minmax(330px, .72fr) !important;
+        gap: clamp(22px, 4vw, 42px) !important;
+    }
+
+    .auth-copy {
+        min-height: 500px !important;
+        padding: clamp(22px, 3vw, 36px) !important;
+        border-radius: 28px !important;
+    }
+
+    .auth-copy h1 {
+        font-size: clamp(2rem, 4.2vw, 4rem) !important;
+        max-width: 560px !important;
+        margin-top: 16px !important;
+    }
+
+    .auth-copy p {
+        font-size: 1rem !important;
+        max-width: 540px !important;
+        margin-top: 16px !important;
+    }
+
+    .hero-badge {
+        padding: 8px 13px !important;
+        font-size: .88rem !important;
+    }
+
+    .hero-badge svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .auth-benefits {
+        gap: 10px !important;
+        margin-top: 20px !important;
+    }
+
+    .auth-benefits div {
+        padding: 12px 14px !important;
+        border-radius: 16px !important;
+        font-size: .92rem !important;
+    }
+
+    .auth-benefits svg {
+        width: 19px !important;
+        height: 19px !important;
+    }
+
+    .auth-visual-flow {
+        margin-top: 18px !important;
+        gap: 8px !important;
+    }
+
+    .auth-flow-item {
+        padding: 13px !important;
+        border-radius: 17px !important;
+    }
+
+    .auth-flow-item strong {
+        width: 30px !important;
+        height: 30px !important;
+        border-radius: 11px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .auth-flow-item span {
+        font-size: .86rem !important;
+    }
+
+    .auth-card {
+        padding: clamp(20px, 2.5vw, 28px) !important;
+        border-radius: 28px !important;
+    }
+
+    .form-card-heading {
+        margin-bottom: 16px !important;
+        gap: 12px !important;
+    }
+
+    .form-icon {
+        width: 48px !important;
+        height: 48px !important;
+        border-radius: 16px !important;
+    }
+
+    .form-icon svg {
+        width: 23px !important;
+        height: 23px !important;
+    }
+
+    .form-card-heading h2 {
+        font-size: clamp(1.45rem, 2.4vw, 2rem) !important;
+    }
+
+    .eyebrow {
+        font-size: .72rem !important;
+    }
+
+    .form-group {
+        margin-top: 12px !important;
+        gap: 6px !important;
+    }
+
+    .form-label {
+        font-size: .88rem !important;
+    }
+
+    .form-control {
+        min-height: 46px !important;
+        border-radius: 14px !important;
+        padding: 10px 42px 10px 42px !important;
+        font-size: .94rem !important;
+    }
+
+    .input-shell .input-icon {
+        left: 13px !important;
+    }
+
+    .input-shell .input-icon svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .password-toggle {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    .auth-submit,
+    .btn-google-real {
+        min-height: 46px !important;
+        border-radius: 14px !important;
+        font-size: .94rem !important;
+    }
+
+    .login-divider {
+        margin: 14px 0 10px !important;
+        font-size: .8rem !important;
+    }
+
+    .form-footer {
+        margin-top: 16px !important;
+        font-size: .92rem !important;
+    }
+
+    @media (max-width: 980px) {
+        .auth-layout {
+            grid-template-columns: 1fr !important;
+            width: min(760px, calc(100% - 24px)) !important;
+        }
+
+        .auth-copy {
+            min-height: auto !important;
+        }
+    }
+
+    @media (max-width: 620px) {
+        .auth-layout {
+            width: min(100% - 18px, 760px) !important;
+            margin-top: 16px !important;
+            margin-bottom: 38px !important;
+        }
+
+        .auth-copy,
+        .auth-card {
+            padding: 18px !important;
+            border-radius: 22px !important;
+        }
+    }
 </style>
 
 <section class="auth-layout">
