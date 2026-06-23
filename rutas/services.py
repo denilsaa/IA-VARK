@@ -87,6 +87,12 @@ def generar_ruta_aprendizaje(user, perfil_vark, datos_academicos, materiales):
             dias_hasta_examen=dias_hasta_examen,
             dias_planificados=dias_planificados,
         )
+        respuesta = validar_respuesta_ruta(
+            respuesta,
+            dias_planificados,
+            datos_academicos.minutos_por_dia,
+            datos_academicos,
+        )
 
     respuesta = enriquecer_plan_con_imagenes_ia(
         respuesta=respuesta,
@@ -483,6 +489,16 @@ def es_etiqueta_generica_estudio(texto: str) -> bool:
         "produccion escrita",
         "práctica escrita",
         "practica escrita",
+        "refuerzo final",
+        "repaso final",
+        "cierre de estudio",
+        "guía desarrollada",
+        "guia desarrollada",
+        "guía real de lectura y escritura",
+        "guia real de lectura y escritura",
+        "lectura escritura",
+        "producto del día",
+        "producto del dia",
     ]
     return t in genericos or any(t.startswith(g + ":") for g in genericos)
 
@@ -586,12 +602,18 @@ def generar_ruta_respaldo(
     dias_hasta_examen,
     dias_planificados,
 ):
-    temas_base = []
-    if datos_academicos.tema_actual:
-        temas_base.append(datos_academicos.tema_actual)
-    if datos_academicos.temas_dificiles:
-        temas_base.append(datos_academicos.temas_dificiles)
-    temas_base.extend(["Repaso guiado", "Autoevaluación", "Refuerzo final"])
+    tema_real = obtener_tema_canonico_estudio(
+        tema_seleccionado=getattr(datos_academicos, "tema_actual", ""),
+        punto_dificil=getattr(datos_academicos, "temas_dificiles", ""),
+    )
+    punto_dificil_real = str(getattr(datos_academicos, "temas_dificiles", "") or "").strip()
+
+    # La ruta nunca debe usar etiquetas como "Repaso guiado", "Autoevaluación"
+    # o "Refuerzo final" como tema académico. Esas frases sirven para títulos,
+    # pero destruyen el contenido de Lectura/Escritura porque generan apuntes vacíos.
+    temas_base = [tema_real]
+    if punto_dificil_real and not es_etiqueta_generica_estudio(punto_dificil_real) and punto_dificil_real.lower() != tema_real.lower():
+        temas_base.append(punto_dificil_real)
 
     mezcla = perfil_vark_detalle["mezcla"]
     tiene_visual = perfil_vark.puntaje_visual > 0
@@ -1770,228 +1792,440 @@ def _normalizar_actividad_escritura(valor):
 
 
 def texto_es_generico_lectura(*partes):
+    """Detecta si Lectura/Escritura trae relleno metodológico y no contenido anatómico.
+
+    Antes el sistema aceptaba frases como "escribe una definición" o "relaciona el
+    tema", pero eso no enseña Anatomía. Esta función fuerza el reemplazo por una
+    guía desarrollada cuando el texto habla más de cómo estudiar que del contenido.
+    """
     texto = " ".join(str(p or "") for p in partes).lower()
+    texto = re.sub(r"\s+", " ", texto).strip()
+
     senales_genericas = [
         "autoevaluación",
         "autoevaluacion",
         "concepto principal que debe",
         "contenido que requiere mayor práctica",
+        "contenido que requiere mayor practica",
         "explicación breve y precisa de una estructura",
+        "explicacion breve y precisa de una estructura",
         "estructuras cercanas o conexiones anatómicas",
+        "estructuras cercanas o conexiones anatomicas",
         "escribe una definición",
+        "escribe una definicion",
         "anota la región anatómica",
+        "anota la region anatomica",
         "define",
         "ubicar",
         "relacionar",
         "tema principal del día",
+        "tema principal del dia",
+        "tema central de esta sesión",
+        "tema central de esta sesion",
         "debe poder definirse",
         "usa este término para iniciar",
+        "usa este termino para iniciar",
+        "se estudia como un contenido anatómico",
+        "se estudia como un contenido anatomico",
+        "debe comprenderse como una unidad anatómica",
+        "debe comprenderse como una unidad anatomica",
+        "qué estructura o sistema se estudia",
+        "que estructura o sistema se estudia",
+        "según el tema",
+        "segun el tema",
+        "una vez comprendida la ubicación",
+        "una vez comprendida la ubicacion",
+        "debe señalarse la región anatómica",
+        "debe señalarse la region anatomica",
+        "contenido central de esta sesión",
+        "contenido central de esta sesion",
+        "no solo observar la información",
+        "no solo observar la informacion",
+        "transformarla en apuntes claros",
+        "respuesta breve tipo examen",
     ]
-    return sum(1 for patron in senales_genericas if patron in texto) >= 2 or len(texto.strip()) < 700
 
+    menciones_genericas = sum(1 for patron in senales_genericas if patron in texto)
+
+    # Si casi no hay sustantivos anatómicos específicos, el texto no sirve como contenido.
+    vocabulario_anatomico = [
+        "corazón", "corazon", "aorta", "pulmonar", "pericardio", "aurícula", "auricula", "ventrículo", "ventriculo",
+        "mediastino", "diafragma", "costilla", "esternón", "esternon", "columna", "vértebra", "vertebra",
+        "sacro", "pelvis", "periné", "perine", "peritoneo", "hígado", "higado", "estómago", "estomago",
+        "páncreas", "pancreas", "bazo", "riñón", "riñones", "rinon", "rinones", "uréter", "ureter",
+        "vejiga", "tráquea", "traquea", "bronquio", "pleura", "esófago", "esofago", "nervio", "plexo",
+        "arteria", "vena", "linfático", "linfatico", "músculo", "musculo", "ligamento", "articulación", "articulacion",
+    ]
+    cantidad_anatomica = sum(1 for palabra in vocabulario_anatomico if palabra in texto)
+
+    return menciones_genericas >= 2 or len(texto) < 700 or (menciones_genericas >= 1 and cantidad_anatomica < 3)
 
 def construir_lectura_escritura_real(tema, punto_dificil=""):
-    """Construye contenido real para Lectura/Escritura cuando el LLM devuelve relleno.
+    """Construye contenido anatómico real para Lectura/Escritura.
 
-    No reemplaza al LLM: funciona como corrector pedagógico para que la modalidad
-    Lectura/Escritura siempre entregue material que se pueda leer, copiar y usar
-    para responder en examen.
+    Esta modalidad debe enseñar el tema, no solo decirle al estudiante que escriba.
+    Por eso se arma una lectura desarrollada con definición, ubicación, relaciones,
+    glosario, cuadro Cornell y respuesta tipo examen según el tema seleccionado.
     """
-    tema = str(tema or "el tema seleccionado").strip()
-    punto = str(punto_dificil or "el punto difícil seleccionado").strip()
+    tema = str(tema or "").strip()
+    punto = str(punto_dificil or "").strip()
+
+    if es_etiqueta_generica_estudio(tema) and punto and not es_etiqueta_generica_estudio(punto):
+        tema = punto
+    if not tema:
+        tema = punto or "Anatomía I del tronco"
+    if not punto or es_etiqueta_generica_estudio(punto):
+        punto = tema
+
     t = f"{tema} {punto}".lower()
     categoria = detectar_categoria_tema(tema, punto)
 
-    if "corazón" in t or "corazon" in t or "vasos" in t or "card" in t:
+    def contiene(*palabras):
+        return any(palabra in t for palabra in palabras)
+
+    def armar_paquete(definicion, ubicacion, relaciones, importancia, conceptos, glosario_extra=None, errores_extra=None):
+        glosario_extra = glosario_extra or []
+        errores_extra = errores_extra or []
+
         resumen = (
-            "El corazón y los vasos del tronco deben estudiarse como un sistema de conducción y distribución de la sangre. "
-            "El corazón funciona como una bomba muscular ubicada en el mediastino medio, protegida por el pericardio y relacionada con los pulmones, el diafragma, el esternón y los grandes vasos. "
-            "Para escribir una buena respuesta se debe ordenar la información en cuatro partes: definición, ubicación, relaciones anatómicas e importancia funcional. "
-            "El punto clave no es memorizar nombres aislados, sino explicar cómo el corazón recibe sangre por las venas, la impulsa hacia pulmones y cuerpo, y se conecta con vasos como la aorta, el tronco pulmonar, las venas cavas y las venas pulmonares."
+            f"{tema} se entiende mejor cuando se estudia como contenido anatómico concreto y no como una lista suelta. "
+            f"La idea principal es: {definicion} "
+            f"Para ubicarlo: {ubicacion} "
+            f"Sus relaciones principales se explican así: {relaciones} "
+            f"La importancia del tema está en que {importancia} "
+            f"En una respuesta escrita, conecta el tema con {punto} y usa términos anatómicos precisos."
         )
+
         lectura_profunda = [
             {
                 "subtitulo": "1. Concepto central",
                 "contenido": (
-                    "El corazón es un órgano muscular hueco que actúa como bomba impulsora de la sangre. "
-                    "Trabaja de forma continua para enviar sangre hacia los pulmones y hacia el resto del cuerpo. "
-                    "En Anatomía I se estudia junto con los vasos porque no funciona de manera aislada: recibe sangre, la conduce por sus cavidades y la expulsa por grandes arterias. "
-                    "Por eso, al leer este tema conviene unir órgano, cavidades, vasos y circulación."
+                    f"{definicion} Esta idea es la base para leer el tema sin memorizar frases aisladas. "
+                    f"Cuando el estudiante escribe sobre {tema}, primero necesita reconocer qué estructura, región o sistema está explicando. "
+                    "La definición debe ser corta, pero completa: nombre del contenido, característica principal y función o sentido anatómico. "
+                    "Así la lectura se convierte en comprensión y no en copia mecánica."
                 ),
             },
             {
                 "subtitulo": "2. Ubicación anatómica",
                 "contenido": (
-                    "El corazón se localiza en el mediastino medio, dentro de la cavidad torácica, entre ambos pulmones. "
-                    "Se ubica detrás del esternón y por encima del diafragma. Su base mira principalmente hacia atrás, arriba y a la derecha, mientras que el vértice se dirige hacia abajo, adelante y a la izquierda. "
-                    "Esta ubicación permite relacionarlo con estructuras torácicas importantes y ayuda a responder preguntas de localización."
+                    f"{ubicacion} La ubicación es importante porque en Anatomía I casi siempre se pregunta dónde está una estructura y con qué se relaciona. "
+                    "Para escribirlo mejor, usa referencias como anterior, posterior, superior, inferior, medial, lateral, profundo o superficial cuando correspondan. "
+                    f"Si el punto difícil es {punto}, colócalo dentro de esta ubicación para entenderlo en el espacio real del cuerpo."
                 ),
             },
             {
                 "subtitulo": "3. Relaciones principales",
                 "contenido": (
-                    "El corazón se relaciona superiormente con los grandes vasos, como la aorta, el tronco pulmonar y las venas cavas. "
-                    "Lateralmente se aproxima a los pulmones y pleuras; inferiormente se apoya sobre el diafragma; anteriormente se proyecta hacia el esternón. "
-                    "Estas relaciones son importantes porque permiten explicar su posición real dentro del tórax y no solo nombrarlo como una bomba."
+                    f"{relaciones} Las relaciones anatómicas muestran cómo una estructura se conecta con otra. "
+                    "No basta con decir el nombre del órgano, músculo, hueso o vaso; también se debe explicar qué tiene cerca, qué atraviesa, qué limita o qué función acompaña. "
+                    "Esta parte permite responder preguntas de identificación, comparación y desarrollo."
                 ),
             },
             {
-                "subtitulo": "4. Idea para escribir en examen",
+                "subtitulo": "4. Importancia para examen",
                 "contenido": (
-                    "Una respuesta completa debe iniciar definiendo el corazón, luego ubicarlo en el mediastino medio y finalmente relacionarlo con sus vasos principales. "
-                    "También debe mencionarse su importancia funcional: impulsar la sangre hacia la circulación pulmonar y sistémica. "
-                    f"Si el punto difícil es {punto}, intégralo como parte de la explicación para demostrar comprensión específica."
+                    f"{importancia} Una respuesta tipo examen puede organizarse en cuatro pasos: definición, ubicación, relaciones e importancia. "
+                    f"Para {tema}, el cierre debe demostrar que el estudiante entiende el contenido y puede relacionarlo con {punto}. "
+                    "Si puede redactarlo en un párrafo sin mirar sus apuntes, el tema ya está listo para practicar con mini quiz o simulacro."
                 ),
             },
         ]
-        conceptos = [
-            {"termino": "Corazón", "explicacion": "Órgano muscular hueco que impulsa la sangre por el sistema circulatorio.", "como_usarlo": "Empieza una respuesta diciendo: 'El corazón es un órgano muscular hueco...'"},
-            {"termino": "Mediastino medio", "explicacion": "Región del tórax donde se ubica el corazón, entre ambos pulmones.", "como_usarlo": "Úsalo para responder ubicación: 'Se localiza en el mediastino medio'."},
-            {"termino": "Pericardio", "explicacion": "Membrana que rodea y protege al corazón, ayudando a fijarlo en su posición.", "como_usarlo": "Menciónalo al hablar de envolturas y relaciones del corazón."},
-            {"termino": "Aorta", "explicacion": "Arteria principal que sale del ventrículo izquierdo y distribuye sangre oxigenada.", "como_usarlo": "Úsala como ejemplo de gran vaso relacionado con el corazón."},
-            {"termino": "Tronco pulmonar", "explicacion": "Vaso que sale del ventrículo derecho y conduce sangre hacia los pulmones.", "como_usarlo": "Sirve para explicar la circulación pulmonar."},
-            {"termino": "Venas cavas", "explicacion": "Vasos que llevan sangre venosa hacia la aurícula derecha.", "como_usarlo": "Inclúyelas al explicar entrada de sangre al corazón."},
-        ]
+
+        conceptos_clave = conceptos[:6]
         esquema = [
-            {"seccion": "Definición", "desarrollo": "El corazón es un órgano muscular hueco que actúa como bomba del sistema circulatorio."},
-            {"seccion": "Ubicación", "desarrollo": "Se localiza en el mediastino medio, entre los pulmones, detrás del esternón y sobre el diafragma."},
-            {"seccion": "Relaciones", "desarrollo": "Se relaciona con el pericardio, pulmones, diafragma, esternón y grandes vasos como aorta, tronco pulmonar, venas cavas y venas pulmonares."},
-            {"seccion": "Importancia", "desarrollo": "Su función es impulsar la sangre hacia la circulación pulmonar y sistémica, manteniendo el transporte de oxígeno y nutrientes."},
+            {"seccion": "Definición", "desarrollo": definicion},
+            {"seccion": "Ubicación", "desarrollo": ubicacion},
+            {"seccion": "Relaciones", "desarrollo": relaciones},
+            {"seccion": "Importancia", "desarrollo": importancia},
         ]
         cornell = [
-            {"pregunta_guia": "¿Qué es el corazón?", "apuntes": "Órgano muscular hueco que funciona como bomba central de la circulación.", "clave_memoria": "Bomba"},
-            {"pregunta_guia": "¿Dónde se ubica?", "apuntes": "En el mediastino medio, entre ambos pulmones, detrás del esternón y apoyado sobre el diafragma.", "clave_memoria": "Mediastino"},
-            {"pregunta_guia": "¿Qué vasos principales se relacionan?", "apuntes": "Aorta, tronco pulmonar, venas cavas y venas pulmonares.", "clave_memoria": "Grandes vasos"},
-            {"pregunta_guia": "¿Cómo responder en examen?", "apuntes": "Definición + ubicación + relaciones + función circulatoria.", "clave_memoria": "DURF"},
+            {"pregunta_guia": f"¿Qué es {tema}?", "apuntes": definicion, "clave_memoria": "Definición"},
+            {"pregunta_guia": "¿Dónde se ubica?", "apuntes": ubicacion, "clave_memoria": "Ubicación"},
+            {"pregunta_guia": "¿Con qué se relaciona?", "apuntes": relaciones, "clave_memoria": "Relaciones"},
+            {"pregunta_guia": "¿Por qué importa?", "apuntes": importancia, "clave_memoria": "Importancia"},
         ]
-        glosario = [
-            {"termino": "Aurícula", "definicion": "Cavidad superior del corazón que recibe sangre.", "relacion": "Ayuda a explicar la entrada de sangre al corazón."},
-            {"termino": "Ventrículo", "definicion": "Cavidad inferior que impulsa sangre hacia arterias principales.", "relacion": "Permite explicar la salida de sangre hacia pulmones o cuerpo."},
-            {"termino": "Aorta", "definicion": "Arteria principal que nace del ventrículo izquierdo.", "relacion": "Conecta el corazón con la circulación sistémica."},
-            {"termino": "Tronco pulmonar", "definicion": "Vaso que sale del ventrículo derecho hacia los pulmones.", "relacion": "Conecta el corazón con la circulación pulmonar."},
-            {"termino": "Pericardio", "definicion": "Envoltura fibroserosa que rodea al corazón.", "relacion": "Protege y fija el corazón dentro del mediastino."},
-        ]
+        glosario = glosario_extra[:8]
+        if not glosario:
+            glosario = [
+                {"termino": tema, "definicion": definicion, "relacion": f"Es el contenido central que se conecta con {punto}."},
+                {"termino": punto, "definicion": "Punto específico elegido como dificultad o refuerzo dentro de la ruta.", "relacion": "Debe integrarse en la respuesta para que el estudio sea personalizado."},
+                {"termino": "Ubicación anatómica", "definicion": "Posición de una estructura dentro de una región del cuerpo.", "relacion": "Ayuda a responder dónde se encuentra el contenido estudiado."},
+                {"termino": "Relación anatómica", "definicion": "Vínculo espacial o funcional con estructuras cercanas.", "relacion": "Permite explicar el tema con comprensión y no solo memoria."},
+            ]
+
         respuesta_modelo = (
-            "El corazón es un órgano muscular hueco que actúa como bomba central del sistema circulatorio. "
-            "Se localiza en el mediastino medio, entre ambos pulmones, detrás del esternón y sobre el diafragma. "
-            "Está rodeado por el pericardio y se relaciona superiormente con los grandes vasos. "
-            "Entre estos vasos se encuentran la aorta, el tronco pulmonar, las venas cavas y las venas pulmonares. "
-            "Funcionalmente, recibe sangre venosa, la envía hacia los pulmones para oxigenarse y luego impulsa sangre oxigenada hacia el cuerpo. "
-            "Por eso, para estudiar corazón y vasos del tronco se deben relacionar ubicación, cavidades, vasos y circulación."
+            f"{definicion} {ubicacion} {relaciones} {importancia} "
+            f"Por eso, al estudiar {tema}, conviene conectar la definición con la ubicación y luego relacionarla con {punto}. "
+            "Una respuesta completa no se limita a nombrar estructuras; explica dónde están, cómo se relacionan y qué función o valor anatómico tienen."
         )
-        respuesta_corta = "El corazón es una bomba muscular ubicada en el mediastino medio; se relaciona con el pericardio, pulmones, diafragma y grandes vasos, y su función es impulsar la sangre hacia pulmones y cuerpo."
-        pregunta_examen = "Describa el corazón y sus vasos principales considerando definición, ubicación, relaciones anatómicas e importancia funcional."
-        puntos = ["Corazón = bomba muscular", "Ubicación = mediastino medio", "Relaciones = pulmones, diafragma, esternón y pericardio", "Vasos clave = aorta, tronco pulmonar, venas cavas y venas pulmonares"]
-        errores = [
-            {"error": "Responder solo que el corazón bombea sangre", "correccion": "Agrega ubicación y relaciones anatómicas para que la respuesta sea completa."},
-            {"error": "Confundir vasos de entrada y salida", "correccion": "Recuerda: venas llegan al corazón; arterias salen del corazón."},
-            {"error": "Olvidar el mediastino", "correccion": "Incluye la frase 'se localiza en el mediastino medio'."},
+        respuesta_corta = f"{definicion} {ubicacion} {relaciones}"
+        pregunta_examen = f"Explique {tema} considerando definición, ubicación, relaciones anatómicas e importancia."
+        puntos = [
+            definicion,
+            ubicacion,
+            relaciones,
+            importancia,
         ]
-    else:
-        categoria_nombre = {
-            "pelvis_osea": "estructuras óseas y límites anatómicos",
-            "articular": "superficies articulares, ligamentos y estabilidad",
-            "muscular": "origen, inserción, acción y relaciones musculares",
-            "nervioso": "trayectos nerviosos, distribución e inervación",
-            "vascular": "trayectos vasculares, ramas y relaciones",
-            "linfatico": "cadenas ganglionares, vasos linfáticos y drenaje",
-            "visceral": "órganos, ubicación y relaciones viscerales",
-            "perine": "límites, planos y relaciones del periné",
-        }.get(categoria, "definición, ubicación, relaciones e importancia")
-        resumen = (
-            f"{tema} debe estudiarse de forma escrita identificando {categoria_nombre}. "
-            f"La lectura debe transformarse en un apunte organizado: primero se define el tema, luego se ubica, después se relaciona con {punto} y finalmente se explica su importancia para el examen. "
-            "Esta modalidad no busca copiar párrafos largos, sino producir una explicación clara que el estudiante pueda leer, memorizar y responder con sus propias palabras."
-        )
-        lectura_profunda = [
-            {"subtitulo": "1. Qué debo entender", "contenido": f"El tema {tema} debe comenzar con una definición clara. La definición no debe ser una lista de palabras, sino una frase que explique qué estructura, región o sistema se está estudiando y por qué forma parte de Anatomía I."},
-            {"subtitulo": "2. Dónde se ubica", "contenido": f"Después de definirlo, se debe ubicar {tema} dentro de la región anatómica correspondiente. Usa referencias espaciales como anterior, posterior, superior, inferior, medial o lateral cuando sean necesarias."},
-            {"subtitulo": "3. Con qué se relaciona", "contenido": f"Relaciona {tema} con {punto}. También agrega estructuras cercanas, límites, función o conexiones relevantes según el tipo de tema. Esta parte demuestra comprensión y no solo memoria."},
-            {"subtitulo": "4. Cómo escribirlo en examen", "contenido": "La respuesta debe seguir este orden: definición, ubicación, relaciones e importancia. Si puedes escribir esos cuatro elementos sin mirar, el tema ya está listo para practicar con preguntas."},
+        errores = errores_extra[:]
+        errores.extend([
+            {"error": "Responder solo con una lista de nombres", "correccion": "Convierte cada nombre en una oración que explique ubicación o relación."},
+            {"error": "Olvidar la ubicación", "correccion": "Incluye una frase clara de localización antes de hablar de relaciones."},
+            {"error": "No conectar con el punto difícil", "correccion": f"Menciona {punto} dentro de la explicación y no como palabra suelta."},
+        ])
+
+        actividad = {
+            "titulo": "Producción escrita guiada",
+            "consigna": pregunta_examen,
+            "instrucciones": "Escribe primero la respuesta corta y luego desarrolla la respuesta completa. Revisa si incluiste definición, ubicación, relaciones e importancia.",
+            "plantilla": ["Definición:", "Ubicación anatómica:", "Relaciones principales:", "Importancia funcional o clínica:", "Respuesta final con mis palabras:"],
+            "ejemplo_respuesta": respuesta_corta,
+        }
+        fichas = [
+            {"anverso": f"¿Qué debo recordar primero de {tema}?", "reverso": definicion},
+            {"anverso": "¿Qué no puede faltar en la respuesta?", "reverso": f"Ubicación y relaciones principales: {ubicacion} {relaciones}"},
+            {"anverso": "¿Cómo sé que entendí?", "reverso": "Si puedo explicarlo con definición, ubicación, relaciones e importancia sin mirar el apunte."},
         ]
-        conceptos = [
-            {"termino": tema, "explicacion": f"Tema principal que debe definirse, ubicarse y relacionarse con {punto}.", "como_usarlo": f"Inicia la respuesta con: '{tema} se entiende como...'"},
-            {"termino": punto, "explicacion": "Punto específico que debe reforzarse en la ruta personalizada.", "como_usarlo": "Inclúyelo después de la definición para demostrar estudio dirigido."},
-            {"termino": "Ubicación anatómica", "explicacion": "Región o posición donde se reconoce una estructura.", "como_usarlo": "Escribe: 'Se localiza en...' y agrega una referencia espacial."},
-            {"termino": "Relación anatómica", "explicacion": "Vínculo con estructuras cercanas, límites, función o continuidad.", "como_usarlo": "Escribe: 'Se relaciona con...' para completar la respuesta."},
+        preguntas = [
+            f"¿Puedo explicar qué es {tema} sin copiar?",
+            "¿Incluí ubicación anatómica precisa?",
+            "¿Mencioné relaciones anatómicas o funcionales?",
+            "¿Mi respuesta parece de examen o solo una lista?",
         ]
-        esquema = [
-            {"seccion": "Definición", "desarrollo": f"{tema} debe definirse con una frase clara que indique qué se estudia."},
-            {"seccion": "Ubicación", "desarrollo": "Debe indicarse la región anatómica y referencias espaciales principales."},
-            {"seccion": "Relaciones", "desarrollo": f"Debe conectarse con {punto} y con estructuras vecinas o funciones asociadas."},
-            {"seccion": "Importancia", "desarrollo": "Permite responder preguntas de identificación, relación y explicación anatómica."},
-        ]
-        cornell = [
-            {"pregunta_guia": f"¿Qué es {tema}?", "apuntes": f"Escribe una definición clara de {tema} con tus palabras.", "clave_memoria": "Definir"},
-            {"pregunta_guia": "¿Dónde se ubica?", "apuntes": "Anota región, límites o referencias espaciales.", "clave_memoria": "Ubicar"},
-            {"pregunta_guia": f"¿Cómo se relaciona con {punto}?", "apuntes": "Agrega conexiones anatómicas o funcionales relevantes.", "clave_memoria": "Relacionar"},
-            {"pregunta_guia": "¿Cómo lo respondería?", "apuntes": "Redacta definición + ubicación + relaciones + importancia.", "clave_memoria": "Responder"},
-        ]
-        glosario = [
-            {"termino": tema, "definicion": "Tema central que debe dominarse en la sesión.", "relacion": f"Se conecta con {punto} y con el objetivo del día."},
-            {"termino": punto, "definicion": "Subtema marcado como dificultad principal.", "relacion": "Debe aparecer en la respuesta escrita."},
-            {"termino": "Definición", "definicion": "Explicación precisa de qué es una estructura o región.", "relacion": "Es el inicio de una respuesta académica."},
-            {"termino": "Relaciones", "definicion": "Estructuras cercanas o conexiones anatómicas relevantes.", "relacion": "Demuestran comprensión y no solo memoria."},
-        ]
-        respuesta_modelo = (
-            f"{tema} es el contenido central de esta sesión y debe explicarse de manera ordenada. "
-            f"Primero se define qué se estudia y luego se ubica dentro de la región anatómica correspondiente. "
-            f"Después se relaciona con {punto} y con las estructuras vecinas o funciones que correspondan. "
-            "Una respuesta completa no debe limitarse a nombrar estructuras; debe explicar ubicación, relaciones e importancia. "
-            "Esta forma de redacción permite responder mejor preguntas abiertas, de identificación y de relación anatómica."
-        )
-        respuesta_corta = f"{tema} debe explicarse con definición, ubicación, relación con {punto} e importancia anatómica para responder correctamente en examen."
-        pregunta_examen = f"Explique {tema} considerando definición, ubicación, relaciones e importancia anatómica."
-        puntos = [f"Tema central: {tema}", f"Punto difícil: {punto}", "Responder con definición + ubicación + relaciones", "Evitar copiar; redactar con palabras propias"]
-        errores = [
-            {"error": "Hacer una lista sin explicación", "correccion": "Convierte cada punto en una oración completa."},
-            {"error": "No mencionar ubicación", "correccion": "Agrega una referencia anatómica clara."},
-            {"error": "No conectar con el punto difícil", "correccion": f"Incluye explícitamente {punto} en la respuesta."},
+        lectura_guiada = [
+            "Lee la explicación completa y subraya definición, ubicación, relaciones e importancia.",
+            "Copia el cuadro Cornell en tu cuaderno y conviértelo en cuatro frases propias.",
+            "Memoriza la respuesta corta y luego intenta escribir la respuesta modelo sin mirar.",
+            "Corrige tu respuesta usando la lista de errores comunes.",
         ]
 
-    actividad = {
-        "titulo": "Producción escrita guiada",
-        "consigna": pregunta_examen,
-        "instrucciones": "Escribe primero la respuesta corta y luego desarrolla la respuesta completa. Revisa si incluiste definición, ubicación, relaciones e importancia.",
-        "plantilla": ["Definición:", "Ubicación anatómica:", "Relaciones principales:", "Importancia:", "Respuesta final con mis palabras:"],
-        "ejemplo_respuesta": respuesta_corta,
-    }
-    fichas = [
-        {"anverso": "¿Qué debo decir primero?", "reverso": "La definición clara del tema, sin copiar literalmente."},
-        {"anverso": "¿Qué no puede faltar?", "reverso": "Ubicación anatómica y al menos una relación importante."},
-        {"anverso": "¿Cómo sé que está completo?", "reverso": "Si mi respuesta tiene definición, ubicación, relaciones e importancia."},
-    ]
-    preguntas = [
-        "¿Puedo explicar el tema en 4 líneas sin mirar?",
-        "¿Incluí ubicación anatómica precisa?",
-        "¿Mencioné relaciones anatómicas o funcionales?",
-        "¿Mi respuesta parece de examen o solo una lista?",
-    ]
-    lectura_guiada = [
-        "Lee la lectura desarrollada una vez completa sin copiar.",
-        "Subraya definición, ubicación, relaciones e importancia.",
-        "Copia el cuadro Cornell en tu cuaderno y completa una frase propia por fila.",
-        "Redacta la respuesta modelo con tus palabras y compárala con la propuesta del sistema.",
-    ]
-    return {
-        "titulo": f"Guía real de lectura y escritura: {tema}",
-        "resumen": resumen,
-        "lectura_guiada": lectura_guiada,
-        "lectura_profunda": lectura_profunda,
-        "conceptos_clave": conceptos,
-        "esquema_escrito": esquema,
-        "cuadro_cornell": cornell,
-        "glosario_detallado": glosario,
-        "fichas_memoria": fichas,
-        "respuesta_modelo": respuesta_modelo,
-        "respuesta_corta": respuesta_corta,
-        "pregunta_tipo_examen": pregunta_examen,
-        "puntos_memorizacion": puntos,
-        "actividad_escritura": actividad,
-        "errores_comunes": errores,
-        "preguntas_autoverificacion": preguntas,
-        "producto_esperado": "Apunte completo: lectura desarrollada, glosario, cuadro Cornell, respuesta corta y respuesta tipo examen.",
-    }
+        return {
+            "habilitado": True,
+            "titulo": f"Guía desarrollada de lectura y escritura: {tema}",
+            "resumen": resumen,
+            "lectura_guiada": lectura_guiada,
+            "lectura_profunda": lectura_profunda,
+            "conceptos_clave": conceptos_clave,
+            "esquema_escrito": esquema,
+            "cuadro_cornell": cornell,
+            "glosario_detallado": glosario,
+            "fichas_memoria": fichas,
+            "respuesta_modelo": respuesta_modelo,
+            "respuesta_corta": respuesta_corta,
+            "pregunta_tipo_examen": pregunta_examen,
+            "puntos_memorizacion": puntos,
+            "actividad_escritura": actividad,
+            "errores_comunes": errores[:5],
+            "preguntas_autoverificacion": preguntas,
+            "producto_esperado": "Apunte real: lectura desarrollada, cuadro Cornell, glosario, respuesta corta, respuesta tipo examen y correcciones.",
+        }
+
+    if contiene("corazón", "corazon", "card", "aorta", "cava", "pulmonar"):
+        return armar_paquete(
+            definicion="El corazón es un órgano muscular hueco que funciona como bomba central del sistema circulatorio y moviliza la sangre hacia los pulmones y hacia el resto del cuerpo.",
+            ubicacion="Se localiza en el mediastino medio, dentro del tórax, entre ambos pulmones, detrás del esternón y apoyado sobre el diafragma.",
+            relaciones="Se relaciona con el pericardio, los pulmones y pleuras, el diafragma, el esternón y los grandes vasos: aorta, tronco pulmonar, venas cavas y venas pulmonares.",
+            importancia="permite comprender la circulación pulmonar y sistémica, la entrada y salida de sangre por sus cavidades y la relación entre corazón y vasos del tronco.",
+            conceptos=[
+                {"termino": "Corazón", "explicacion": "Órgano muscular hueco que impulsa la sangre.", "como_usarlo": "Inicia una respuesta diciendo: 'El corazón es un órgano muscular hueco...'."},
+                {"termino": "Mediastino medio", "explicacion": "Región torácica donde se encuentra el corazón.", "como_usarlo": "Úsalo para ubicar: 'Se localiza en el mediastino medio'."},
+                {"termino": "Pericardio", "explicacion": "Envoltura fibroserosa que rodea y protege al corazón.", "como_usarlo": "Menciónalo en relaciones y protección."},
+                {"termino": "Aorta", "explicacion": "Arteria principal que sale del ventrículo izquierdo.", "como_usarlo": "Úsala como vaso de salida hacia la circulación sistémica."},
+                {"termino": "Tronco pulmonar", "explicacion": "Vaso que sale del ventrículo derecho hacia los pulmones.", "como_usarlo": "Úsalo para explicar la circulación pulmonar."},
+                {"termino": "Venas cavas", "explicacion": "Vasos que llevan sangre venosa a la aurícula derecha.", "como_usarlo": "Inclúyelas al explicar la entrada de sangre."},
+            ],
+            glosario_extra=[
+                {"termino": "Aurícula", "definicion": "Cavidad superior del corazón que recibe sangre.", "relacion": "Explica la entrada de sangre al corazón."},
+                {"termino": "Ventrículo", "definicion": "Cavidad inferior que expulsa sangre hacia arterias principales.", "relacion": "Explica la salida de sangre hacia pulmones o cuerpo."},
+                {"termino": "Aorta", "definicion": "Arteria principal de la circulación sistémica.", "relacion": "Nace del ventrículo izquierdo."},
+                {"termino": "Tronco pulmonar", "definicion": "Vaso que conduce sangre hacia los pulmones.", "relacion": "Nace del ventrículo derecho."},
+                {"termino": "Pericardio", "definicion": "Membrana que envuelve al corazón.", "relacion": "Lo protege y fija en el mediastino."},
+            ],
+            errores_extra=[
+                {"error": "Confundir arterias y venas", "correccion": "Recuerda: las arterias salen del corazón y las venas llegan al corazón."},
+            ],
+        )
+
+    if contiene("diafragma", "hiato", "centro tendinoso"):
+        return armar_paquete(
+            definicion="El diafragma es un músculo ancho, plano y abovedado que separa la cavidad torácica de la abdominal y actúa como principal músculo de la inspiración.",
+            ubicacion="Se ubica en la parte inferior del tórax, formando el piso de la cavidad torácica y el techo de la cavidad abdominal.",
+            relaciones="Se relaciona superiormente con pulmones, pleuras y corazón; inferiormente con hígado, estómago y vísceras abdominales; además presenta orificios para vena cava inferior, esófago y aorta.",
+            importancia="explica la mecánica respiratoria, el paso de estructuras entre tórax y abdomen y la relación funcional entre respiración, presión abdominal y vísceras.",
+            conceptos=[
+                {"termino": "Diafragma", "explicacion": "Músculo principal de la inspiración.", "como_usarlo": "Defínelo como separación toracoabdominal y músculo respiratorio."},
+                {"termino": "Centro tendinoso", "explicacion": "Zona central aponeurótica del diafragma.", "como_usarlo": "Menciónalo al explicar su estructura."},
+                {"termino": "Hiato aórtico", "explicacion": "Abertura posterior para el paso de la aorta.", "como_usarlo": "Úsalo en orificios del diafragma."},
+                {"termino": "Hiato esofágico", "explicacion": "Abertura para el esófago.", "como_usarlo": "Relaciona tórax y abdomen."},
+                {"termino": "Nervio frénico", "explicacion": "Principal inervación motora del diafragma.", "como_usarlo": "Inclúyelo al hablar de función respiratoria."},
+            ],
+        )
+
+    if contiene("pelvis menor", "esqueleto de la pelvis", "pelvis", "sacroilíaca", "sacroiliaca", "sínfisis púbica", "sinfisis pubica"):
+        return armar_paquete(
+            definicion="La pelvis es el anillo óseo formado por los huesos coxales, el sacro y el cóccix; la pelvis menor corresponde a la porción inferior situada por debajo de la abertura superior de la pelvis.",
+            ubicacion="Se localiza en la parte inferior del tronco, entre la columna vertebral y los miembros inferiores, formando una cavidad que contiene órganos pélvicos.",
+            relaciones="Se relaciona con el sacro posteriormente, la sínfisis púbica anteriormente, los huesos coxales lateralmente, el periné inferiormente y órganos como vejiga, recto y genitales internos.",
+            importancia="permite comprender límites pélvicos, soporte visceral, diferencias anatómicas según sexo y referencias usadas en obstetricia, urología y anatomía topográfica.",
+            conceptos=[
+                {"termino": "Pelvis menor", "explicacion": "Porción inferior de la pelvis situada debajo de la abertura superior.", "como_usarlo": "Úsala para ubicar órganos pélvicos."},
+                {"termino": "Sacro", "explicacion": "Hueso posterior que une columna y pelvis.", "como_usarlo": "Menciónalo como límite posterior."},
+                {"termino": "Sínfisis púbica", "explicacion": "Unión anterior entre ambos pubis.", "como_usarlo": "Sirve para explicar el límite anterior."},
+                {"termino": "Abertura superior", "explicacion": "Plano que separa pelvis mayor y pelvis menor.", "como_usarlo": "Úsala para diferenciar regiones pélvicas."},
+                {"termino": "Periné", "explicacion": "Región inferior que cierra la pelvis.", "como_usarlo": "Relaciona pelvis menor con suelo pélvico."},
+            ],
+        )
+
+    if contiene("columna", "vértebra", "vertebra", "sacro", "cóccix", "coccix", "conducto vertebral"):
+        return armar_paquete(
+            definicion="La columna vertebral es el eje óseo posterior del tronco, formado por vértebras articuladas que sostienen el cuerpo, permiten movimiento y protegen la médula espinal.",
+            ubicacion="Se extiende desde la base del cráneo hasta la pelvis, en la línea media posterior, y se organiza en regiones cervical, torácica, lumbar, sacra y coccígea.",
+            relaciones="Se relaciona con músculos profundos del dorso, costillas en la región torácica, pelvis en la región sacra y el conducto vertebral que contiene la médula espinal.",
+            importancia="sirve para entender postura, movimientos del tronco, protección neurológica y puntos de articulación con tórax y pelvis.",
+            conceptos=[
+                {"termino": "Vértebra", "explicacion": "Unidad ósea de la columna vertebral.", "como_usarlo": "Explica cuerpo vertebral, arco y agujero vertebral."},
+                {"termino": "Conducto vertebral", "explicacion": "Canal formado por los agujeros vertebrales.", "como_usarlo": "Menciónalo como protección de la médula."},
+                {"termino": "Disco intervertebral", "explicacion": "Estructura fibrocartilaginosa entre cuerpos vertebrales.", "como_usarlo": "Úsalo para explicar amortiguación y movilidad."},
+                {"termino": "Curvaturas", "explicacion": "Cervical, torácica, lumbar y sacra.", "como_usarlo": "Relaciona con postura y equilibrio."},
+            ],
+        )
+
+    if contiene("tórax", "torax", "costilla", "esternón", "esternon", "caja torácica", "caja toracica", "intercostal"):
+        return armar_paquete(
+            definicion="El esqueleto del tórax forma una caja osteocartilaginosa compuesta por vértebras torácicas, costillas, cartílagos costales y esternón.",
+            ubicacion="Se ubica en la parte superior del tronco, entre el cuello y el abdomen, rodeando la cavidad torácica.",
+            relaciones="Se relaciona con pulmones, pleuras, corazón, grandes vasos, músculos intercostales y diafragma; las costillas se articulan posteriormente con vértebras torácicas y anteriormente con cartílagos costales.",
+            importancia="protege órganos vitales, participa en la mecánica respiratoria y sirve como referencia para localizar espacios intercostales, vasos y nervios torácicos.",
+            conceptos=[
+                {"termino": "Costilla", "explicacion": "Hueso alargado que forma la pared torácica.", "como_usarlo": "Diferencia costillas verdaderas, falsas y flotantes."},
+                {"termino": "Esternón", "explicacion": "Hueso plano anterior del tórax.", "como_usarlo": "Úsalo como referencia anterior."},
+                {"termino": "Cartílago costal", "explicacion": "Une costillas con esternón o cartílagos vecinos.", "como_usarlo": "Explica elasticidad torácica."},
+                {"termino": "Espacio intercostal", "explicacion": "Espacio entre costillas con músculos, vasos y nervios.", "como_usarlo": "Menciónalo en relaciones clínicas y respiratorias."},
+            ],
+        )
+
+    if categoria == "muscular":
+        return armar_paquete(
+            definicion=f"{tema} corresponde al estudio de músculos, fascias o aponeurosis del tronco, analizando su disposición, inserciones, acción y relación con movimientos o soporte corporal.",
+            ubicacion="Se ubica en la pared correspondiente del tronco, ya sea dorsal, torácica, abdominal o pélvica, según el grupo muscular estudiado.",
+            relaciones="Se relaciona con huesos de inserción, fascias, planos musculares vecinos, vasos y nervios que acompañan la región.",
+            importancia="permite comprender movimiento, postura, respiración, presión abdominal y protección de vísceras según el músculo estudiado.",
+            conceptos=[
+                {"termino": "Origen", "explicacion": "Punto de fijación más estable de un músculo.", "como_usarlo": "Inclúyelo para ordenar inserciones."},
+                {"termino": "Inserción", "explicacion": "Punto móvil o distal donde termina el músculo.", "como_usarlo": "Úsalo junto con acción."},
+                {"termino": "Acción", "explicacion": "Movimiento o efecto producido por el músculo.", "como_usarlo": "Cierra la respuesta funcional."},
+                {"termino": "Inervación", "explicacion": "Nervio que controla el músculo.", "como_usarlo": "Demuestra comprensión funcional."},
+            ],
+        )
+
+    if categoria == "nervioso":
+        return armar_paquete(
+            definicion=f"{tema} estudia nervios o plexos del tronco, es decir, estructuras que conducen información motora, sensitiva o autónoma hacia órganos, paredes y regiones corporales.",
+            ubicacion="Los nervios se distribuyen desde la médula espinal hacia paredes torácicas, abdominales, pelvis y vísceras, siguiendo trayectos relacionados con vasos y planos musculares.",
+            relaciones="Se relacionan con forámenes intervertebrales, espacios intercostales, plexos autónomos, vasos acompañantes y órganos que reciben inervación.",
+            importancia="permite explicar sensibilidad, movimiento, control visceral y consecuencias anatómicas de una lesión nerviosa.",
+            conceptos=[
+                {"termino": "Nervio espinal", "explicacion": "Nervio que sale de la médula por el foramen intervertebral.", "como_usarlo": "Úsalo para explicar distribución segmentaria."},
+                {"termino": "Plexo", "explicacion": "Red de nervios que intercambian fibras.", "como_usarlo": "Menciónalo en organización nerviosa."},
+                {"termino": "Rama motora", "explicacion": "Fibras que activan músculos.", "como_usarlo": "Relaciona con movimiento."},
+                {"termino": "Rama sensitiva", "explicacion": "Fibras que llevan sensibilidad.", "como_usarlo": "Relaciona con territorio cutáneo o visceral."},
+            ],
+        )
+
+    if categoria == "linfatico":
+        return armar_paquete(
+            definicion=f"{tema} estudia vasos, nódulos y troncos linfáticos que recogen linfa del tronco y participan en el drenaje y defensa del organismo.",
+            ubicacion="Se distribuye en regiones torácicas, abdominales y pélvicas, con grupos ganglionares cercanos a vasos principales y órganos.",
+            relaciones="Se relaciona con venas, arterias, vísceras, conducto torácico y troncos linfáticos colectores que conducen la linfa hacia la circulación venosa.",
+            importancia="ayuda a comprender drenaje de órganos, propagación de infecciones o tumores y organización topográfica de nódulos linfáticos.",
+            conceptos=[
+                {"termino": "Nódulo linfático", "explicacion": "Estructura que filtra linfa.", "como_usarlo": "Úsalo para explicar defensa y drenaje."},
+                {"termino": "Vaso linfático", "explicacion": "Conducto que transporta linfa.", "como_usarlo": "Relaciona órganos con cadenas ganglionares."},
+                {"termino": "Conducto torácico", "explicacion": "Principal colector linfático del cuerpo.", "como_usarlo": "Menciónalo en drenaje final."},
+                {"termino": "Tronco linfático", "explicacion": "Colector regional de linfa.", "como_usarlo": "Ordena el recorrido de drenaje."},
+            ],
+        )
+
+    if categoria == "perine":
+        return armar_paquete(
+            definicion="El periné es la región inferior del tronco que cierra la pelvis y contiene estructuras musculares, fasciales, urogenitales y anales.",
+            ubicacion="Se sitúa por debajo del diafragma pélvico, entre pubis, ramas isquiopúbicas, tuberosidades isquiáticas y cóccix.",
+            relaciones="Se relaciona superiormente con la pelvis menor, anteriormente con la región urogenital y posteriormente con la región anal.",
+            importancia="permite comprender soporte del suelo pélvico, continencia, paso de estructuras urogenitales y organización topográfica masculina y femenina.",
+            conceptos=[
+                {"termino": "Región urogenital", "explicacion": "Porción anterior del periné.", "como_usarlo": "Úsala para dividir el periné."},
+                {"termino": "Región anal", "explicacion": "Porción posterior del periné.", "como_usarlo": "Relaciona con conducto anal."},
+                {"termino": "Diafragma pélvico", "explicacion": "Plano muscular que sostiene vísceras pélvicas.", "como_usarlo": "Menciónalo como límite superior funcional."},
+                {"termino": "Fascias perineales", "explicacion": "Planos conectivos que organizan espacios perineales.", "como_usarlo": "Úsalas en relaciones y compartimentos."},
+            ],
+        )
+
+    if categoria == "visceral" or contiene("pulmón", "pulmon", "pleura", "tráquea", "traquea", "bronquio", "mediastino", "esófago", "esofago", "estómago", "estomago", "hígado", "higado", "páncreas", "pancreas", "bazo", "intestino", "riñón", "rinon", "vejiga", "uréter", "ureter", "peritoneo"):
+        return armar_paquete(
+            definicion=f"{tema} corresponde al estudio de órganos del tronco y sus relaciones topográficas, funcionales y vasculonerviosas.",
+            ubicacion="Los órganos del tronco se organizan dentro de cavidades torácica, abdominal o pélvica, rodeados por serosas, fascias o espacios anatómicos según la región.",
+            relaciones="Se relacionan con paredes corporales, vasos principales, nervios, peritoneo o pleura, y con órganos vecinos que condicionan su forma, movilidad y función.",
+            importancia="permite entender localización clínica, vías de paso, irrigación, drenaje, inervación y relaciones que suelen evaluarse en preguntas de anatomía topográfica.",
+            conceptos=[
+                {"termino": "Órgano", "explicacion": "Estructura con forma, ubicación y función específica.", "como_usarlo": "Defínelo con ubicación y función."},
+                {"termino": "Serosa", "explicacion": "Membrana como pleura o peritoneo que reviste cavidades.", "como_usarlo": "Úsala para explicar relaciones y movilidad."},
+                {"termino": "Irrigación", "explicacion": "Aporte arterial del órgano.", "como_usarlo": "Añádela si el examen pide vasos."},
+                {"termino": "Drenaje", "explicacion": "Salida venosa o linfática.", "como_usarlo": "Relaciona órgano con circulación o linfa."},
+            ],
+        )
+
+    if categoria == "articular":
+        return armar_paquete(
+            definicion=f"{tema} estudia uniones articulares del tronco, sus superficies, ligamentos y movimientos permitidos.",
+            ubicacion="Se ubica en el punto donde dos o más huesos del tronco entran en contacto, como columna, tórax o cintura pélvica.",
+            relaciones="Se relaciona con cápsulas, ligamentos, discos o cartílagos, músculos estabilizadores y estructuras nerviosas o vasculares cercanas.",
+            importancia="explica estabilidad, movilidad, transmisión de fuerzas y limitaciones funcionales de la región estudiada.",
+            conceptos=[
+                {"termino": "Ligamento", "explicacion": "Banda fibrosa que une huesos y estabiliza una articulación.", "como_usarlo": "Inclúyelo en relaciones y estabilidad."},
+                {"termino": "Superficie articular", "explicacion": "Zona ósea que participa en la unión.", "como_usarlo": "Menciónala al describir la articulación."},
+                {"termino": "Cápsula articular", "explicacion": "Envoltura de una articulación sinovial.", "como_usarlo": "Úsala cuando corresponda a sinoviales."},
+                {"termino": "Movimiento", "explicacion": "Acción permitida por la articulación.", "como_usarlo": "Cierra con función."},
+            ],
+        )
+
+    if categoria == "vascular":
+        return armar_paquete(
+            definicion=f"{tema} estudia arterias, venas o trayectos vasculares del tronco encargados de conducir sangre hacia órganos y paredes corporales.",
+            ubicacion="Los vasos se ubican siguiendo ejes anatómicos del tórax, abdomen o pelvis, muchas veces acompañando nervios, órganos y planos musculares.",
+            relaciones="Se relacionan con órganos que irrigan o drenan, venas acompañantes, plexos nerviosos, ganglios linfáticos y espacios de paso.",
+            importancia="permite comprender irrigación, drenaje venoso, circulación regional y referencias clínicas para sangrado, pulsos o abordajes anatómicos.",
+            conceptos=[
+                {"termino": "Arteria", "explicacion": "Vaso que lleva sangre desde el corazón hacia tejidos.", "como_usarlo": "Úsala para explicar irrigación."},
+                {"termino": "Vena", "explicacion": "Vaso que devuelve sangre hacia el corazón.", "como_usarlo": "Úsala para explicar drenaje venoso."},
+                {"termino": "Rama", "explicacion": "División de un vaso principal.", "como_usarlo": "Ordena el trayecto vascular."},
+                {"termino": "Anastomosis", "explicacion": "Comunicación entre vasos.", "como_usarlo": "Menciona circulación alternativa si corresponde."},
+            ],
+        )
+
+    # Fallback con categoría: todavía entrega contenido, no instrucciones vacías.
+    categoria_nombre = {
+        "pelvis_osea": "estructuras óseas y límites pélvicos",
+        "muscular": "músculos, inserciones y acciones",
+        "nervioso": "trayectos nerviosos e inervación",
+        "vascular": "trayectos arteriales y venosos",
+        "linfatico": "vasos, nódulos y drenaje linfático",
+        "visceral": "órganos, ubicación y relaciones viscerales",
+        "perine": "límites, planos y relaciones del periné",
+        "articular": "superficies, ligamentos y movimientos articulares",
+    }.get(categoria, "definición, ubicación, relaciones e importancia anatómica")
+
+    return armar_paquete(
+        definicion=f"{tema} es un contenido de Anatomía I del tronco que se organiza alrededor de {categoria_nombre}.",
+        ubicacion="Se estudia dentro de la región anatómica correspondiente del tronco: tórax, abdomen, pelvis, periné o pared corporal según el tema seleccionado.",
+        relaciones=f"Se relaciona con {punto}, con estructuras vecinas de la misma región y con límites, vasos, nervios, músculos u órganos asociados según corresponda.",
+        importancia="ayuda a responder preguntas de identificación, ubicación, relación anatómica y explicación funcional en el examen.",
+        conceptos=[
+            {"termino": tema, "explicacion": f"Contenido central asociado a {categoria_nombre}.", "como_usarlo": f"Inicia la respuesta explicando qué representa {tema}."},
+            {"termino": punto, "explicacion": "Punto específico que se debe reforzar.", "como_usarlo": "Intégralo en la ubicación o relaciones."},
+            {"termino": "Región anatómica", "explicacion": "Zona del cuerpo donde se ubica el contenido.", "como_usarlo": "Úsala para localizar el tema."},
+            {"termino": "Relación anatómica", "explicacion": "Conexión con estructuras cercanas.", "como_usarlo": "Añádela para completar la respuesta."},
+        ],
+    )
 
 def normalizar_lectura(valor, tema="", punto_dificil=""):
     """Normaliza el recurso Lectura/Escritura como una guía escrita REAL.
@@ -2064,8 +2298,13 @@ def normalizar_lectura(valor, tema="", punto_dificil=""):
         " ".join(item.get("apuntes", "") for item in cuadro_cornell),
         " ".join(item.get("definicion", "") for item in glosario_detallado),
     ])
-    if tema and texto_es_generico_lectura(contenido_revisar):
-        real = construir_lectura_escritura_real(tema, punto_dificil)
+    tema_real_lectura = obtener_tema_canonico_estudio(
+        tema_seleccionado=tema,
+        punto_dificil=punto_dificil,
+    )
+
+    if tema_real_lectura and (texto_es_generico_lectura(contenido_revisar) or es_etiqueta_generica_estudio(tema)): 
+        real = construir_lectura_escritura_real(tema_real_lectura, punto_dificil)
         titulo = real["titulo"]
         resumen = real["resumen"]
         lectura_guiada = real["lectura_guiada"]
