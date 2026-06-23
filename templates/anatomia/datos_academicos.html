@@ -1,23 +1,517 @@
 {% extends "base.html" %}
 
-{% block title %}Datos acad&eacute;micos | Tutor IA Anatom&iacute;a VARK{% endblock %}
+{% block title %}Datos académicos | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
-<section class="page-hero">
+<style>
+    body {
+        background:
+            radial-gradient(circle at 8% 10%, rgba(15, 143, 134, .10), transparent 24rem),
+            radial-gradient(circle at 92% 12%, rgba(246, 189, 59, .10), transparent 24rem),
+            linear-gradient(180deg, #f7fbfb 0%, #ffffff 48%, #f3faf8 100%) !important;
+    }
+
+    .academic-hero {
+        width: min(1080px, calc(100% - 28px));
+        margin: 26px auto 18px;
+        position: relative;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, .48fr);
+        gap: 22px;
+        align-items: center;
+        padding: clamp(22px, 3.5vw, 36px);
+        border-radius: 30px;
+        border: 1px solid rgba(207, 227, 224, .95);
+        background:
+            radial-gradient(circle at 86% 18%, rgba(15, 143, 134, .15), transparent 17rem),
+            linear-gradient(135deg, rgba(255,255,255,.96) 0%, rgba(243,251,250,.92) 100%);
+        box-shadow: 0 22px 60px rgba(18, 40, 39, .10);
+    }
+
+    .academic-hero h1 {
+        margin: 8px 0 0;
+        color: #0d2d2b;
+        font-size: clamp(2rem, 4.5vw, 4rem);
+        line-height: .98;
+        font-weight: 950;
+        letter-spacing: -.06em;
+    }
+
+    .academic-hero h1 span {
+        color: #0f8f86;
+    }
+
+    .academic-hero p:not(.eyebrow) {
+        max-width: 760px;
+        margin: 14px 0 0;
+        color: #526d6a;
+        font-size: 1rem;
+        line-height: 1.66;
+    }
+
+    .academic-hero-card {
+        display: grid;
+        gap: 12px;
+        padding: 18px;
+        border-radius: 24px;
+        background: rgba(255,255,255,.88);
+        border: 1px solid rgba(219,232,230,.95);
+        box-shadow: 0 14px 34px rgba(18,40,39,.06);
+    }
+
+    .academic-hero-card div {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #244241;
+        font-weight: 850;
+        font-size: .92rem;
+    }
+
+    .academic-hero-card span {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 11px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #0f8f86, #08756f);
+        font-size: .82rem;
+        font-weight: 950;
+        flex: 0 0 auto;
+    }
+
+    .academic-layout {
+        width: min(1080px, calc(100% - 28px));
+        margin: 0 auto 58px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, .36fr);
+        gap: 18px;
+        align-items: start;
+    }
+
+    .academic-form-card {
+        padding: clamp(18px, 2.4vw, 26px);
+        border-radius: 26px;
+        border: 1px solid rgba(219, 232, 230, .95);
+        background: rgba(255, 255, 255, .96);
+        box-shadow: 0 16px 42px rgba(18, 40, 39, .07);
+    }
+
+    .academic-form-header {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 14px;
+        align-items: start;
+        margin-bottom: 20px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid rgba(219, 232, 230, .95);
+    }
+
+    .academic-form-icon {
+        display: grid;
+        place-items: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 17px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #0f8f86, #08756f);
+        box-shadow: 0 14px 28px rgba(15, 143, 134, .20);
+    }
+
+    .academic-form-icon svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .academic-form-header h2 {
+        margin: 4px 0 6px;
+        color: #0d2d2b;
+        font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+        line-height: 1.12;
+        font-weight: 950;
+        letter-spacing: -.04em;
+    }
+
+    .academic-form-header p {
+        margin: 0;
+        color: #526d6a;
+        line-height: 1.55;
+    }
+
+    .academic-progress-guide {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .academic-progress-guide div {
+        padding: 13px;
+        border-radius: 17px;
+        background: #f7fcfb;
+        border: 1px solid rgba(219, 232, 230, .95);
+    }
+
+    .academic-progress-guide strong {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        margin-bottom: 8px;
+        border-radius: 11px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #0f8f86, #08756f);
+        font-size: .82rem;
+        font-weight: 950;
+    }
+
+    .academic-progress-guide span {
+        display: block;
+        color: #102a28;
+        font-size: .86rem;
+        line-height: 1.25;
+        font-weight: 900;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 15px;
+    }
+
+    .form-group {
+        display: grid;
+        gap: 7px;
+    }
+
+    .form-label {
+        color: #244241;
+        font-weight: 900;
+        font-size: .9rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        min-height: 46px;
+        padding: 10px 13px;
+        border-radius: 14px;
+        border: 1px solid rgba(15, 118, 110, .18);
+        background: #f9fdfc;
+        color: #102a28;
+        font-size: .94rem;
+        font-weight: 700;
+        transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .form-group textarea {
+        min-height: 110px;
+        resize: vertical;
+        line-height: 1.5;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        border-color: #0f766e;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(15, 118, 110, .10);
+        outline: none;
+    }
+
+    .form-hint {
+        display: block;
+        color: #738684;
+        font-size: .78rem;
+        line-height: 1.35;
+    }
+
+    .field-guide {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+        margin-top: 2px;
+        padding: 10px 11px;
+        border-radius: 14px;
+        background: #f7fcfb;
+        border: 1px solid rgba(219, 232, 230, .9);
+        color: #526d6a;
+        font-size: .8rem;
+        line-height: 1.4;
+    }
+
+    .field-guide svg {
+        width: 16px;
+        height: 16px;
+        color: #0f766e;
+        flex: 0 0 auto;
+        margin-top: 1px;
+    }
+
+    .academic-objective-box {
+        margin-top: 16px;
+        padding: 16px;
+        border-radius: 20px;
+        background:
+            radial-gradient(circle at top right, rgba(15, 143, 134, .08), transparent 12rem),
+            #ffffff;
+        border: 1px solid rgba(219, 232, 230, .95);
+    }
+
+    .academic-objective-box h3 {
+        margin: 0 0 8px;
+        color: #0d2d2b;
+        font-size: 1.08rem;
+        font-weight: 950;
+    }
+
+    .info-box {
+        margin-top: 16px;
+        padding: 16px;
+        border-radius: 20px;
+        background: #edf8f6;
+        border: 1px solid rgba(15, 118, 110, .14);
+        color: #244b49;
+    }
+
+    .ai-box-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 8px;
+        color: #0d2d2b;
+    }
+
+    .ai-box-title svg {
+        width: 20px;
+        height: 20px;
+        color: #0f8f86;
+    }
+
+    .info-box p {
+        margin: 0;
+        line-height: 1.55;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(219, 232, 230, .95);
+    }
+
+    .form-actions .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .academic-side {
+        position: sticky;
+        top: 94px;
+        display: grid;
+        gap: 14px;
+    }
+
+    .side-card {
+        padding: 18px;
+        border-radius: 24px;
+        border: 1px solid rgba(219, 232, 230, .95);
+        background: rgba(255,255,255,.94);
+        box-shadow: 0 14px 34px rgba(18, 40, 39, .06);
+    }
+
+    .side-card h3 {
+        margin: 0 0 8px;
+        color: #0d2d2b;
+        font-size: 1.12rem;
+        font-weight: 950;
+        letter-spacing: -.03em;
+    }
+
+    .side-card p {
+        margin: 0;
+        color: #526d6a;
+        font-size: .92rem;
+        line-height: 1.55;
+    }
+
+    .side-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .side-list div {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 10px;
+        align-items: start;
+    }
+
+    .side-list span {
+        display: grid;
+        place-items: center;
+        width: 25px;
+        height: 25px;
+        border-radius: 9px;
+        color: #0f766e;
+        background: #e6f7f4;
+        font-size: .78rem;
+        font-weight: 950;
+    }
+
+    .side-list strong {
+        display: block;
+        color: #244241;
+        font-size: .88rem;
+        margin-bottom: 2px;
+    }
+
+    .side-list small {
+        display: block;
+        color: #738684;
+        line-height: 1.35;
+    }
+
+    .dataset-card {
+        background:
+            radial-gradient(circle at top right, rgba(246, 189, 59, .12), transparent 13rem),
+            #ffffff;
+    }
+
+    .save-card {
+        background:
+            radial-gradient(circle at top right, rgba(15, 143, 134, .13), transparent 13rem),
+            linear-gradient(180deg, #ffffff 0%, #f7fcfb 100%);
+    }
+
+    .save-card .save-icon {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        margin-bottom: 12px;
+        border-radius: 16px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #0f8f86, #08756f);
+        box-shadow: 0 14px 28px rgba(15, 143, 134, .20);
+    }
+
+    .save-card .save-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .errorlist {
+        margin: 4px 0 0;
+        padding: 0;
+        list-style: none;
+        color: #c2412d;
+        font-size: .86rem;
+        font-weight: 750;
+    }
+
+    .alert {
+        border-radius: 16px;
+        padding: 13px 15px;
+        margin-bottom: 16px;
+    }
+
+    @media (max-width: 1050px) {
+        .academic-hero,
+        .academic-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .academic-side {
+            position: static;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 760px) {
+        .academic-hero,
+        .academic-layout {
+            width: min(100% - 18px, 1080px);
+        }
+
+        .academic-hero,
+        .academic-form-card,
+        .side-card {
+            padding: 18px;
+            border-radius: 22px;
+        }
+
+        .form-grid,
+        .academic-progress-guide,
+        .academic-side {
+            grid-template-columns: 1fr;
+        }
+
+        .academic-form-header {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column-reverse;
+            align-items: stretch;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<section class="academic-hero">
     <div>
-        <p class="eyebrow">Perfil acad&eacute;mico</p>
-        <h1>Datos acad&eacute;micos</h1>
+        <p class="eyebrow">Perfil académico</p>
+        <h1>Datos académicos para tu <span>ruta personalizada.</span></h1>
         <p>
-            Selecciona tu tema de Anatom&iacute;a I desde el dataset basado en el libro de Rouvi&egrave;re y Delmas.
-            Estos datos servir&aacute;n para generar una ruta de aprendizaje personalizada y centrada en el libro base.
+            Completa esta información para que el sistema sepa qué tema estudias, cuánto tiempo tienes y qué tipo de examen debes preparar.
+            Con esos datos podrá generar una ruta de aprendizaje más clara y útil para Anatomía I.
         </p>
+    </div>
+
+    <div class="academic-hero-card">
+        <div><span>1</span> Elige el tema del libro base</div>
+        <div><span>2</span> Indica fechas y tiempo diario</div>
+        <div><span>3</span> Guarda para generar tu ruta</div>
     </div>
 </section>
 
 <section class="section-band">
-    <div class="page-inner">
-        <form method="post" class="form-panel wide-panel">
+    <div class="academic-layout">
+        <form method="post" class="form-panel wide-panel academic-form-card">
             {% csrf_token %}
+
+            <div class="academic-form-header">
+                <span class="academic-form-icon">
+                    <i data-lucide="book-open-check"></i>
+                </span>
+                <div>
+                    <p class="eyebrow">Formulario guiado</p>
+                    <h2>Configura tu estudio antes del examen</h2>
+                    <p>Mientras más claro sea este perfil, más precisa será la ruta generada por el sistema.</p>
+                </div>
+            </div>
+
+            <div class="academic-progress-guide">
+                <div><strong>1</strong><span>Tema principal</span></div>
+                <div><strong>2</strong><span>Punto difícil</span></div>
+                <div><strong>3</strong><span>Fechas y tiempo</span></div>
+                <div><strong>4</strong><span>Objetivo</span></div>
+            </div>
+
             {% if form.non_field_errors %}
                 <div class="alert alert-danger">
                     {{ form.non_field_errors }}
@@ -30,7 +524,11 @@
                         {{ form.materia.label }}
                     </label>
                     {{ form.materia }}
-                    <small class="form-hint">Por ahora el sistema trabaja solo con Anatom&iacute;a I.</small>
+                    <small class="form-hint">Por ahora el sistema trabaja solo con Anatomía I.</small>
+                    <div class="field-guide">
+                        <i data-lucide="graduation-cap"></i>
+                        <span>Sirve para mantener la ruta enfocada únicamente en la materia correcta.</span>
+                    </div>
                     {{ form.materia.errors }}
                 </div>
 
@@ -40,6 +538,10 @@
                     </label>
                     {{ form.tema_actual }}
                     <small class="form-hint">Tema principal tomado del libro base.</small>
+                    <div class="field-guide">
+                        <i data-lucide="target"></i>
+                        <span>Selecciona el bloque general que necesitas estudiar para tu examen.</span>
+                    </div>
                     {{ form.tema_actual.errors }}
                 </div>
 
@@ -49,7 +551,24 @@
                     </label>
                     {{ form.temas_dificiles }}
                     <small class="form-hint">Este campo depende del tema actual seleccionado.</small>
+                    <div class="field-guide">
+                        <i data-lucide="alert-circle"></i>
+                        <span>Marca el punto que más te cuesta para que la ruta lo priorice.</span>
+                    </div>
                     {{ form.temas_dificiles.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.tipo_examen.id_for_label }}">
+                        {{ form.tipo_examen.label }}
+                    </label>
+                    {{ form.tipo_examen }}
+                    <small class="form-hint">Ayuda a preparar preguntas más parecidas a tu evaluación.</small>
+                    <div class="field-guide">
+                        <i data-lucide="clipboard-check"></i>
+                        <span>El tipo de examen orienta el estilo de práctica y simulacro.</span>
+                    </div>
+                    {{ form.tipo_examen.errors }}
                 </div>
 
                 <div class="form-group">
@@ -57,6 +576,11 @@
                         {{ form.fecha_inicio.label }}
                     </label>
                     {{ form.fecha_inicio }}
+                    <small class="form-hint">Fecha desde la que empezarás a estudiar.</small>
+                    <div class="field-guide">
+                        <i data-lucide="calendar-days"></i>
+                        <span>El sistema usa esta fecha para distribuir la carga diaria.</span>
+                    </div>
                     {{ form.fecha_inicio.errors }}
                 </div>
 
@@ -65,6 +589,11 @@
                         {{ form.fecha_examen.label }}
                     </label>
                     {{ form.fecha_examen }}
+                    <small class="form-hint">Fecha límite para completar la ruta.</small>
+                    <div class="field-guide">
+                        <i data-lucide="calendar-check"></i>
+                        <span>Mientras más cerca esté el examen, más directa será la ruta.</span>
+                    </div>
                     {{ form.fecha_examen.errors }}
                 </div>
 
@@ -73,35 +602,35 @@
                         {{ form.minutos_por_dia.label }}
                     </label>
                     {{ form.minutos_por_dia }}
-                    <small class="form-hint">M&iacute;nimo 15 minutos y m&aacute;ximo 60 minutos, en intervalos de 5.</small>
+                    <small class="form-hint">Mínimo 15 minutos y máximo 60 minutos, en intervalos de 5.</small>
+                    <div class="field-guide">
+                        <i data-lucide="clock"></i>
+                        <span>Elige un tiempo realista para que puedas cumplir tu plan diario.</span>
+                    </div>
                     {{ form.minutos_por_dia.errors }}
                 </div>
+            </div>
 
+            <div class="academic-objective-box">
+                <h3>Objetivo de estudio</h3>
                 <div class="form-group">
-                    <label class="form-label" for="{{ form.tipo_examen.id_for_label }}">
-                        {{ form.tipo_examen.label }}
+                    <label class="form-label" for="{{ form.objetivo_estudio.id_for_label }}">
+                        {{ form.objetivo_estudio.label }}
                     </label>
-                    {{ form.tipo_examen }}
-                    {{ form.tipo_examen.errors }}
+                    {{ form.objetivo_estudio }}
+                    <small class="form-hint">Ejemplo: “repasar para parcial”, “entender mejor pelvis”, “preparar exposición” o “practicar preguntas”.</small>
+                    {{ form.objetivo_estudio.errors }}
                 </div>
             </div>
 
-            <div class="form-group mt-4">
-                <label class="form-label" for="{{ form.objetivo_estudio.id_for_label }}">
-                    {{ form.objetivo_estudio.label }}
-                </label>
-                {{ form.objetivo_estudio }}
-                {{ form.objetivo_estudio.errors }}
-            </div>
-
-            <div class="info-box mt-4">
+            <div class="info-box">
                 <div class="ai-box-title">
                     <i data-lucide="book-open"></i>
                     <strong>Base del dataset</strong>
                 </div>
                 <p>
-                    Los temas disponibles se basan en el libro <strong>Anatom&iacute;a Humana, Tomo 2: Tronco</strong>
-                    de Rouvi&egrave;re y Delmas. La ruta de estudio se generar&aacute; usando el tema y punto espec&iacute;fico
+                    Los temas disponibles se basan en el libro <strong>Anatomía Humana, Tomo 2: Tronco</strong>
+                    de Rouvière y Delmas. La ruta de estudio se generará usando el tema y punto específico
                     que selecciones en esta pantalla.
                 </p>
             </div>
@@ -117,6 +646,64 @@
                 </button>
             </div>
         </form>
+
+        <aside class="academic-side">
+            <section class="side-card save-card">
+                <div class="save-icon">
+                    <i data-lucide="route"></i>
+                </div>
+                <h3>¿Qué pasa después?</h3>
+                <p>
+                    Al guardar estos datos, el sistema ya tendrá la base para organizar tu ruta de aprendizaje por días.
+                </p>
+                <div class="side-list">
+                    <div>
+                        <span>1</span>
+                        <div>
+                            <strong>Se identifica el tema</strong>
+                            <small>La ruta se enfoca en el contenido que seleccionaste.</small>
+                        </div>
+                    </div>
+                    <div>
+                        <span>2</span>
+                        <div>
+                            <strong>Se calcula el tiempo</strong>
+                            <small>El plan se adapta a tus días y minutos disponibles.</small>
+                        </div>
+                    </div>
+                    <div>
+                        <span>3</span>
+                        <div>
+                            <strong>Se prepara la ruta</strong>
+                            <small>Después podrás generar actividades, recursos y práctica.</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="side-card dataset-card">
+                <h3>Consejo rápido</h3>
+                <p>
+                    No elijas todo de forma general. Mientras más específico sea el punto difícil, más útil será la ruta.
+                </p>
+                <div class="side-list">
+                    <div>
+                        <span>✓</span>
+                        <div>
+                            <strong>Mejor opción</strong>
+                            <small>“Pelvis menor”, “periné”, “diafragma” o un subtema concreto.</small>
+                        </div>
+                    </div>
+                    <div>
+                        <span>×</span>
+                        <div>
+                            <strong>Evita</strong>
+                            <small>Objetivos muy amplios como “estudiar todo Anatomía”.</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </aside>
     </div>
 </section>
 
