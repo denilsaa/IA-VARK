@@ -6,38 +6,678 @@
 {% block main_class %}main-home{% endblock %}
 
 {% block content %}
+<style>
+    .home-body {
+        background:
+            radial-gradient(circle at 8% 12%, rgba(15, 118, 110, .12), transparent 26rem),
+            radial-gradient(circle at 92% 10%, rgba(59, 130, 246, .10), transparent 24rem),
+            linear-gradient(180deg, #f7fbfb 0%, #ffffff 48%, #f3faf8 100%) !important;
+    }
+
+    .main-home {
+        overflow: hidden;
+    }
+
+    .home-hero {
+        position: relative;
+        padding: clamp(34px, 6vw, 82px) 0 42px;
+    }
+
+    .home-hero::before {
+        content: "";
+        position: absolute;
+        inset: 3% auto auto 50%;
+        width: 720px;
+        height: 720px;
+        transform: translateX(-4%);
+        border-radius: 999px;
+        background:
+            radial-gradient(circle, rgba(15, 118, 110, .16), transparent 62%),
+            radial-gradient(circle at 68% 36%, rgba(240, 100, 69, .13), transparent 28%);
+        pointer-events: none;
+        filter: blur(2px);
+    }
+
+    .hero-grid {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(360px, .95fr);
+        gap: clamp(28px, 5vw, 58px);
+        align-items: center;
+    }
+
+    .hero-content {
+        max-width: 760px;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 10px 15px;
+        border-radius: 999px;
+        color: #0f766e;
+        background: rgba(234, 248, 245, .95);
+        border: 1px solid rgba(15, 118, 110, .14);
+        font-weight: 900;
+        box-shadow: 0 12px 28px rgba(15, 118, 110, .08);
+    }
+
+    .hero-badge svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .hero-content h1 {
+        margin: 18px 0 0;
+        color: #102a28;
+        font-size: clamp(2.55rem, 6vw, 5.55rem);
+        line-height: .93;
+        letter-spacing: -.075em;
+        font-weight: 950;
+    }
+
+    .hero-content h1 span {
+        color: #0f766e;
+    }
+
+    .hero-copy {
+        max-width: 680px;
+        margin: 22px 0 0;
+        color: #58706d;
+        font-size: clamp(1.02rem, 1.5vw, 1.18rem);
+        line-height: 1.72;
+    }
+
+    .hero-copy strong {
+        color: #0f766e;
+    }
+
+    .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 26px;
+        align-items: center;
+    }
+
+    .google-login-card {
+        display: grid;
+        gap: 12px;
+        margin-top: 26px;
+        width: min(100%, 520px);
+        padding: 18px;
+        border-radius: 26px;
+        background: rgba(255, 255, 255, .86);
+        border: 1px solid rgba(219, 232, 230, .95);
+        box-shadow: 0 18px 45px rgba(18, 40, 39, .08);
+        backdrop-filter: blur(14px);
+    }
+
+    .google-login-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+    }
+
+    .google-login-card-top strong {
+        color: #102a28;
+        font-size: 1rem;
+    }
+
+    .google-login-card-top span {
+        color: #647777;
+        font-size: .9rem;
+    }
+
+    .btn-google-real {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 52px;
+        padding: 12px 18px;
+        border-radius: 16px;
+        border: 1px solid #dadce0;
+        background: #ffffff;
+        color: #3c4043;
+        text-decoration: none;
+        font-weight: 850;
+        font-size: 1rem;
+        box-shadow: 0 10px 22px rgba(60, 64, 67, .10);
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .btn-google-real:hover {
+        transform: translateY(-2px);
+        background: #f8fbff;
+        border-color: #c8d4e3;
+        box-shadow: 0 18px 34px rgba(60, 64, 67, .16);
+        color: #202124;
+    }
+
+    .google-g {
+        flex: 0 0 auto;
+        width: 22px;
+        height: 22px;
+    }
+
+    .auth-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #8a9a98;
+        font-size: .84rem;
+        font-weight: 800;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: #e0ece9;
+    }
+
+    .hero-secondary-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .hero-secondary-actions .btn {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .hero-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        max-width: 620px;
+        margin-top: 26px;
+    }
+
+    .hero-metrics div {
+        padding: 16px;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, .82);
+        border: 1px solid rgba(219, 232, 230, .95);
+        box-shadow: 0 14px 34px rgba(18, 40, 39, .06);
+    }
+
+    .hero-metrics strong {
+        display: block;
+        color: #0f766e;
+        font-size: clamp(1.4rem, 2.4vw, 2rem);
+        line-height: 1;
+        font-weight: 950;
+    }
+
+    .hero-metrics span {
+        display: block;
+        margin-top: 6px;
+        color: #607875;
+        font-weight: 800;
+        font-size: .9rem;
+    }
+
+    .hero-preview {
+        position: relative;
+    }
+
+    .preview-window {
+        position: relative;
+        overflow: hidden;
+        border-radius: 34px;
+        padding: 20px;
+        background:
+            radial-gradient(circle at 72% 8%, rgba(15, 118, 110, .16), transparent 18rem),
+            linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(246, 251, 250, .94));
+        border: 1px solid rgba(255, 255, 255, .82);
+        box-shadow: 0 28px 90px rgba(18, 40, 39, .16);
+        backdrop-filter: blur(16px);
+    }
+
+    .preview-window::before {
+        content: "";
+        position: absolute;
+        right: -110px;
+        top: -110px;
+        width: 320px;
+        height: 320px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(240, 100, 69, .18), transparent 68%);
+        pointer-events: none;
+    }
+
+    .preview-toolbar {
+        display: flex;
+        gap: 7px;
+        margin-bottom: 18px;
+    }
+
+    .preview-toolbar span {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #dbe8e6;
+    }
+
+    .preview-toolbar span:nth-child(1) {
+        background: #f06445;
+    }
+
+    .preview-toolbar span:nth-child(2) {
+        background: #f5b841;
+    }
+
+    .preview-toolbar span:nth-child(3) {
+        background: #0d9488;
+    }
+
+    .preview-header {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .preview-header small {
+        display: block;
+        color: #708784;
+        font-weight: 850;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-size: .72rem;
+    }
+
+    .preview-header strong {
+        display: block;
+        margin-top: 3px;
+        color: #102a28;
+        font-size: 1.55rem;
+        font-weight: 950;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 64px;
+        padding: 10px 13px;
+        border-radius: 999px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #0f766e, #0d9488);
+        font-weight: 950;
+        box-shadow: 0 14px 30px rgba(15, 118, 110, .22);
+    }
+
+    .preview-card.anatomy-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 280px;
+        border-radius: 28px;
+        display: grid;
+        place-items: center;
+        background:
+            radial-gradient(circle at 50% 42%, rgba(15, 118, 110, .12), transparent 14rem),
+            linear-gradient(180deg, #ffffff, #f2fbf9);
+        border: 1px solid rgba(219, 232, 230, .95);
+    }
+
+    .preview-card.anatomy-card img {
+        width: min(100%, 360px);
+        max-height: 300px;
+        object-fit: contain;
+        filter: drop-shadow(0 18px 24px rgba(18, 40, 39, .14));
+        animation: homeFloat 4.5s ease-in-out infinite;
+    }
+
+    .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+    }
+
+    .mini-card {
+        display: grid;
+        gap: 6px;
+        padding: 16px;
+        border-radius: 22px;
+        background: #ffffff;
+        border: 1px solid rgba(219, 232, 230, .95);
+        box-shadow: 0 12px 28px rgba(18, 40, 39, .06);
+    }
+
+    .mini-card i,
+    .mini-card svg {
+        width: 22px;
+        height: 22px;
+        color: #0f766e;
+    }
+
+    .mini-card strong {
+        color: #102a28;
+        font-size: 1.08rem;
+        font-weight: 950;
+    }
+
+    .mini-card span {
+        color: #708784;
+        font-size: .86rem;
+        font-weight: 800;
+    }
+
+    .route-mini {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        padding: 14px;
+        border-radius: 999px;
+        background: rgba(234, 248, 245, .82);
+        border: 1px solid rgba(15, 118, 110, .11);
+    }
+
+    .route-mini span {
+        flex: 1;
+        height: 9px;
+        border-radius: 999px;
+        background: #d3e6e3;
+    }
+
+    .route-mini span.done {
+        background: linear-gradient(90deg, #0f766e, #0d9488);
+    }
+
+    .home-guide-strip {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .guide-pill {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, .82);
+        border: 1px solid rgba(219, 232, 230, .9);
+        color: #244241;
+        font-weight: 850;
+        box-shadow: 0 12px 28px rgba(18, 40, 39, .05);
+    }
+
+    .guide-pill span {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 12px;
+        color: #ffffff;
+        background: #0f766e;
+        font-weight: 950;
+        flex: 0 0 auto;
+    }
+
+    .home-section {
+        padding: clamp(38px, 6vw, 76px) 0;
+    }
+
+    .section-heading.centered {
+        text-align: center;
+        max-width: 720px;
+        margin: 0 auto 30px;
+    }
+
+    .section-heading.centered h2 {
+        margin: 8px 0 0;
+        color: #102a28;
+        font-size: clamp(2rem, 4vw, 3.3rem);
+        line-height: 1;
+        letter-spacing: -.05em;
+        font-weight: 950;
+    }
+
+    .section-heading.centered p {
+        margin: 14px auto 0;
+        color: #647777;
+        line-height: 1.65;
+        font-size: 1.02rem;
+    }
+
+    .process-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .feature-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 230px;
+        padding: 22px;
+        border-radius: 26px;
+        background:
+            radial-gradient(circle at top right, rgba(15, 118, 110, .08), transparent 10rem),
+            #ffffff;
+        border: 1px solid rgba(219, 232, 230, .95);
+        box-shadow: 0 16px 42px rgba(18, 40, 39, .07);
+    }
+
+    .feature-card::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto auto 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #0f766e, #f06445);
+    }
+
+    .feature-icon {
+        display: grid;
+        place-items: center;
+        width: 52px;
+        height: 52px;
+        border-radius: 18px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #0f766e, #0d9488);
+        box-shadow: 0 14px 28px rgba(15, 118, 110, .18);
+        margin-bottom: 16px;
+    }
+
+    .feature-icon svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .feature-card h3 {
+        margin: 0 0 10px;
+        color: #102a28;
+        font-size: 1.2rem;
+        font-weight: 950;
+    }
+
+    .feature-card p {
+        margin: 0;
+        color: #647777;
+        line-height: 1.58;
+    }
+
+    @keyframes homeFloat {
+        0%, 100% {
+            transform: translateY(0) scale(1);
+        }
+
+        50% {
+            transform: translateY(-10px) scale(1.02);
+        }
+    }
+
+    @media (max-width: 1050px) {
+        .hero-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-content {
+            max-width: 100%;
+        }
+
+        .process-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .home-guide-strip {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .home-hero {
+            padding-top: 24px;
+        }
+
+        .hero-actions,
+        .hero-secondary-actions,
+        .hero-metrics,
+        .preview-grid,
+        .process-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-actions {
+            display: grid;
+        }
+
+        .hero-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .google-login-card {
+            padding: 14px;
+            border-radius: 22px;
+        }
+
+        .google-login-card-top {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .hero-metrics {
+            display: grid;
+        }
+
+        .preview-window {
+            border-radius: 26px;
+            padding: 16px;
+        }
+
+        .preview-card.anatomy-card {
+            min-height: 230px;
+        }
+    }
+</style>
+
 <section class="home-hero">
     <div class="container-fluid app-container hero-grid">
         <div class="hero-content">
-            <span class="hero-badge"><i data-lucide="sparkles"></i> Anatomía I + IA + VARK</span>
-            <h1>Estudia Anatomía con una ruta clara, visual y personalizada.</h1>
+            <span class="hero-badge">
+                <i data-lucide="sparkles"></i>
+                Anatomía I + IA + VARK
+            </span>
+
+            <h1>La educación también debe <span>evolucionar.</span></h1>
+
             <p class="hero-copy">
-                Diagnostica tu estilo VARK, sube tus materiales, genera un plan de estudio por días
-                y practica con simulacros antes del examen.
+                Descubre tu estilo de aprendizaje, organiza tus materiales y deja que el sistema genere una
+                <strong>ruta personalizada</strong> para estudiar Anatomía I con recursos visuales, auditivos, lectura/escritura y práctica.
             </p>
-            <div class="hero-actions">
-                <a href="{% url 'account_login' %}" class="btn btn-primary btn-lg icon-btn">
-                    <i data-lucide="log-in"></i><span>Iniciar sesión</span>
-                </a>
-                <a href="{% url 'account_signup' %}" class="btn btn-outline-primary btn-lg icon-btn">
-                    <i data-lucide="user-plus"></i><span>Crear cuenta</span>
-                </a>
-                {% if GOOGLE_AUTH_ENABLED %}
-                    <a href="{% provider_login_url 'google' process='login' %}" class="btn btn-google btn-lg icon-btn">
-                        <i data-lucide="chrome"></i><span>Continuar con Google</span>
+
+            {% if GOOGLE_AUTH_ENABLED %}
+                <div class="google-login-card">
+                    <div class="google-login-card-top">
+                        <div>
+                            <strong>Ingresa rápido y empieza tu ruta</strong><br>
+                            <span>Usa tu cuenta de Google para continuar sin llenar formularios.</span>
+                        </div>
+                        <span class="hero-badge">
+                            <i data-lucide="shield-check"></i>
+                            Seguro
+                        </span>
+                    </div>
+
+                    <a href="{% provider_login_url 'google' process='login' %}" class="btn-google-real">
+                        <svg class="google-g" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"></path>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"></path>
+                            <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z"></path>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06L5.84 9.9C6.71 7.3 9.14 5.38 12 5.38z"></path>
+                        </svg>
+                        <span>Continuar con Google</span>
                     </a>
-                {% endif %}
-            </div>
+
+                    <div class="auth-divider">o continúa manualmente</div>
+
+                    <div class="hero-secondary-actions">
+                        <a href="{% url 'account_login' %}" class="btn btn-outline-primary icon-btn">
+                            <i data-lucide="log-in"></i>
+                            <span>Iniciar sesión</span>
+                        </a>
+                        <a href="{% url 'account_signup' %}" class="btn btn-outline-primary icon-btn">
+                            <i data-lucide="user-plus"></i>
+                            <span>Crear cuenta</span>
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="hero-actions">
+                    <a href="{% url 'account_login' %}" class="btn btn-primary btn-lg icon-btn">
+                        <i data-lucide="log-in"></i>
+                        <span>Iniciar sesión</span>
+                    </a>
+                    <a href="{% url 'account_signup' %}" class="btn btn-outline-primary btn-lg icon-btn">
+                        <i data-lucide="user-plus"></i>
+                        <span>Crear cuenta</span>
+                    </a>
+                </div>
+            {% endif %}
+
             <div class="hero-metrics" aria-label="Resumen de funciones">
-                <div><strong>10</strong><span>preguntas VARK</span></div>
-                <div><strong>1–21</strong><span>días de ruta</span></div>
-                <div><strong>IA</strong><span>resúmenes y simulacros</span></div>
+                <div>
+                    <strong>10</strong>
+                    <span>preguntas VARK</span>
+                </div>
+                <div>
+                    <strong>1–21</strong>
+                    <span>días de ruta</span>
+                </div>
+                <div>
+                    <strong>IA</strong>
+                    <span>resúmenes y simulacros</span>
+                </div>
             </div>
         </div>
 
         <aside class="hero-preview" aria-label="Vista previa del sistema">
             <div class="preview-window">
-                <div class="preview-toolbar"><span></span><span></span><span></span></div>
+                <div class="preview-toolbar">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
                 <div class="preview-header">
                     <div>
                         <small>Ruta activa</small>
@@ -45,15 +685,45 @@
                     </div>
                     <span class="status-pill">82%</span>
                 </div>
+
                 <div class="preview-card anatomy-card">
                     <img src="{% static 'img/anatomy-study.png' %}" alt="Ilustración de estudio de anatomía">
                 </div>
+
                 <div class="preview-grid">
-                    <div class="mini-card"><i data-lucide="scan-eye"></i><strong>Visual</strong><span>Estilo VARK</span></div>
-                    <div class="mini-card"><i data-lucide="file-question"></i><strong>10</strong><span>Preguntas</span></div>
+                    <div class="mini-card">
+                        <i data-lucide="scan-eye"></i>
+                        <strong>Visual</strong>
+                        <span>Estilo VARK</span>
+                    </div>
+                    <div class="mini-card">
+                        <i data-lucide="file-question"></i>
+                        <strong>10</strong>
+                        <span>Preguntas</span>
+                    </div>
                 </div>
+
                 <div class="route-mini">
-                    <span class="done"></span><span class="done"></span><span></span><span></span><span></span>
+                    <span class="done"></span>
+                    <span class="done"></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <div class="home-guide-strip">
+                    <div class="guide-pill">
+                        <span>1</span>
+                        Test VARK
+                    </div>
+                    <div class="guide-pill">
+                        <span>2</span>
+                        Ruta por días
+                    </div>
+                    <div class="guide-pill">
+                        <span>3</span>
+                        Simulacro
+                    </div>
                 </div>
             </div>
         </aside>
@@ -65,13 +735,41 @@
         <div class="section-heading centered">
             <span class="eyebrow">Flujo de trabajo</span>
             <h2>De apuntes sueltos a una ruta de estudio</h2>
-            <p>La experiencia está pensada para que el estudiante sepa qué hacer en cada paso.</p>
+            <p>El estudiante entiende qué hacer desde el primer momento: diagnosticar, organizar, generar y practicar.</p>
         </div>
+
         <div class="process-grid">
-            <article class="feature-card"><span class="feature-icon"><i data-lucide="scan-eye"></i></span><h3>Test VARK</h3><p>Detecta el estilo principal para adaptar recursos y recomendaciones.</p></article>
-            <article class="feature-card"><span class="feature-icon"><i data-lucide="calendar-check"></i></span><h3>Datos académicos</h3><p>Registra tema, fecha de examen, dificultad y tiempo disponible.</p></article>
-            <article class="feature-card"><span class="feature-icon"><i data-lucide="folder-up"></i></span><h3>Materiales</h3><p>Sube PDFs, imágenes o textos para enriquecer la ruta personalizada.</p></article>
-            <article class="feature-card"><span class="feature-icon"><i data-lucide="route"></i></span><h3>Ruta y simulacro</h3><p>Estudia por días, marca avances y mide tu preparación con exámenes.</p></article>
+            <article class="feature-card">
+                <span class="feature-icon">
+                    <i data-lucide="scan-eye"></i>
+                </span>
+                <h3>Test VARK</h3>
+                <p>Detecta el estilo principal para adaptar recursos y recomendaciones según cómo aprende mejor el estudiante.</p>
+            </article>
+
+            <article class="feature-card">
+                <span class="feature-icon">
+                    <i data-lucide="calendar-check"></i>
+                </span>
+                <h3>Datos académicos</h3>
+                <p>Registra tema, fecha de examen, dificultad y tiempo disponible para crear un plan realista.</p>
+            </article>
+
+            <article class="feature-card">
+                <span class="feature-icon">
+                    <i data-lucide="folder-up"></i>
+                </span>
+                <h3>Materiales</h3>
+                <p>Sube PDFs, imágenes, documentos o texto manual para que la ruta use contenido del estudiante.</p>
+            </article>
+
+            <article class="feature-card">
+                <span class="feature-icon">
+                    <i data-lucide="route"></i>
+                </span>
+                <h3>Ruta y simulacro</h3>
+                <p>Estudia por días, marca avances, revisa recursos y mide tu preparación con exámenes de práctica.</p>
+            </article>
         </div>
     </div>
 </section>
