@@ -89,6 +89,17 @@ def generar_ruta_aprendizaje(user, perfil_vark, datos_academicos, materiales):
             dias_planificados=dias_planificados,
         )
 
+    # PARCHE CLAVE: antes de guardar, la ruta se fuerza a avanzar por
+    # subtemas reales del dataset. Esto evita que todos los días queden con
+    # el mismo tema, aunque Gemini devuelva días repetidos o una ruta antigua.
+    respuesta = forzar_variacion_diaria_con_dataset(
+        respuesta=respuesta,
+        datos_academicos=datos_academicos,
+        perfil_vark=perfil_vark,
+        perfil_vark_detalle=perfil_vark_detalle,
+        dias_planificados=dias_planificados,
+    )
+
     respuesta = enriquecer_plan_con_imagenes_ia(
         respuesta=respuesta,
         user=user,
@@ -122,6 +133,400 @@ def calcular_dias_planificados(dias_hasta_examen):
     if dias_hasta_examen > MAX_DIAS_PLAN:
         return MAX_DIAS_PLAN
     return dias_hasta_examen
+
+
+
+
+def _normalizar_clave_dataset(texto):
+    """Normaliza texto para comparar temas aunque tengan tildes o mayúsculas."""
+    import unicodedata
+
+    texto = str(texto or "").strip().lower()
+    texto = unicodedata.normalize("NFD", texto)
+    texto = "".join(ch for ch in texto if unicodedata.category(ch) != "Mn")
+    texto = re.sub(r"[^a-z0-9ñ]+", " ", texto)
+    return re.sub(r"\s+", " ", texto).strip()
+
+
+def _cargar_dataset_anatomia_i():
+    """Carga el dataset interno sin romper el sistema si el import falla."""
+    try:
+        from anatomia.dataset_anatomia import ANATOMIA_I_DATASET
+        return ANATOMIA_I_DATASET
+    except Exception as error:
+        print("No se pudo cargar ANATOMIA_I_DATASET:", error)
+        return []
+
+
+def _buscar_tema_en_dataset(tema_general="", punto_especifico=""):
+    """Busca el tema padre del dataset usando el tema general o el punto específico.
+
+    Ejemplo:
+    tema_general = "Corazón y vasos del tronco"
+    punto_especifico = "Anatomía del corazón"
+    retorna la entrada completa de "Corazón y vasos del tronco".
+    """
+    dataset = _cargar_dataset_anatomia_i()
+    tema_n = _normalizar_clave_dataset(tema_general)
+    punto_n = _normalizar_clave_dataset(punto_especifico)
+
+    # 1) Coincidencia exacta con el nombre del tema padre.
+    for item in dataset:
+        if _normalizar_clave_dataset(item.get("nombre")) == tema_n:
+            return item
+
+    # 2) Coincidencia parcial con el nombre del tema padre.
+    for item in dataset:
+        nombre_n = _normalizar_clave_dataset(item.get("nombre"))
+        if tema_n and (tema_n in nombre_n or nombre_n in tema_n):
+            return item
+
+    # 3) Si el punto específico pertenece a algún tema, usamos ese tema padre.
+    for item in dataset:
+        subtemas = item.get("subtemas") or []
+        for subtema in subtemas:
+            sub_n = _normalizar_clave_dataset(subtema)
+            if punto_n and (punto_n == sub_n or punto_n in sub_n or sub_n in punto_n):
+                return item
+
+    return None
+
+
+def _rotar_subtemas_desde_punto(subtemas, punto_especifico=""):
+    """Si el estudiante eligió un punto específico, arranca desde ese punto."""
+    if not subtemas:
+        return []
+
+    punto_n = _normalizar_clave_dataset(punto_especifico)
+    if not punto_n:
+        return list(subtemas)
+
+    for idx, subtema in enumerate(subtemas):
+        sub_n = _normalizar_clave_dataset(subtema)
+        if punto_n == sub_n or punto_n in sub_n or sub_n in punto_n:
+            return list(subtemas[idx:]) + list(subtemas[:idx])
+
+    return list(subtemas)
+
+
+def construir_secuencia_dataset_1_21(datos_academicos, dias_planificados):
+    """Construye una secuencia diaria real usando los subtemas del dataset.
+
+    Esta es la parte que corrige la ruta: ya no se repite el tema padre todos los
+    días. Si el tema tiene 15 subtemas y la ruta es de 15 días, usa esos 15.
+    Si la ruta es de 21 días, completa con actividades integradoras distintas.
+    """
+    dias = max(1, min(int(dias_planificados or 1), MAX_DIAS_PLAN))
+    tema_general = str(getattr(datos_academicos, "tema_actual", "") or "").strip()
+    punto_especifico = str(getattr(datos_academicos, "temas_dificiles", "") or "").strip()
+
+    entrada = _buscar_tema_en_dataset(tema_general, punto_especifico)
+
+    if entrada:
+        nombre_padre = str(entrada.get("nombre") or tema_general or "Anatomía I").strip()
+        subtemas = [str(s).strip() for s in (entrada.get("subtemas") or []) if str(s).strip()]
+        secuencia = _rotar_subtemas_desde_punto(subtemas, punto_especifico)
+    else:
+        nombre_padre = tema_general or "Anatomía I"
+        secuencia = []
+        if punto_especifico:
+            secuencia.append(punto_especifico)
+        secuencia.extend([
+            f"{nombre_padre}: concepto y ubicación",
+            f"{nombre_padre}: límites y referencias anatómicas",
+            f"{nombre_padre}: relaciones principales",
+            f"{nombre_padre}: función e importancia",
+            f"{nombre_padre}: respuesta tipo examen",
+        ])
+
+    # Quita duplicados conservando orden.
+    vistos = set()
+    limpia = []
+    for item in secuencia:
+        clave = _normalizar_clave_dataset(item)
+        if clave and clave not in vistos:
+            vistos.add(clave)
+            limpia.append(item)
+
+    secuencia = limpia or [nombre_padre]
+
+    # Completa hasta 21 días sin repetir exactamente el mismo título.
+    extras_base = [
+        "Integración anatómica general",
+        "Relaciones y límites importantes",
+        "Cuadro comparativo para examen",
+        "Preguntas de identificación anatómica",
+        "Caso aplicado de anatomía funcional",
+        "Repaso activo con errores comunes",
+        "Respuesta escrita tipo examen",
+        "Mapa final del tema completo",
+        "Simulacro corto del tema",
+    ]
+
+    resultado = []
+    for item in secuencia:
+        if len(resultado) >= dias:
+            break
+        resultado.append(item)
+
+    extra_idx = 0
+    while len(resultado) < dias:
+        base = extras_base[extra_idx % len(extras_base)]
+        resultado.append(f"{base}: {nombre_padre}")
+        extra_idx += 1
+
+    return resultado[:dias], nombre_padre
+
+
+def _guion_audio_por_tema(tema_dia, tema_padre):
+    return (
+        f"Hoy vas a estudiar {tema_dia}, dentro de {tema_padre}. Primero di en voz alta qué es, "
+        f"luego ubícalo en el tronco y finalmente relaciónalo con una estructura vecina. "
+        f"No memorices solo el nombre: intenta explicar para qué sirve, dónde se encuentra y "
+        f"por qué podría aparecer en una pregunta de examen. Cierra el repaso diciendo una frase "
+        f"propia que conecte {tema_dia} con el tema general."
+    )
+
+
+def _visual_por_tema(tema_dia, tema_padre, habilitado=True):
+    return {
+        "habilitado": bool(habilitado),
+        "titulo": f"Mapa mental de {tema_dia}",
+        "tipo": "mapa_mental_html",
+        "descripcion": f"Mapa para organizar {tema_dia} dentro de {tema_padre}.",
+        "nodo_central": tema_dia,
+        "ramas": [
+            {"titulo": "Definición", "detalle": f"Qué es {tema_dia}.", "subpuntos": ["Concepto", "Idea principal"]},
+            {"titulo": "Ubicación", "detalle": "Dónde se localiza o en qué región se estudia.", "subpuntos": ["Región", "Referencia anatómica"]},
+            {"titulo": "Relaciones", "detalle": "Con qué estructuras se conecta o se compara.", "subpuntos": ["Vecindad", "Límites"]},
+            {"titulo": "Examen", "detalle": "Cómo explicarlo en una respuesta escrita u oral.", "subpuntos": ["Palabras clave", "Error común"]},
+        ],
+        "apoyo_visual": [
+            f"Dibuja un esquema simple de {tema_dia}.",
+            "Marca ubicación, relaciones y función.",
+            "Convierte cada rama en una pregunta de repaso.",
+        ],
+    }
+
+
+def _kinestesico_por_tema(tema_dia, habilitado=True):
+    return {
+        "habilitado": bool(habilitado),
+        "titulo": f"Práctica activa de {tema_dia}",
+        "instrucciones": (
+            f"Sin mirar la respuesta, señala o imagina dónde ubicarías {tema_dia}. "
+            "Después escribe una explicación breve y compárala con la guía."
+        ),
+        "preguntas": [
+            f"¿Dónde se ubica {tema_dia}?",
+            f"¿Con qué estructura cercana se relaciona {tema_dia}?",
+            f"¿Qué dato no debo olvidar de {tema_dia} para el examen?",
+        ],
+    }
+
+
+def _imagen_anatomica_por_tema(tema_dia, tema_padre, habilitado=True):
+    return {
+        "habilitado": bool(habilitado),
+        "titulo": f"Lámina anatómica guiada de {tema_dia}",
+        "tipo_vista": "vista anatómica didáctica",
+        "descripcion": f"Imagen de apoyo para ubicar {tema_dia} dentro de {tema_padre}.",
+        "marcadores": [
+            {"id": 1, "nombre": tema_dia, "x": 50, "y": 38, "pista": "Busca la estructura o región central del día.", "detalle": f"Corresponde al subtema {tema_dia}."},
+            {"id": 2, "nombre": "Relación anatómica", "x": 62, "y": 55, "pista": "Observa qué estructura vecina se conecta.", "detalle": "Sirve para explicar relaciones en examen."},
+            {"id": 3, "nombre": "Referencia regional", "x": 40, "y": 65, "pista": "Ubica la región general.", "detalle": f"Pertenece a {tema_padre}."},
+        ],
+        "preguntas": [
+            f"¿Dónde ubicas {tema_dia}?",
+            "¿Qué relación anatómica principal puedes mencionar?",
+            "¿Cómo lo explicarías en una respuesta corta?",
+        ],
+        "modo_practica": "Observa primero, responde sin ayuda y luego revela pistas y respuestas.",
+    }
+
+
+def _actividad_escritura_por_tema(tema_dia, tema_padre):
+    return {
+        "titulo": "Producción escrita tipo examen",
+        "consigna": f"Redacta una respuesta sobre {tema_dia} usando tus propias palabras.",
+        "instrucciones": "Completa la plantilla y luego compara tu respuesta con la respuesta modelo.",
+        "plantilla": [
+            "Definición:",
+            "Ubicación anatómica:",
+            "Relaciones principales:",
+            "Importancia funcional o clínica:",
+            "Cierre con mis palabras:",
+        ],
+        "ejemplo_respuesta": f"{tema_dia} se estudia dentro de {tema_padre}; debe explicarse por su definición, ubicación, relaciones e importancia anatómica.",
+    }
+
+
+def _lectura_directa_por_tema(tema_dia, tema_padre):
+    """Contenido escrito real para que Lectura/Escritura no quede vacío."""
+    return {
+        "habilitado": True,
+        "titulo": f"Guía desarrollada de lectura y escritura: {tema_dia}",
+        "resumen": (
+            f"{tema_dia} es el subtema de estudio del día dentro de {tema_padre}. Para aprenderlo correctamente, "
+            "debe trabajarse con cuatro partes: definición, ubicación anatómica, relaciones principales e importancia. "
+            "El objetivo no es copiar frases sueltas, sino convertir el contenido en una respuesta clara que pueda usarse "
+            "en preguntas de identificación, relación anatómica o desarrollo escrito."
+        ),
+        "lectura_profunda": [
+            {"subtitulo": "1. Concepto central", "contenido": f"El punto central es comprender qué representa {tema_dia}. Escríbelo como una idea anatómica completa: qué estructura, región, vaso, órgano, músculo, articulación o relación se estudia, y por qué pertenece al bloque {tema_padre}."},
+            {"subtitulo": "2. Ubicación anatómica", "contenido": f"Después de definirlo, ubica {tema_dia} usando referencias anatómicas. Indica si se encuentra en tórax, abdomen, pelvis, pared del tronco, mediastino, cavidad o región correspondiente según el tema seleccionado."},
+            {"subtitulo": "3. Relaciones principales", "contenido": f"Relaciona {tema_dia} con estructuras vecinas, límites, vasos, nervios, órganos, cavidades o funciones. Esta parte demuestra comprensión, porque conecta el subtema con el resto de la anatomía y evita memorizarlo de forma aislada."},
+            {"subtitulo": "4. Importancia para el examen", "contenido": "Para cerrar, explica por qué este subtema puede preguntarse en examen: por identificación, ubicación, relación anatómica, comparación, función o descripción ordenada."},
+        ],
+        "conceptos_clave": [
+            {"termino": tema_dia, "explicacion": f"Subtema específico que se debe dominar dentro de {tema_padre}.", "como_usarlo": "Úsalo como inicio de una respuesta desarrollada."},
+            {"termino": "Ubicación anatómica", "explicacion": "Indica dónde se encuentra una estructura o región.", "como_usarlo": "Después de la definición, ubica el contenido con referencias espaciales."},
+            {"termino": "Relación anatómica", "explicacion": "Conexión con estructuras cercanas o funciones asociadas.", "como_usarlo": "Sirve para demostrar comprensión y no solo memoria."},
+        ],
+        "esquema_escrito": [
+            {"seccion": "Definición", "desarrollo": f"{tema_dia} debe definirse de forma breve y precisa dentro de {tema_padre}."},
+            {"seccion": "Ubicación", "desarrollo": "Debe indicarse la región anatómica y las referencias espaciales importantes."},
+            {"seccion": "Relaciones", "desarrollo": "Debe conectarse con estructuras vecinas, límites, vasos, nervios, órganos o funciones."},
+            {"seccion": "Importancia", "desarrollo": "Sirve para responder preguntas de identificación, relación y desarrollo anatómico."},
+        ],
+        "cuadro_cornell": [
+            {"pregunta_guia": f"¿Qué es {tema_dia}?", "apuntes": f"Es el subtema específico del día dentro de {tema_padre}; se estudia por definición, ubicación y relaciones.", "clave_memoria": "Definir"},
+            {"pregunta_guia": "¿Dónde se ubica?", "apuntes": "Se debe ubicar en la región anatómica correspondiente y con referencias espaciales claras.", "clave_memoria": "Ubicar"},
+            {"pregunta_guia": "¿Con qué se relaciona?", "apuntes": "Se conecta con estructuras vecinas o funciones asociadas según el bloque del tronco.", "clave_memoria": "Relacionar"},
+        ],
+        "glosario_detallado": [
+            {"termino": tema_dia, "definicion": f"Contenido principal del día relacionado con {tema_padre}.", "relacion": "Debe dominarse para avanzar en la ruta."},
+            {"termino": tema_padre, "definicion": "Tema general seleccionado del dataset de Anatomía I.", "relacion": "Organiza los subtemas de la ruta."},
+            {"termino": "Respuesta anatómica", "definicion": "Explicación ordenada con definición, ubicación y relaciones.", "relacion": "Es el formato esperado para estudiar mejor."},
+        ],
+        "fichas_memoria": [
+            {"anverso": f"¿Qué debo recordar primero de {tema_dia}?", "reverso": "Definición, ubicación y relación principal."},
+            {"anverso": "¿Cómo convierto esto en respuesta?", "reverso": "Inicio con definición, sigo con ubicación y cierro con relaciones e importancia."},
+            {"anverso": "¿Cómo compruebo que entendí?", "reverso": "Lo explico sin mirar y lo conecto con otro elemento anatómico."},
+        ],
+        "pregunta_tipo_examen": f"Explique {tema_dia}, indicando definición, ubicación anatómica, relaciones principales e importancia.",
+        "respuesta_corta": f"{tema_dia} es un subtema de {tema_padre} que debe explicarse por su definición, ubicación y relaciones anatómicas principales.",
+        "respuesta_modelo": (
+            f"{tema_dia} se estudia dentro de {tema_padre}. Para explicarlo correctamente, primero se debe indicar qué representa y cuál es su papel anatómico. "
+            "Luego se ubica en la región correspondiente del tronco, usando referencias espaciales claras. Después se mencionan sus relaciones principales con estructuras vecinas, límites, vasos, nervios, órganos o funciones asociadas según corresponda. "
+            "Finalmente, se cierra la respuesta indicando su importancia para comprender la organización anatómica y responder preguntas de identificación o desarrollo en el examen."
+        ),
+        "puntos_memorizacion": ["Definir", "Ubicar", "Relacionar", "Explicar importancia"],
+        "actividad_escritura": _actividad_escritura_por_tema(tema_dia, tema_padre),
+        "errores_comunes": [
+            {"error": "Copiar sin explicar", "correccion": "Reescribe la definición con tus propias palabras."},
+            {"error": "Olvidar la ubicación", "correccion": "Agrega una frase que empiece con: 'Se localiza en...'."},
+            {"error": "No mencionar relaciones", "correccion": "Incluye al menos una estructura vecina, límite o función asociada."},
+        ],
+        "preguntas_autoverificacion": [
+            f"¿Puedo definir {tema_dia} sin mirar mis apuntes?",
+            "¿Escribí ubicación anatómica?",
+            "¿Mencioné al menos una relación principal?",
+            "¿Mi respuesta parece una explicación de examen y no solo una lista?",
+        ],
+    }
+
+
+def forzar_variacion_diaria_con_dataset(respuesta, datos_academicos, perfil_vark=None, perfil_vark_detalle=None, dias_planificados=None):
+    """Fuerza días distintos en la ruta antes de guardar en la base de datos.
+
+    Esta función es intencionalmente fuerte: aunque Gemini devuelva 21 días iguales,
+    aquí se reemplaza cada título y cada tema principal por un subtema real del
+    dataset. También actualiza los recursos para que el contenido del modal cambie.
+    """
+    if not isinstance(respuesta, dict):
+        respuesta = {}
+
+    dias = dias_planificados or respuesta.get("dias_planificados") or getattr(datos_academicos, "dias_restantes", 1)
+    dias = calcular_dias_planificados(int(dias or 1))
+    secuencia, tema_padre = construir_secuencia_dataset_1_21(datos_academicos, dias)
+
+    plan_original = respuesta.get("plan_diario", [])
+    if not isinstance(plan_original, list):
+        plan_original = []
+
+    mezcla = ""
+    if isinstance(perfil_vark_detalle, dict):
+        mezcla = perfil_vark_detalle.get("mezcla", "")
+    if not mezcla and perfil_vark:
+        mezcla = getattr(perfil_vark, "estilo_display", "VARK")
+    mezcla = mezcla or "VARK"
+
+    tiene_visual = bool(getattr(perfil_vark, "puntaje_visual", 1) > 0) if perfil_vark else True
+    tiene_audio = bool(getattr(perfil_vark, "puntaje_auditivo", 1) > 0) if perfil_vark else True
+    tiene_lectura = bool(getattr(perfil_vark, "puntaje_lectura", 1) > 0) if perfil_vark else True
+    tiene_kin = bool(getattr(perfil_vark, "puntaje_kinestesico", 1) > 0) if perfil_vark else True
+
+    plan_nuevo = []
+    for idx, tema_dia in enumerate(secuencia, start=1):
+        dia_original = plan_original[idx - 1] if idx - 1 < len(plan_original) and isinstance(plan_original[idx - 1], dict) else {}
+        recursos_originales = dia_original.get("recursos") if isinstance(dia_original.get("recursos"), dict) else {}
+
+        try:
+            minutos = int(dia_original.get("minutos") or getattr(datos_academicos, "minutos_por_dia", 60) or 60)
+        except Exception:
+            minutos = int(getattr(datos_academicos, "minutos_por_dia", 60) or 60)
+        minutos = max(5, min(minutos, int(getattr(datos_academicos, "minutos_por_dia", minutos) or minutos)))
+
+        audio = recursos_originales.get("audio", {}) if isinstance(recursos_originales.get("audio", {}), dict) else {}
+        audio.update({
+            "habilitado": tiene_audio,
+            "titulo": f"Audio de repaso: {tema_dia}",
+            "guion": _guion_audio_por_tema(tema_dia, tema_padre),
+            "pasos_clave": ["Definir", "Ubicar", "Relacionar", "Explicar en voz alta"],
+        })
+
+        lectura = _lectura_directa_por_tema(tema_dia, tema_padre)
+        lectura["habilitado"] = tiene_lectura
+
+        plan_nuevo.append({
+            "dia": idx,
+            "titulo": f"Día {idx}: {tema_dia}",
+            "tema_principal": tema_dia,
+            "objetivo": (
+                f"Aprender {tema_dia} dentro de {tema_padre}, trabajando definición, "
+                "ubicación, relaciones anatómicas y una respuesta tipo examen."
+            ),
+            "minutos": minutos,
+            "enfoque_vark": f"Ruta adaptada a {mezcla}; el subtema del día cambia para evitar repetición.",
+            "recurso_vark": "Audio, mapa mental, lectura desarrollada, práctica activa, lámina guiada y mini quiz.",
+            "uso_materiales": dia_original.get("uso_materiales") or "Dataset interno de Anatomía I + materiales procesados si existen.",
+            "actividades": [
+                f"Lee la guía desarrollada de {tema_dia}.",
+                f"Haz un mapa de definición, ubicación y relaciones de {tema_dia}.",
+                "Escribe una respuesta tipo examen sin mirar la respuesta modelo.",
+                "Resuelve el mini quiz y corrige tus errores.",
+            ],
+            "autoevaluacion": [
+                f"¿Puedo definir {tema_dia} con mis propias palabras?",
+                f"¿Puedo ubicar {tema_dia} dentro de {tema_padre}?",
+                "¿Mencioné una relación anatómica importante?",
+                "¿Mi respuesta sirve para un examen de Anatomía I?",
+            ],
+            "producto_esperado": f"Apunte completo de {tema_dia}: definición, ubicación, relaciones, glosario y respuesta tipo examen.",
+            "mini_quiz": mini_quiz_respaldo_tema(tema_dia, tema_padre),
+            "recursos": {
+                "audio": normalizar_audio(audio),
+                "visual": normalizar_visual(_visual_por_tema(tema_dia, tema_padre, habilitado=tiene_visual)),
+                "kinestesico": normalizar_kinestesico(_kinestesico_por_tema(tema_dia, habilitado=tiene_kin)),
+                "lectura": lectura,
+                "imagen_anatomica": normalizar_imagen_anatomica(_imagen_anatomica_por_tema(tema_dia, tema_padre, habilitado=(tiene_visual or tiene_kin))),
+            },
+        })
+
+    respuesta["titulo"] = f"Ruta por subtemas: {tema_padre}"
+    respuesta["resumen_general"] = (
+        f"Ruta organizada por subtemas reales del dataset de Anatomía I. Cada día trabaja un punto distinto de {tema_padre} "
+        "para evitar repetición y mejorar el aprendizaje progresivo."
+    )
+    respuesta["temas_priorizados"] = secuencia[:min(len(secuencia), 10)]
+    respuesta["plan_diario"] = plan_nuevo
+    respuesta["recomendaciones_finales"] = respuesta.get("recomendaciones_finales") or [
+        "No estudies solo el título: escribe definición, ubicación y relaciones.",
+        "Al terminar cada día, redacta una respuesta tipo examen sin mirar la guía.",
+        "Usa el mini quiz para detectar qué subtema necesita refuerzo.",
+    ]
+    return respuesta
 
 
 def construir_detalle_vark(perfil_vark):
@@ -2937,7 +3342,7 @@ def generar_y_guardar_imagen_gemini_api(prompt, carpeta, nombre_archivo, aspect_
 
             response = client.models.generate_content(
                 model=model,
-                contents=[prompt_final], 
+                contents=[prompt_final],
             )
             for part in obtener_partes_respuesta(response):
                 if guardar_parte_imagen(part, ruta_absoluta):
