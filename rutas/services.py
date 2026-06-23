@@ -341,30 +341,44 @@ Devuelve únicamente JSON válido con esta estructura exacta:
         }},
         "lectura": {{
           "habilitado": false,
-          "titulo": "Guía de lectura y escritura activa",
-          "resumen": "Síntesis inicial en 3 o 4 líneas, concreta y útil",
-          "lectura_guiada": [
-            "Paso 1: qué leer o reconocer primero",
-            "Paso 2: qué subrayar o copiar al cuaderno",
-            "Paso 3: qué relación anatómica explicar con tus palabras"
+          "titulo": "Guía de lectura y escritura desarrollada",
+          "resumen": "Resumen académico desarrollado de 120 a 180 palabras sobre el tema del día. Debe explicar definición, ubicación, relaciones anatómicas e importancia para el examen.",
+          "lectura_profunda": [
+            {{"subtitulo": "1. Concepto central", "contenido": "Párrafo completo de 4 a 6 líneas que explique qué es el tema, para qué sirve y por qué debe estudiarse."}},
+            {{"subtitulo": "2. Ubicación anatómica", "contenido": "Párrafo completo de 4 a 6 líneas que explique dónde se localiza y con qué regiones o estructuras se relaciona."}},
+            {{"subtitulo": "3. Relaciones e importancia", "contenido": "Párrafo completo de 4 a 6 líneas que explique relaciones anatómicas, función e importancia clínica o funcional general."}}
           ],
-          "cuadro_estudio": [
-            {{"concepto": "Concepto clave", "explicacion": "Explicación breve, clara y anatómica"}},
-            {{"concepto": "Ubicación", "explicacion": "Dónde se localiza o con qué se relaciona"}},
-            {{"concepto": "Importancia", "explicacion": "Por qué sirve para el examen"}}
+          "conceptos_clave": [
+            {{"termino": "Término anatómico", "explicacion": "Definición clara en 1 o 2 oraciones", "como_usarlo": "Cómo usar este término en una respuesta de examen"}}
           ],
-          "glosario": ["Término: definición breve y útil"],
+          "esquema_escrito": [
+            {{"seccion": "Definición", "desarrollo": "Contenido ya redactado para que el estudiante lo copie o adapte."}},
+            {{"seccion": "Ubicación", "desarrollo": "Contenido ya redactado con ubicación anatómica."}},
+            {{"seccion": "Relaciones", "desarrollo": "Contenido ya redactado con estructuras relacionadas."}},
+            {{"seccion": "Importancia", "desarrollo": "Contenido ya redactado con función o utilidad."}}
+          ],
+          "cuadro_cornell": [
+            {{"pregunta_guia": "Pregunta de estudio", "apuntes": "Apunte desarrollado que responde la pregunta", "clave_memoria": "Palabra o frase para recordar"}}
+          ],
+          "glosario_detallado": [
+            {{"termino": "Término", "definicion": "Definición breve", "relacion": "Relación con el tema principal"}}
+          ],
           "fichas_memoria": [
-            {{"anverso": "Pregunta corta para recordar", "reverso": "Respuesta breve que el estudiante puede memorizar"}}
+            {{"anverso": "Pregunta corta para recordar", "reverso": "Respuesta breve pero completa"}}
           ],
+          "respuesta_modelo": "Respuesta tipo examen de 8 a 12 líneas, redactada en estilo académico, sobre el tema y el punto difícil.",
           "actividad_escritura": {{
-            "titulo": "Escritura activa",
+            "titulo": "Producción escrita del día",
+            "consigna": "Consigna clara de escritura activa",
             "instrucciones": "Qué debe escribir el estudiante en su cuaderno",
-            "plantilla": ["Definición:", "Ubicación:", "Relaciones:", "Importancia clínica o funcional:"],
-            "ejemplo_respuesta": "Ejemplo corto de cómo debería empezar la respuesta"
+            "plantilla": ["Definición:", "Ubicación anatómica:", "Relaciones:", "Importancia funcional o clínica:", "Cierre personal:"],
+            "ejemplo_respuesta": "Ejemplo desarrollado de cómo debería empezar la respuesta"
           }},
-          "preguntas_autoverificacion": ["Pregunta escrita 1", "Pregunta escrita 2"],
-          "producto_esperado": "Producto concreto: resumen, cuadro comparativo, glosario o respuesta escrita"
+          "errores_comunes": [
+            {{"error": "Error frecuente al estudiar el tema", "correccion": "Cómo corregirlo en una respuesta escrita"}}
+          ],
+          "preguntas_autoverificacion": ["Pregunta escrita 1", "Pregunta escrita 2", "Pregunta escrita 3"],
+          "producto_esperado": "Producto concreto: apunte desarrollado, cuadro Cornell, glosario y respuesta tipo examen"
         }},
         "imagen_anatomica": {{
           "habilitado": true,
@@ -393,8 +407,16 @@ REGLAS OBLIGATORIAS:
 - No uses texto dentro de imágenes generadas. El sistema añadirá textos, preguntas y marcadores fuera o encima de la imagen.
 - Si Kinestésico > 0, genera kinestesico.habilitado=true.
 - Si Lectura/Escritura > 0, genera lectura.habilitado=true; si es 0, puede quedar false.
-- Cuando lectura.habilitado=true, el bloque lectura debe incluir obligatoriamente: resumen, lectura_guiada, cuadro_estudio, glosario, fichas_memoria, actividad_escritura, preguntas_autoverificacion y producto_esperado.
-- Evita frases vacías como "resume el tema"; entrega contenido ya preparado para copiar al cuaderno, memorizar y responder en examen.
+- Cuando lectura.habilitado=true, NO entregues solo instrucciones; genera contenido académico ya redactado para leer y copiar.
+- lectura.resumen debe tener 120 a 180 palabras.
+- lectura.lectura_profunda debe tener 3 o 4 bloques con subtitulo y contenido desarrollado; cada contenido debe tener 4 a 6 líneas.
+- lectura.conceptos_clave debe tener 4 a 6 términos con explicación y cómo usarlo en examen.
+- lectura.esquema_escrito debe tener definición, ubicación, relaciones e importancia ya redactadas.
+- lectura.cuadro_cornell debe tener 3 a 5 filas con pregunta_guia, apuntes y clave_memoria.
+- lectura.glosario_detallado debe tener 4 a 6 términos con definición y relación.
+- lectura.respuesta_modelo debe ser una respuesta tipo examen de 8 a 12 líneas, no una frase genérica.
+- lectura.errores_comunes debe tener 3 errores frecuentes y su corrección.
+- Evita frases vacías como "resume el tema" o "lee el tema". Entrega contenido útil, escrito y listo para estudiar.
 - No inventes detalles anatómicos ultraespecíficos fuera del contexto; si falta precisión, enfoca la lámina en relaciones generales del tema y subtema, priorizando una vista anatómica realista y coherente.
 - Cada día debe incluir mini_quiz con 3 preguntas evaluables.
 - Cada pregunta del mini_quiz debe tener exactamente 4 opciones y una respuesta_correcta que coincida exactamente con una opción.
@@ -649,63 +671,128 @@ def generar_ruta_respaldo(
                     },
                     "lectura": {
                         "habilitado": lectura_habilitada,
-                        "titulo": f"Guía escrita activa de {tema}",
+                        "titulo": f"Guía desarrollada de lectura y escritura: {tema}",
                         "resumen": (
-                            f"{tema} debe estudiarse identificando su definición, ubicación, relaciones anatómicas "
-                            f"y vínculo con {datos_academicos.temas_dificiles or 'el punto difícil seleccionado'}. "
-                            "El objetivo no es solo leer, sino transformar el contenido en apuntes útiles para repasar antes del examen."
+                            f"{tema} se estudia como un contenido anatómico que debe explicarse de forma ordenada, "
+                            f"empezando por su definición, su ubicación dentro del tronco y su relación con "
+                            f"{datos_academicos.temas_dificiles or 'el punto difícil seleccionado'}. Para un perfil de Lectura/Escritura, "
+                            "lo más útil no es solo observar la información, sino transformarla en apuntes claros, cuadros comparativos, "
+                            "glosario propio y una respuesta breve tipo examen. Al finalizar el día, el estudiante debe poder escribir "
+                            "con sus palabras qué es el tema, dónde se localiza, con qué estructuras se relaciona y por qué es importante."
                         ),
-                        "lectura_guiada": [
-                            f"Lee el tema {tema} y subraya la definición o idea principal.",
-                            "Copia en tu cuaderno la ubicación anatómica y las relaciones más importantes.",
-                            f"Explica con tus palabras cómo se conecta con {datos_academicos.temas_dificiles or 'el punto difícil seleccionado'}.",
+                        "lectura_profunda": [
+                            {
+                                "subtitulo": "1. Concepto central",
+                                "contenido": (
+                                    f"El tema {tema} debe comprenderse como una unidad anatómica que organiza estructuras, relaciones y funciones. "
+                                    "Primero se debe identificar la idea principal: qué estructura o sistema se estudia, qué papel cumple y por qué aparece dentro del contenido de Anatomía I. "
+                                    "Esta primera lectura ayuda a evitar memorizar palabras sueltas y permite construir una explicación completa. "
+                                    "El estudiante debe escribir una definición breve, pero con sentido anatómico."
+                                ),
+                            },
+                            {
+                                "subtitulo": "2. Ubicación anatómica",
+                                "contenido": (
+                                    f"Después de la definición, se debe ubicar {tema} dentro del tronco o de la región anatómica correspondiente. "
+                                    "La ubicación debe escribirse usando referencias como anterior, posterior, superior, inferior, medial o lateral cuando sea necesario. "
+                                    "También conviene relacionar el tema con estructuras cercanas, porque en el examen suelen preguntar no solo el nombre, sino su posición y relación espacial. "
+                                    f"El punto que debes conectar especialmente es: {datos_academicos.temas_dificiles or 'el subtema marcado como difícil'}."
+                                ),
+                            },
+                            {
+                                "subtitulo": "3. Relaciones e importancia",
+                                "contenido": (
+                                    "Una vez comprendida la ubicación, se deben escribir las relaciones anatómicas principales. "
+                                    "Esto incluye estructuras vecinas, vasos, nervios, órganos, límites o funciones asociadas según el tema. "
+                                    "La importancia está en poder explicar cómo una estructura se conecta con otra y no estudiarla de manera aislada. "
+                                    "Esta forma de escritura prepara mejor para preguntas abiertas, preguntas de identificación y simulacros."
+                                ),
+                            },
                         ],
-                        "cuadro_estudio": [
+                        "conceptos_clave": [
                             {
-                                "concepto": "Tema central",
-                                "explicacion": f"{tema}: contenido principal que debe quedar claro al finalizar el día.",
+                                "termino": tema,
+                                "explicacion": f"Tema principal del día; debe poder definirse y ubicarse anatómicamente.",
+                                "como_usarlo": f"Usa este término para iniciar una respuesta: '{tema} corresponde a...'.",
                             },
                             {
-                                "concepto": "Punto difícil",
-                                "explicacion": datos_academicos.temas_dificiles or "Subtema que requiere mayor repaso y explicación escrita.",
+                                "termino": datos_academicos.temas_dificiles or "Punto difícil",
+                                "explicacion": "Subtema que necesita más repaso dentro de la ruta personalizada.",
+                                "como_usarlo": "Inclúyelo como segunda parte de la respuesta para demostrar comprensión específica.",
                             },
                             {
-                                "concepto": "Relación anatómica",
-                                "explicacion": "Conecta ubicación, función y estructuras vecinas para responder mejor en el examen.",
+                                "termino": "Ubicación anatómica",
+                                "explicacion": "Lugar o región donde se reconoce una estructura dentro del cuerpo.",
+                                "como_usarlo": "Escribe: 'Se localiza en...' y agrega una referencia espacial.",
                             },
+                            {
+                                "termino": "Relación anatómica",
+                                "explicacion": "Conexión de una estructura con órganos, vasos, nervios, huesos, músculos o límites cercanos.",
+                                "como_usarlo": "Escribe: 'Se relaciona con...' para completar una respuesta tipo examen.",
+                            },
+                        ],
+                        "esquema_escrito": [
+                            {"seccion": "Definición", "desarrollo": f"{tema} es el contenido central de estudio del día y debe explicarse con una frase clara, evitando copiar palabras sin comprenderlas."},
+                            {"seccion": "Ubicación", "desarrollo": "Debe señalarse la región anatómica donde se encuentra o se estudia, usando referencias espaciales cuando corresponda."},
+                            {"seccion": "Relaciones", "desarrollo": f"Debe conectarse con {datos_academicos.temas_dificiles or 'el punto difícil seleccionado'} y con estructuras vecinas relevantes."},
+                            {"seccion": "Importancia", "desarrollo": "Sirve para responder preguntas de identificación, relación anatómica y explicación funcional en el examen."},
+                        ],
+                        "cuadro_cornell": [
+                            {"pregunta_guia": f"¿Qué es {tema}?", "apuntes": "Escribe una definición breve y completa con tus propias palabras.", "clave_memoria": "Definir"},
+                            {"pregunta_guia": "¿Dónde se ubica?", "apuntes": "Anota la región anatómica, límites o referencias espaciales importantes.", "clave_memoria": "Ubicar"},
+                            {"pregunta_guia": "¿Con qué se relaciona?", "apuntes": f"Conecta el tema con {datos_academicos.temas_dificiles or 'el punto difícil'} y estructuras cercanas.", "clave_memoria": "Relacionar"},
+                            {"pregunta_guia": "¿Cómo lo respondo en examen?", "apuntes": "Redacta una respuesta con definición, ubicación, relaciones e importancia.", "clave_memoria": "Responder"},
                         ],
                         "glosario": [
-                            f"{tema}: concepto principal del día.",
+                            f"{tema}: tema principal del día.",
                             f"{datos_academicos.temas_dificiles or 'Punto difícil'}: subtema a reforzar.",
-                            "Relación anatómica: conexión de una estructura con sus límites, órganos, vasos, nervios o función.",
+                            "Ubicación anatómica: lugar donde se localiza una estructura.",
+                            "Relación anatómica: vínculo con estructuras vecinas o función.",
+                        ],
+                        "glosario_detallado": [
+                            {"termino": tema, "definicion": "Concepto principal que debe dominarse durante el día.", "relacion": "Se conecta con el objetivo, el mapa mental, la lámina y el mini quiz."},
+                            {"termino": datos_academicos.temas_dificiles or "Punto difícil", "definicion": "Contenido que requiere mayor práctica escrita.", "relacion": "Debe aparecer en la respuesta tipo examen."},
+                            {"termino": "Definición", "definicion": "Explicación breve y precisa de una estructura o concepto.", "relacion": "Es el inicio de una buena respuesta escrita."},
+                            {"termino": "Relaciones", "definicion": "Estructuras cercanas o conexiones anatómicas relevantes.", "relacion": "Permiten demostrar comprensión, no solo memoria."},
                         ],
                         "fichas_memoria": [
-                            {
-                                "anverso": f"¿Qué debo recordar primero de {tema}?",
-                                "reverso": "La definición, ubicación y relación anatómica principal.",
-                            },
-                            {
-                                "anverso": "¿Cómo compruebo que entendí?",
-                                "reverso": "Escribiendo una explicación breve sin mirar los apuntes.",
-                            },
+                            {"anverso": f"¿Qué debo recordar primero de {tema}?", "reverso": "La definición, ubicación y relación anatómica principal."},
+                            {"anverso": "¿Cómo convierto la lectura en apunte?", "reverso": "Escribiendo definición, ubicación, relaciones e importancia en frases breves."},
+                            {"anverso": "¿Cómo compruebo que entendí?", "reverso": "Redactando una respuesta sin mirar y comparándola con el esquema escrito."},
                         ],
+                        "respuesta_modelo": (
+                            f"{tema} es el contenido principal de esta sesión de estudio y debe comprenderse desde su definición, ubicación y relaciones anatómicas. "
+                            f"Para responder correctamente, primero se debe explicar qué representa {tema} dentro de Anatomía I. "
+                            "Luego se debe indicar su ubicación general dentro del tronco o de la región correspondiente. "
+                            f"También es necesario relacionarlo con {datos_academicos.temas_dificiles or 'el punto difícil seleccionado'}, porque ese vínculo permite demostrar comprensión y no solo memorización. "
+                            "Una respuesta completa debe mencionar estructuras vecinas, función o importancia según el caso. "
+                            "Finalmente, el estudiante debe cerrar la explicación con una idea propia que conecte el tema con el examen."
+                        ),
                         "actividad_escritura": {
-                            "titulo": "Respuesta escrita tipo examen",
-                            "instrucciones": "Escribe una respuesta breve usando la plantilla. Luego compárala con el resumen y corrige lo que falte.",
+                            "titulo": "Producción escrita tipo examen",
+                            "consigna": f"Redacta una respuesta sobre {tema} usando tus propias palabras y conectándola con {datos_academicos.temas_dificiles or 'el punto difícil seleccionado'}.",
+                            "instrucciones": "Completa la plantilla en tu cuaderno. Después compara tu respuesta con la respuesta modelo y corrige lo que falte.",
                             "plantilla": [
                                 "Definición:",
-                                "Ubicación:",
-                                "Relaciones anatómicas:",
+                                "Ubicación anatómica:",
+                                "Relaciones principales:",
                                 "Importancia funcional o clínica:",
+                                "Cierre con mis palabras:",
                             ],
-                            "ejemplo_respuesta": f"{tema} se comprende ubicándolo dentro del tronco y relacionándolo con {datos_academicos.temas_dificiles or 'el subtema difícil'}."
+                            "ejemplo_respuesta": f"{tema} se puede explicar como un contenido anatómico que debe ubicarse y relacionarse con {datos_academicos.temas_dificiles or 'el punto difícil seleccionado'} para responder mejor en el examen.",
                         },
-                        "preguntas_autoverificacion": [
-                            f"¿Puedes definir {tema} sin mirar tus apuntes?",
-                            "¿Puedes explicar su ubicación y una relación anatómica importante?",
-                            "¿Qué parte debes volver a escribir porque todavía no está clara?",
+                        "errores_comunes": [
+                            {"error": "Copiar sin explicar", "correccion": "Reescribe la definición con tus propias palabras."},
+                            {"error": "Olvidar la ubicación", "correccion": "Agrega siempre una frase que empiece con 'Se localiza en...'."},
+                            {"error": "No mencionar relaciones", "correccion": "Incluye al menos una estructura vecina, función o conexión anatómica."},
                         ],
-                        "producto_esperado": "Una ficha escrita con definición, ubicación, relaciones, glosario y una respuesta tipo examen.",
+                        "preguntas_autoverificacion": [
+                            f"¿Puedo definir {tema} sin mirar mis apuntes?",
+                            "¿Escribí ubicación anatómica y relaciones principales?",
+                            f"¿Relacioné mi respuesta con {datos_academicos.temas_dificiles or 'el punto difícil seleccionado'}?",
+                            "¿Mi respuesta parece una respuesta de examen o solo una lista?",
+                        ],
+                        "producto_esperado": "Una hoja de estudio con resumen desarrollado, cuadro Cornell, glosario, respuesta modelo y corrección de errores comunes.",
                     },
                     "imagen_anatomica": {
                         "habilitado": imagen_habilitada,
@@ -1579,66 +1666,169 @@ def _normalizar_actividad_escritura(valor):
         plantilla = [
             "Definición:",
             "Ubicación anatómica:",
-            "Relaciones:",
+            "Relaciones principales:",
             "Importancia funcional o clínica:",
+            "Cierre con mis palabras:",
         ]
 
     return {
-        "titulo": str(valor.get("titulo", "Escritura activa")).strip(),
+        "titulo": str(valor.get("titulo", "Producción escrita del día")).strip(),
+        "consigna": str(valor.get("consigna", "Redacta una respuesta breve usando tus propias palabras.")).strip(),
         "instrucciones": str(
             valor.get(
                 "instrucciones",
-                "Escribe una respuesta breve en tu cuaderno usando la plantilla y luego verifica si incluiste definición, ubicación y relaciones.",
+                "Completa la plantilla en tu cuaderno y compara tu respuesta con el modelo para corregir lo que falte.",
             )
         ).strip(),
-        "plantilla": plantilla[:6],
+        "plantilla": plantilla[:8],
         "ejemplo_respuesta": str(valor.get("ejemplo_respuesta", "")).strip(),
     }
 
 
 def normalizar_lectura(valor):
+    """Normaliza el recurso Lectura/Escritura como una guía escrita REAL.
+
+    La idea es que esta modalidad no muestre solo instrucciones genéricas, sino
+    contenido ya desarrollado: lectura profunda, conceptos, cuadro Cornell,
+    glosario, respuesta modelo y errores frecuentes.
+    """
     if not isinstance(valor, dict):
         valor = {}
 
-    titulo = str(valor.get("titulo", "Guía de lectura y escritura activa")).strip()
+    titulo = str(valor.get("titulo", "Guía desarrollada de lectura y escritura")).strip()
     resumen = str(valor.get("resumen", "")).strip()
 
     lectura_guiada = normalizar_lista(valor.get("lectura_guiada", []))
-    glosario = normalizar_lista(valor.get("glosario", []))
     preguntas_autoverificacion = normalizar_lista(valor.get("preguntas_autoverificacion", []))
+    glosario_simple = normalizar_lista(valor.get("glosario", []))
 
+    lectura_profunda = _normalizar_lista_dict(
+        valor.get("lectura_profunda", []),
+        ["subtitulo", "contenido"],
+        max_items=4,
+    )
+    conceptos_clave = _normalizar_lista_dict(
+        valor.get("conceptos_clave", []),
+        ["termino", "explicacion", "como_usarlo"],
+        max_items=6,
+    )
+    esquema_escrito = _normalizar_lista_dict(
+        valor.get("esquema_escrito", []),
+        ["seccion", "desarrollo"],
+        max_items=6,
+    )
+    cuadro_cornell = _normalizar_lista_dict(
+        valor.get("cuadro_cornell", []),
+        ["pregunta_guia", "apuntes", "clave_memoria"],
+        max_items=6,
+    )
     cuadro_estudio = _normalizar_lista_dict(
         valor.get("cuadro_estudio", []),
         ["concepto", "explicacion"],
         max_items=6,
+    )
+    glosario_detallado = _normalizar_lista_dict(
+        valor.get("glosario_detallado", []),
+        ["termino", "definicion", "relacion"],
+        max_items=8,
     )
     fichas_memoria = _normalizar_lista_dict(
         valor.get("fichas_memoria", []),
         ["anverso", "reverso"],
         max_items=6,
     )
+    errores_comunes = _normalizar_lista_dict(
+        valor.get("errores_comunes", []),
+        ["error", "correccion"],
+        max_items=5,
+    )
     actividad_escritura = _normalizar_actividad_escritura(valor.get("actividad_escritura", {}))
+    respuesta_modelo = str(valor.get("respuesta_modelo", "")).strip()
 
-    # Fallback inteligente para que Lectura/Escritura nunca quede como un bloque vacío.
+    # Compatibilidad: si el LLM antiguo solo mandó cuadro_estudio, lo usamos como esquema.
+    if not esquema_escrito and cuadro_estudio:
+        esquema_escrito = [
+            {"seccion": item.get("concepto", "Idea"), "desarrollo": item.get("explicacion", "")}
+            for item in cuadro_estudio
+        ]
+
+    # Compatibilidad: si solo llegó glosario simple, lo convertimos en glosario detallado.
+    if not glosario_detallado and glosario_simple:
+        for item in glosario_simple[:8]:
+            texto = str(item).strip()
+            if not texto:
+                continue
+            if ":" in texto:
+                termino, definicion = texto.split(":", 1)
+            else:
+                termino, definicion = texto, "Concepto clave para repasar."
+            glosario_detallado.append({
+                "termino": termino.strip(),
+                "definicion": definicion.strip(),
+                "relacion": "Úsalo para completar tu respuesta escrita.",
+            })
+
+    # Fallback inteligente: nunca mostrar una sección vacía o inútil.
+    if not resumen:
+        resumen = (
+            "Este recurso transforma la lectura en una guía escrita activa. "
+            "Primero se revisa la idea central, luego se organiza la ubicación anatómica, "
+            "las relaciones y la importancia del tema. Finalmente, el estudiante redacta "
+            "una respuesta tipo examen y verifica si incluyó los elementos principales."
+        )
+
+    if not lectura_profunda:
+        lectura_profunda = [
+            {
+                "subtitulo": "1. Lectura comprensiva",
+                "contenido": "Lee el tema para identificar la idea principal. No copies todo el texto: busca definición, ubicación, relaciones e importancia. Convierte cada parte en una frase propia para que el apunte sea útil al repasar.",
+            },
+            {
+                "subtitulo": "2. Organización escrita",
+                "contenido": "Después de leer, ordena la información en bloques. Primero escribe qué es el tema, luego dónde se ubica, después con qué se relaciona y finalmente por qué es importante para el examen.",
+            },
+            {
+                "subtitulo": "3. Respuesta tipo examen",
+                "contenido": "Cierra el estudio escribiendo una respuesta breve sin mirar tus apuntes. Compara tu respuesta con el modelo y corrige si falta definición, ubicación, relaciones o importancia.",
+            },
+        ]
+
     if not lectura_guiada:
         lectura_guiada = [
-            "Lee primero la idea general del tema y subraya palabras anatómicas clave.",
-            "Copia en tu cuaderno ubicación, límites, relaciones y función si corresponde.",
-            "Cierra los apuntes y escribe una explicación breve con tus propias palabras.",
+            "Lee el resumen desarrollado y subraya definición, ubicación y relaciones.",
+            "Copia el esquema escrito en tu cuaderno usando tus propias palabras.",
+            "Completa el cuadro Cornell y convierte cada pregunta guía en una respuesta corta.",
+            "Redacta la respuesta tipo examen sin mirar y luego compárala con el modelo.",
         ]
 
-    if not cuadro_estudio:
-        cuadro_estudio = [
-            {"concepto": "Idea principal", "explicacion": resumen or "Concepto central que debes poder explicar sin mirar."},
-            {"concepto": "Ubicación", "explicacion": "Región anatómica donde se reconoce el tema o estructura estudiada."},
-            {"concepto": "Relaciones", "explicacion": "Estructuras vecinas, límites o conexiones que ayudan a comprender el tema."},
+    if not conceptos_clave:
+        conceptos_clave = [
+            {"termino": "Definición", "explicacion": "Explica qué es el tema o estructura.", "como_usarlo": "Empieza tu respuesta con una frase clara y directa."},
+            {"termino": "Ubicación", "explicacion": "Indica dónde se encuentra o dónde se estudia.", "como_usarlo": "Usa expresiones como se localiza en, se relaciona con o se observa en."},
+            {"termino": "Relaciones", "explicacion": "Conecta el tema con estructuras cercanas.", "como_usarlo": "Agrega al menos una relación anatómica para que la respuesta sea completa."},
+            {"termino": "Importancia", "explicacion": "Explica por qué el contenido sirve para comprender el tema o resolver preguntas.", "como_usarlo": "Cierra tu respuesta con una función, utilidad o idea de repaso."},
         ]
 
-    if not glosario:
-        glosario = [
-            "Concepto clave: idea que debes memorizar y explicar.",
-            "Ubicación: lugar anatómico donde se encuentra la estructura.",
-            "Relación anatómica: conexión con estructuras vecinas o función.",
+    if not esquema_escrito:
+        esquema_escrito = [
+            {"seccion": "Definición", "desarrollo": "Escribe una definición breve del tema usando tus propias palabras."},
+            {"seccion": "Ubicación anatómica", "desarrollo": "Señala la región o estructura donde se localiza el tema estudiado."},
+            {"seccion": "Relaciones", "desarrollo": "Menciona estructuras vecinas, conexiones o límites importantes."},
+            {"seccion": "Importancia", "desarrollo": "Explica por qué este contenido ayuda a responder preguntas de examen."},
+        ]
+
+    if not cuadro_cornell:
+        cuadro_cornell = [
+            {"pregunta_guia": "¿Qué es?", "apuntes": "Definición clara del tema.", "clave_memoria": "Definir"},
+            {"pregunta_guia": "¿Dónde se ubica?", "apuntes": "Región anatómica y referencias espaciales.", "clave_memoria": "Ubicar"},
+            {"pregunta_guia": "¿Con qué se relaciona?", "apuntes": "Estructuras vecinas, función o conexión anatómica.", "clave_memoria": "Relacionar"},
+        ]
+
+    if not glosario_detallado:
+        glosario_detallado = [
+            {"termino": "Concepto clave", "definicion": "Idea principal que debe memorizarse.", "relacion": "Sirve para iniciar la respuesta escrita."},
+            {"termino": "Ubicación anatómica", "definicion": "Lugar o región donde se encuentra una estructura.", "relacion": "Permite responder preguntas de localización."},
+            {"termino": "Relación anatómica", "definicion": "Conexión entre estructuras cercanas.", "relacion": "Ayuda a explicar el tema con mayor profundidad."},
         ]
 
     if not fichas_memoria:
@@ -1648,35 +1838,52 @@ def normalizar_lectura(valor):
             {"anverso": "¿Cómo sé que entendí?", "reverso": "Si puedo escribir una respuesta breve sin mirar apuntes."},
         ]
 
-    if not preguntas_autoverificacion:
-        preguntas_autoverificacion = [
-            "¿Puedo explicar el tema en 4 líneas sin copiar?",
-            "¿Incluí ubicación, relaciones e importancia?",
-            "¿Qué término del glosario todavía debo repasar?",
+    if not respuesta_modelo:
+        respuesta_modelo = (
+            "Una respuesta completa debe iniciar con la definición del tema, continuar con su ubicación anatómica y explicar al menos una relación importante. "
+            "Luego debe agregar su importancia funcional, clínica o académica según corresponda. "
+            "Para terminar, conviene cerrar con una frase propia que conecte el contenido con el objetivo de estudio del día."
+        )
+
+    if not errores_comunes:
+        errores_comunes = [
+            {"error": "Copiar sin comprender", "correccion": "Reescribe cada idea con tus propias palabras."},
+            {"error": "Olvidar la ubicación", "correccion": "Incluye siempre una frase de localización anatómica."},
+            {"error": "No mencionar relaciones", "correccion": "Agrega al menos una estructura vecina o función asociada."},
         ]
 
-    if not resumen:
-        resumen = "Lee el tema, transforma las ideas en apuntes breves y verifica tu comprensión escribiendo una respuesta tipo examen."
+    if not preguntas_autoverificacion:
+        preguntas_autoverificacion = [
+            "¿Mi respuesta tiene definición, ubicación y relaciones?",
+            "¿Puedo explicar el tema sin copiar literalmente?",
+            "¿Qué concepto del glosario todavía debo reforzar?",
+            "¿Mi respuesta parece una explicación de examen o solo una lista?",
+        ]
 
     return {
         "habilitado": bool(valor.get("habilitado")),
         "titulo": titulo,
         "resumen": resumen,
         "lectura_guiada": lectura_guiada[:6],
+        "lectura_profunda": lectura_profunda[:4],
+        "conceptos_clave": conceptos_clave[:6],
+        "esquema_escrito": esquema_escrito[:6],
         "cuadro_estudio": cuadro_estudio[:6],
-        "glosario": glosario[:8],
+        "cuadro_cornell": cuadro_cornell[:6],
+        "glosario": glosario_simple[:8],
+        "glosario_detallado": glosario_detallado[:8],
         "fichas_memoria": fichas_memoria[:6],
         "actividad_escritura": actividad_escritura,
+        "respuesta_modelo": respuesta_modelo,
+        "errores_comunes": errores_comunes[:5],
         "preguntas_autoverificacion": preguntas_autoverificacion[:6],
         "producto_esperado": str(
             valor.get(
                 "producto_esperado",
-                "Apunte escrito con definición, ubicación, relaciones, glosario y respuesta breve tipo examen.",
+                "Apunte desarrollado con lectura profunda, conceptos clave, cuadro Cornell, glosario, respuesta tipo examen y correcciones.",
             )
         ).strip(),
     }
-
-
 
 
 def normalizar_preguntas_guiadas(valor, preguntas_base=None, marcadores=None):

@@ -459,113 +459,197 @@
                             {% if dia.recursos.lectura.habilitado %}
                                 {% with lectura=dia.recursos.lectura %}
                                     <section class="resource-card reading-writing-lab resource-span-2">
-                                        <div class="reading-lab-hero">
+                                        <div class="reading-lab-hero reading-lab-hero-premium">
                                             <div>
                                                 <span class="reading-lab-kicker">
                                                     <i data-lucide="pen-line"></i>
-                                                    Lectura / Escritura activa
+                                                    Lectura / Escritura 10/10
                                                 </span>
                                                 <h3>{{ lectura.titulo }}</h3>
                                                 <p>{{ lectura.resumen }}</p>
                                             </div>
                                             <div class="reading-lab-badge">
-                                                <strong>Producto</strong>
+                                                <strong>Producto del día</strong>
                                                 <span>{{ lectura.producto_esperado }}</span>
                                             </div>
                                         </div>
 
-                                        <div class="reading-lab-grid mt-3">
-                                            <article class="reading-panel">
+                                        {% if lectura.lectura_profunda %}
+                                            <article class="reading-deep-card mt-3">
                                                 <div class="reading-panel-title">
-                                                    <i data-lucide="list-checks"></i>
-                                                    <strong>1. Lectura guiada</strong>
+                                                    <i data-lucide="book-open-check"></i>
+                                                    <strong>1. Lectura desarrollada para estudiar</strong>
                                                 </div>
-                                                <ol class="reading-steps">
-                                                    {% for paso in lectura.lectura_guiada %}
-                                                        <li>{{ paso }}</li>
-                                                    {% endfor %}
-                                                </ol>
-                                            </article>
-
-                                            <article class="reading-panel">
-                                                <div class="reading-panel-title">
-                                                    <i data-lucide="table-2"></i>
-                                                    <strong>2. Cuadro de estudio</strong>
-                                                </div>
-                                                <div class="study-table-lite">
-                                                    {% for fila in lectura.cuadro_estudio %}
-                                                        <div class="study-row-lite">
-                                                            <strong>{{ fila.concepto }}</strong>
-                                                            <span>{{ fila.explicacion }}</span>
+                                                <div class="reading-deep-grid">
+                                                    {% for bloque in lectura.lectura_profunda %}
+                                                        <div class="reading-deep-block">
+                                                            <h4>{{ bloque.subtitulo }}</h4>
+                                                            <p>{{ bloque.contenido }}</p>
                                                         </div>
                                                     {% endfor %}
                                                 </div>
                                             </article>
-                                        </div>
+                                        {% endif %}
 
                                         <div class="reading-lab-grid mt-3">
-                                            <article class="reading-panel">
-                                                <div class="reading-panel-title">
-                                                    <i data-lucide="book-marked"></i>
-                                                    <strong>3. Glosario para memorizar</strong>
-                                                </div>
-                                                <div class="glossary-chip-grid">
-                                                    {% for item in lectura.glosario %}
-                                                        <span>{{ item }}</span>
-                                                    {% endfor %}
-                                                </div>
-                                            </article>
+                                            {% if lectura.conceptos_clave %}
+                                                <article class="reading-panel">
+                                                    <div class="reading-panel-title">
+                                                        <i data-lucide="key-round"></i>
+                                                        <strong>2. Conceptos clave para escribir mejor</strong>
+                                                    </div>
+                                                    <div class="concept-key-list">
+                                                        {% for concepto in lectura.conceptos_clave %}
+                                                            <details class="concept-key-card" {% if forloop.first %}open{% endif %}>
+                                                                <summary>{{ concepto.termino }}</summary>
+                                                                {% if concepto.explicacion %}<p>{{ concepto.explicacion }}</p>{% endif %}
+                                                                {% if concepto.como_usarlo %}<small><strong>Uso en examen:</strong> {{ concepto.como_usarlo }}</small>{% endif %}
+                                                            </details>
+                                                        {% endfor %}
+                                                    </div>
+                                                </article>
+                                            {% endif %}
 
-                                            <article class="reading-panel">
-                                                <div class="reading-panel-title">
-                                                    <i data-lucide="copy-check"></i>
-                                                    <strong>4. Fichas de memoria</strong>
-                                                </div>
-                                                <div class="flashcard-grid">
-                                                    {% for ficha in lectura.fichas_memoria %}
-                                                        <details class="study-flashcard">
-                                                            <summary>{{ ficha.anverso }}</summary>
-                                                            <p>{{ ficha.reverso }}</p>
-                                                        </details>
-                                                    {% endfor %}
-                                                </div>
-                                            </article>
-                                        </div>
-
-                                        <div class="writing-active-box mt-3">
-                                            <div class="reading-panel-title">
-                                                <i data-lucide="edit-3"></i>
-                                                <strong>5. {{ lectura.actividad_escritura.titulo }}</strong>
-                                            </div>
-                                            <p>{{ lectura.actividad_escritura.instrucciones }}</p>
-
-                                            <div class="writing-template-grid">
-                                                {% for item in lectura.actividad_escritura.plantilla %}
-                                                    <div>{{ item }}</div>
-                                                {% endfor %}
-                                            </div>
-
-                                            {% if lectura.actividad_escritura.ejemplo_respuesta %}
-                                                <div class="writing-example mt-3">
-                                                    <strong>Ejemplo de inicio:</strong>
-                                                    <span>{{ lectura.actividad_escritura.ejemplo_respuesta }}</span>
-                                                </div>
+                                            {% if lectura.esquema_escrito %}
+                                                <article class="reading-panel">
+                                                    <div class="reading-panel-title">
+                                                        <i data-lucide="notebook-pen"></i>
+                                                        <strong>3. Esquema escrito ya desarrollado</strong>
+                                                    </div>
+                                                    <div class="written-outline">
+                                                        {% for item in lectura.esquema_escrito %}
+                                                            <div class="written-outline-row">
+                                                                <strong>{{ item.seccion }}</strong>
+                                                                <p>{{ item.desarrollo }}</p>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </article>
                                             {% endif %}
                                         </div>
 
-                                        {% if lectura.preguntas_autoverificacion %}
-                                            <div class="self-check-box mt-3">
+                                        <div class="reading-lab-grid mt-3">
+                                            {% if lectura.cuadro_cornell %}
+                                                <article class="reading-panel reading-panel-wide-mobile">
+                                                    <div class="reading-panel-title">
+                                                        <i data-lucide="columns-3"></i>
+                                                        <strong>4. Cuadro Cornell para copiar al cuaderno</strong>
+                                                    </div>
+                                                    <div class="cornell-table">
+                                                        <div class="cornell-head">Pregunta guía</div>
+                                                        <div class="cornell-head">Apuntes desarrollados</div>
+                                                        <div class="cornell-head">Clave</div>
+                                                        {% for fila in lectura.cuadro_cornell %}
+                                                            <div class="cornell-cell cornell-question">{{ fila.pregunta_guia }}</div>
+                                                            <div class="cornell-cell">{{ fila.apuntes }}</div>
+                                                            <div class="cornell-cell cornell-key">{{ fila.clave_memoria }}</div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </article>
+                                            {% endif %}
+
+                                            {% if lectura.glosario_detallado %}
+                                                <article class="reading-panel">
+                                                    <div class="reading-panel-title">
+                                                        <i data-lucide="book-marked"></i>
+                                                        <strong>5. Glosario explicado</strong>
+                                                    </div>
+                                                    <div class="glossary-detail-list">
+                                                        {% for item in lectura.glosario_detallado %}
+                                                            <div class="glossary-detail-card">
+                                                                <strong>{{ item.termino }}</strong>
+                                                                <p>{{ item.definicion }}</p>
+                                                                {% if item.relacion %}<span>{{ item.relacion }}</span>{% endif %}
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </article>
+                                            {% endif %}
+                                        </div>
+
+                                        {% if lectura.respuesta_modelo %}
+                                            <article class="model-answer-card mt-3">
                                                 <div class="reading-panel-title">
-                                                    <i data-lucide="circle-help"></i>
-                                                    <strong>6. Autoverificación escrita</strong>
+                                                    <i data-lucide="file-check-2"></i>
+                                                    <strong>6. Respuesta modelo tipo examen</strong>
                                                 </div>
-                                                <ul class="clean-list mt-2">
-                                                    {% for pregunta in lectura.preguntas_autoverificacion %}
-                                                        <li><i data-lucide="check-circle-2"></i><span>{{ pregunta }}</span></li>
-                                                    {% endfor %}
-                                                </ul>
-                                            </div>
+                                                <p>{{ lectura.respuesta_modelo }}</p>
+                                            </article>
                                         {% endif %}
+
+                                        <div class="reading-lab-grid mt-3">
+                                            <article class="writing-active-box">
+                                                <div class="reading-panel-title">
+                                                    <i data-lucide="edit-3"></i>
+                                                    <strong>7. {{ lectura.actividad_escritura.titulo }}</strong>
+                                                </div>
+                                                {% if lectura.actividad_escritura.consigna %}
+                                                    <div class="writing-consigna"><strong>Consigna:</strong> {{ lectura.actividad_escritura.consigna }}</div>
+                                                {% endif %}
+                                                <p>{{ lectura.actividad_escritura.instrucciones }}</p>
+                                                <div class="writing-template-grid premium-writing-grid">
+                                                    {% for item in lectura.actividad_escritura.plantilla %}
+                                                        <div>{{ item }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                                {% if lectura.actividad_escritura.ejemplo_respuesta %}
+                                                    <div class="writing-example mt-3">
+                                                        <strong>Ejemplo de inicio:</strong>
+                                                        <span>{{ lectura.actividad_escritura.ejemplo_respuesta }}</span>
+                                                    </div>
+                                                {% endif %}
+                                            </article>
+
+                                            {% if lectura.errores_comunes %}
+                                                <article class="reading-panel error-fix-panel">
+                                                    <div class="reading-panel-title">
+                                                        <i data-lucide="triangle-alert"></i>
+                                                        <strong>8. Errores comunes y cómo corregirlos</strong>
+                                                    </div>
+                                                    <div class="error-fix-list">
+                                                        {% for item in lectura.errores_comunes %}
+                                                            <div class="error-fix-card">
+                                                                <strong>{{ item.error }}</strong>
+                                                                <p>{{ item.correccion }}</p>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </article>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="reading-lab-grid mt-3">
+                                            {% if lectura.fichas_memoria %}
+                                                <article class="reading-panel">
+                                                    <div class="reading-panel-title">
+                                                        <i data-lucide="copy-check"></i>
+                                                        <strong>9. Fichas de memoria</strong>
+                                                    </div>
+                                                    <div class="flashcard-grid">
+                                                        {% for ficha in lectura.fichas_memoria %}
+                                                            <details class="study-flashcard">
+                                                                <summary>{{ ficha.anverso }}</summary>
+                                                                <p>{{ ficha.reverso }}</p>
+                                                            </details>
+                                                        {% endfor %}
+                                                    </div>
+                                                </article>
+                                            {% endif %}
+
+                                            {% if lectura.preguntas_autoverificacion %}
+                                                <article class="self-check-box">
+                                                    <div class="reading-panel-title">
+                                                        <i data-lucide="circle-help"></i>
+                                                        <strong>10. Autoverificación escrita</strong>
+                                                    </div>
+                                                    <ul class="clean-list mt-2">
+                                                        {% for pregunta in lectura.preguntas_autoverificacion %}
+                                                            <li><i data-lucide="check-circle-2"></i><span>{{ pregunta }}</span></li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </article>
+                                            {% endif %}
+                                        </div>
                                     </section>
                                 {% endwith %}
                             {% endif %}
@@ -3248,6 +3332,190 @@
     .reading-lab-grid,
     .writing-template-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ===== Lectura / Escritura 100/10: contenido real para leer y escribir ===== */
+.reading-lab-hero-premium {
+    background:
+        radial-gradient(circle at 10% 0%, rgba(45, 212, 191, .18), transparent 38%),
+        linear-gradient(135deg, #ffffff 0%, #f0fffb 100%);
+}
+.reading-deep-card {
+    border: 1px solid rgba(15, 118, 110, .14);
+    border-radius: 1.05rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, .94);
+}
+.reading-deep-grid {
+    display: grid;
+    gap: .85rem;
+}
+.reading-deep-block {
+    padding: 1rem;
+    border-radius: .95rem;
+    background: linear-gradient(135deg, #f8fffd 0%, #eefbf7 100%);
+    border: 1px solid rgba(15, 118, 110, .10);
+}
+.reading-deep-block h4 {
+    margin: 0 0 .45rem;
+    color: #0f766e;
+    font-size: 1rem;
+    font-weight: 900;
+}
+.reading-deep-block p {
+    margin: 0;
+    color: #2f4e49;
+    line-height: 1.62;
+}
+.concept-key-list,
+.written-outline,
+.glossary-detail-list,
+.error-fix-list {
+    display: grid;
+    gap: .7rem;
+}
+.concept-key-card {
+    border: 1px solid rgba(15, 118, 110, .14);
+    border-radius: .9rem;
+    padding: .78rem;
+    background: #f9fffd;
+}
+.concept-key-card summary {
+    cursor: pointer;
+    font-weight: 900;
+    color: #073f39;
+}
+.concept-key-card p {
+    margin: .55rem 0 .25rem;
+    color: #385a54;
+}
+.concept-key-card small {
+    display: block;
+    color: #0f766e;
+    line-height: 1.45;
+}
+.written-outline-row {
+    display: grid;
+    grid-template-columns: minmax(110px, .28fr) minmax(0, 1fr);
+    gap: .75rem;
+    padding: .82rem;
+    border-radius: .9rem;
+    border: 1px solid rgba(15, 118, 110, .10);
+    background: #f7fcfb;
+}
+.written-outline-row strong {
+    color: #0f766e;
+}
+.written-outline-row p {
+    margin: 0;
+    color: #2e4d48;
+    line-height: 1.55;
+}
+.cornell-table {
+    display: grid;
+    grid-template-columns: minmax(120px, .8fr) minmax(220px, 1.55fr) minmax(90px, .55fr);
+    border: 1px solid rgba(15, 118, 110, .16);
+    border-radius: .95rem;
+    overflow: hidden;
+    background: #fff;
+}
+.cornell-head {
+    padding: .72rem;
+    background: #0f766e;
+    color: #fff;
+    font-weight: 900;
+    font-size: .88rem;
+}
+.cornell-cell {
+    padding: .75rem;
+    border-top: 1px solid rgba(15, 118, 110, .10);
+    color: #2f4e49;
+    line-height: 1.48;
+}
+.cornell-question,
+.cornell-key {
+    font-weight: 850;
+    color: #073f39;
+    background: #f4fbf9;
+}
+.glossary-detail-card {
+    padding: .85rem;
+    border-radius: .9rem;
+    background: #f8fffd;
+    border: 1px solid rgba(15, 118, 110, .12);
+}
+.glossary-detail-card strong {
+    display: block;
+    color: #0f766e;
+    margin-bottom: .25rem;
+}
+.glossary-detail-card p {
+    margin: 0 0 .25rem;
+    color: #244640;
+}
+.glossary-detail-card span {
+    display: inline-flex;
+    padding: .28rem .55rem;
+    border-radius: 999px;
+    background: #e7f8f5;
+    color: #0f766e;
+    font-size: .82rem;
+    font-weight: 800;
+}
+.model-answer-card {
+    padding: 1rem;
+    border-radius: 1.05rem;
+    background:
+        linear-gradient(90deg, rgba(15, 118, 110, .12) 0, rgba(15, 118, 110, .12) 7px, transparent 7px),
+        #ffffff;
+    border: 1px solid rgba(15, 118, 110, .14);
+}
+.model-answer-card p {
+    margin: 0;
+    padding-left: .35rem;
+    color: #263f3b;
+    line-height: 1.7;
+}
+.writing-consigna {
+    margin-bottom: .65rem;
+    padding: .75rem .85rem;
+    border-radius: .85rem;
+    background: #e7f8f5;
+    color: #0b4b45;
+}
+.premium-writing-grid div {
+    min-height: 72px;
+}
+.error-fix-panel {
+    background: linear-gradient(135deg, #fffdf8 0%, #ffffff 100%);
+}
+.error-fix-card {
+    padding: .75rem;
+    border-radius: .85rem;
+    border: 1px solid rgba(245, 158, 11, .20);
+    background: #fffaf0;
+}
+.error-fix-card strong {
+    display: block;
+    color: #92400e;
+    margin-bottom: .25rem;
+}
+.error-fix-card p {
+    margin: 0;
+    color: #4b3a20;
+}
+@media (max-width: 900px) {
+    .cornell-table,
+    .written-outline-row {
+        grid-template-columns: 1fr;
+    }
+    .cornell-head:nth-child(2),
+    .cornell-head:nth-child(3) {
+        display: none;
+    }
+    .cornell-cell {
+        border-top: 1px solid rgba(15, 118, 110, .12);
     }
 }
 
