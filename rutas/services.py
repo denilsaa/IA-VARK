@@ -366,7 +366,10 @@ Devuelve únicamente JSON válido con esta estructura exacta:
           "fichas_memoria": [
             {{"anverso": "Pregunta corta para recordar", "reverso": "Respuesta breve pero completa"}}
           ],
+          "pregunta_tipo_examen": "Pregunta escrita tipo examen sobre el tema del día",
+          "respuesta_corta": "Respuesta breve de 3 a 4 líneas para memorizar lo esencial.",
           "respuesta_modelo": "Respuesta tipo examen de 8 a 12 líneas, redactada en estilo académico, sobre el tema y el punto difícil.",
+          "puntos_memorizacion": ["Idea mínima 1", "Idea mínima 2", "Idea mínima 3", "Idea mínima 4"],
           "actividad_escritura": {{
             "titulo": "Producción escrita del día",
             "consigna": "Consigna clara de escritura activa",
@@ -414,7 +417,10 @@ REGLAS OBLIGATORIAS:
 - lectura.esquema_escrito debe tener definición, ubicación, relaciones e importancia ya redactadas.
 - lectura.cuadro_cornell debe tener 3 a 5 filas con pregunta_guia, apuntes y clave_memoria.
 - lectura.glosario_detallado debe tener 4 a 6 términos con definición y relación.
+- lectura.pregunta_tipo_examen debe plantear una pregunta abierta clara sobre el tema.
+- lectura.respuesta_corta debe resumir en 3 o 4 líneas lo mínimo que el estudiante debe memorizar.
 - lectura.respuesta_modelo debe ser una respuesta tipo examen de 8 a 12 líneas, no una frase genérica.
+- lectura.puntos_memorizacion debe tener 4 ideas concretas del tema, no etiquetas generales.
 - lectura.errores_comunes debe tener 3 errores frecuentes y su corrección.
 - Evita frases vacías como "resume el tema" o "lee el tema". Entrega contenido útil, escrito y listo para estudiar.
 - No inventes detalles anatómicos ultraespecíficos fuera del contexto; si falta precisión, enfoca la lámina en relaciones generales del tema y subtema, priorizando una vista anatómica realista y coherente.
@@ -436,14 +442,14 @@ REGLAS OBLIGATORIAS:
 
         contenido = limpiar_json(response.text)
         data = json.loads(contenido)
-        return validar_respuesta_ruta(data, dias_planificados, datos_academicos.minutos_por_dia)
+        return validar_respuesta_ruta(data, dias_planificados, datos_academicos.minutos_por_dia, datos_academicos)
 
     except Exception as error:
         print("Error generando ruta con Gemini:", error)
         return {}
 
 
-def validar_respuesta_ruta(data, dias_planificados, minutos_maximos):
+def validar_respuesta_ruta(data, dias_planificados, minutos_maximos, datos_academicos=None):
     if not isinstance(data, dict):
         return {}
 
@@ -459,6 +465,8 @@ def validar_respuesta_ruta(data, dias_planificados, minutos_maximos):
         minutos = int(dia.get("minutos") or minutos_maximos)
         minutos = max(5, min(minutos, minutos_maximos))
         recursos = dia.get("recursos") if isinstance(dia.get("recursos"), dict) else {}
+        tema_dia = str(dia.get("tema_principal", "")).strip() or str(getattr(datos_academicos, "tema_actual", "")).strip()
+        punto_dificil = str(getattr(datos_academicos, "temas_dificiles", "") or "").strip()
 
         plan_limpio.append(
             {
@@ -478,7 +486,7 @@ def validar_respuesta_ruta(data, dias_planificados, minutos_maximos):
                     "audio": normalizar_audio(recursos.get("audio", {})),
                     "visual": normalizar_visual(recursos.get("visual", {})),
                     "kinestesico": normalizar_kinestesico(recursos.get("kinestesico", {})),
-                    "lectura": normalizar_lectura(recursos.get("lectura", {})),
+                    "lectura": normalizar_lectura(recursos.get("lectura", {}), tema=tema_dia, punto_dificil=punto_dificil),
                     "imagen_anatomica": normalizar_imagen_anatomica(recursos.get("imagen_anatomica", {})),
                 },
             }
@@ -1685,7 +1693,232 @@ def _normalizar_actividad_escritura(valor):
     }
 
 
-def normalizar_lectura(valor):
+
+def texto_es_generico_lectura(*partes):
+    texto = " ".join(str(p or "") for p in partes).lower()
+    senales_genericas = [
+        "autoevaluación",
+        "autoevaluacion",
+        "concepto principal que debe",
+        "contenido que requiere mayor práctica",
+        "explicación breve y precisa de una estructura",
+        "estructuras cercanas o conexiones anatómicas",
+        "escribe una definición",
+        "anota la región anatómica",
+        "define",
+        "ubicar",
+        "relacionar",
+        "tema principal del día",
+        "debe poder definirse",
+        "usa este término para iniciar",
+    ]
+    return sum(1 for patron in senales_genericas if patron in texto) >= 2 or len(texto.strip()) < 700
+
+
+def construir_lectura_escritura_real(tema, punto_dificil=""):
+    """Construye contenido real para Lectura/Escritura cuando el LLM devuelve relleno.
+
+    No reemplaza al LLM: funciona como corrector pedagógico para que la modalidad
+    Lectura/Escritura siempre entregue material que se pueda leer, copiar y usar
+    para responder en examen.
+    """
+    tema = str(tema or "el tema seleccionado").strip()
+    punto = str(punto_dificil or "el punto difícil seleccionado").strip()
+    t = f"{tema} {punto}".lower()
+    categoria = detectar_categoria_tema(tema, punto)
+
+    if "corazón" in t or "corazon" in t or "vasos" in t or "card" in t:
+        resumen = (
+            "El corazón y los vasos del tronco deben estudiarse como un sistema de conducción y distribución de la sangre. "
+            "El corazón funciona como una bomba muscular ubicada en el mediastino medio, protegida por el pericardio y relacionada con los pulmones, el diafragma, el esternón y los grandes vasos. "
+            "Para escribir una buena respuesta se debe ordenar la información en cuatro partes: definición, ubicación, relaciones anatómicas e importancia funcional. "
+            "El punto clave no es memorizar nombres aislados, sino explicar cómo el corazón recibe sangre por las venas, la impulsa hacia pulmones y cuerpo, y se conecta con vasos como la aorta, el tronco pulmonar, las venas cavas y las venas pulmonares."
+        )
+        lectura_profunda = [
+            {
+                "subtitulo": "1. Concepto central",
+                "contenido": (
+                    "El corazón es un órgano muscular hueco que actúa como bomba impulsora de la sangre. "
+                    "Trabaja de forma continua para enviar sangre hacia los pulmones y hacia el resto del cuerpo. "
+                    "En Anatomía I se estudia junto con los vasos porque no funciona de manera aislada: recibe sangre, la conduce por sus cavidades y la expulsa por grandes arterias. "
+                    "Por eso, al leer este tema conviene unir órgano, cavidades, vasos y circulación."
+                ),
+            },
+            {
+                "subtitulo": "2. Ubicación anatómica",
+                "contenido": (
+                    "El corazón se localiza en el mediastino medio, dentro de la cavidad torácica, entre ambos pulmones. "
+                    "Se ubica detrás del esternón y por encima del diafragma. Su base mira principalmente hacia atrás, arriba y a la derecha, mientras que el vértice se dirige hacia abajo, adelante y a la izquierda. "
+                    "Esta ubicación permite relacionarlo con estructuras torácicas importantes y ayuda a responder preguntas de localización."
+                ),
+            },
+            {
+                "subtitulo": "3. Relaciones principales",
+                "contenido": (
+                    "El corazón se relaciona superiormente con los grandes vasos, como la aorta, el tronco pulmonar y las venas cavas. "
+                    "Lateralmente se aproxima a los pulmones y pleuras; inferiormente se apoya sobre el diafragma; anteriormente se proyecta hacia el esternón. "
+                    "Estas relaciones son importantes porque permiten explicar su posición real dentro del tórax y no solo nombrarlo como una bomba."
+                ),
+            },
+            {
+                "subtitulo": "4. Idea para escribir en examen",
+                "contenido": (
+                    "Una respuesta completa debe iniciar definiendo el corazón, luego ubicarlo en el mediastino medio y finalmente relacionarlo con sus vasos principales. "
+                    "También debe mencionarse su importancia funcional: impulsar la sangre hacia la circulación pulmonar y sistémica. "
+                    f"Si el punto difícil es {punto}, intégralo como parte de la explicación para demostrar comprensión específica."
+                ),
+            },
+        ]
+        conceptos = [
+            {"termino": "Corazón", "explicacion": "Órgano muscular hueco que impulsa la sangre por el sistema circulatorio.", "como_usarlo": "Empieza una respuesta diciendo: 'El corazón es un órgano muscular hueco...'"},
+            {"termino": "Mediastino medio", "explicacion": "Región del tórax donde se ubica el corazón, entre ambos pulmones.", "como_usarlo": "Úsalo para responder ubicación: 'Se localiza en el mediastino medio'."},
+            {"termino": "Pericardio", "explicacion": "Membrana que rodea y protege al corazón, ayudando a fijarlo en su posición.", "como_usarlo": "Menciónalo al hablar de envolturas y relaciones del corazón."},
+            {"termino": "Aorta", "explicacion": "Arteria principal que sale del ventrículo izquierdo y distribuye sangre oxigenada.", "como_usarlo": "Úsala como ejemplo de gran vaso relacionado con el corazón."},
+            {"termino": "Tronco pulmonar", "explicacion": "Vaso que sale del ventrículo derecho y conduce sangre hacia los pulmones.", "como_usarlo": "Sirve para explicar la circulación pulmonar."},
+            {"termino": "Venas cavas", "explicacion": "Vasos que llevan sangre venosa hacia la aurícula derecha.", "como_usarlo": "Inclúyelas al explicar entrada de sangre al corazón."},
+        ]
+        esquema = [
+            {"seccion": "Definición", "desarrollo": "El corazón es un órgano muscular hueco que actúa como bomba del sistema circulatorio."},
+            {"seccion": "Ubicación", "desarrollo": "Se localiza en el mediastino medio, entre los pulmones, detrás del esternón y sobre el diafragma."},
+            {"seccion": "Relaciones", "desarrollo": "Se relaciona con el pericardio, pulmones, diafragma, esternón y grandes vasos como aorta, tronco pulmonar, venas cavas y venas pulmonares."},
+            {"seccion": "Importancia", "desarrollo": "Su función es impulsar la sangre hacia la circulación pulmonar y sistémica, manteniendo el transporte de oxígeno y nutrientes."},
+        ]
+        cornell = [
+            {"pregunta_guia": "¿Qué es el corazón?", "apuntes": "Órgano muscular hueco que funciona como bomba central de la circulación.", "clave_memoria": "Bomba"},
+            {"pregunta_guia": "¿Dónde se ubica?", "apuntes": "En el mediastino medio, entre ambos pulmones, detrás del esternón y apoyado sobre el diafragma.", "clave_memoria": "Mediastino"},
+            {"pregunta_guia": "¿Qué vasos principales se relacionan?", "apuntes": "Aorta, tronco pulmonar, venas cavas y venas pulmonares.", "clave_memoria": "Grandes vasos"},
+            {"pregunta_guia": "¿Cómo responder en examen?", "apuntes": "Definición + ubicación + relaciones + función circulatoria.", "clave_memoria": "DURF"},
+        ]
+        glosario = [
+            {"termino": "Aurícula", "definicion": "Cavidad superior del corazón que recibe sangre.", "relacion": "Ayuda a explicar la entrada de sangre al corazón."},
+            {"termino": "Ventrículo", "definicion": "Cavidad inferior que impulsa sangre hacia arterias principales.", "relacion": "Permite explicar la salida de sangre hacia pulmones o cuerpo."},
+            {"termino": "Aorta", "definicion": "Arteria principal que nace del ventrículo izquierdo.", "relacion": "Conecta el corazón con la circulación sistémica."},
+            {"termino": "Tronco pulmonar", "definicion": "Vaso que sale del ventrículo derecho hacia los pulmones.", "relacion": "Conecta el corazón con la circulación pulmonar."},
+            {"termino": "Pericardio", "definicion": "Envoltura fibroserosa que rodea al corazón.", "relacion": "Protege y fija el corazón dentro del mediastino."},
+        ]
+        respuesta_modelo = (
+            "El corazón es un órgano muscular hueco que actúa como bomba central del sistema circulatorio. "
+            "Se localiza en el mediastino medio, entre ambos pulmones, detrás del esternón y sobre el diafragma. "
+            "Está rodeado por el pericardio y se relaciona superiormente con los grandes vasos. "
+            "Entre estos vasos se encuentran la aorta, el tronco pulmonar, las venas cavas y las venas pulmonares. "
+            "Funcionalmente, recibe sangre venosa, la envía hacia los pulmones para oxigenarse y luego impulsa sangre oxigenada hacia el cuerpo. "
+            "Por eso, para estudiar corazón y vasos del tronco se deben relacionar ubicación, cavidades, vasos y circulación."
+        )
+        respuesta_corta = "El corazón es una bomba muscular ubicada en el mediastino medio; se relaciona con el pericardio, pulmones, diafragma y grandes vasos, y su función es impulsar la sangre hacia pulmones y cuerpo."
+        pregunta_examen = "Describa el corazón y sus vasos principales considerando definición, ubicación, relaciones anatómicas e importancia funcional."
+        puntos = ["Corazón = bomba muscular", "Ubicación = mediastino medio", "Relaciones = pulmones, diafragma, esternón y pericardio", "Vasos clave = aorta, tronco pulmonar, venas cavas y venas pulmonares"]
+        errores = [
+            {"error": "Responder solo que el corazón bombea sangre", "correccion": "Agrega ubicación y relaciones anatómicas para que la respuesta sea completa."},
+            {"error": "Confundir vasos de entrada y salida", "correccion": "Recuerda: venas llegan al corazón; arterias salen del corazón."},
+            {"error": "Olvidar el mediastino", "correccion": "Incluye la frase 'se localiza en el mediastino medio'."},
+        ]
+    else:
+        categoria_nombre = {
+            "pelvis_osea": "estructuras óseas y límites anatómicos",
+            "articular": "superficies articulares, ligamentos y estabilidad",
+            "muscular": "origen, inserción, acción y relaciones musculares",
+            "nervioso": "trayectos nerviosos, distribución e inervación",
+            "vascular": "trayectos vasculares, ramas y relaciones",
+            "linfatico": "cadenas ganglionares, vasos linfáticos y drenaje",
+            "visceral": "órganos, ubicación y relaciones viscerales",
+            "perine": "límites, planos y relaciones del periné",
+        }.get(categoria, "definición, ubicación, relaciones e importancia")
+        resumen = (
+            f"{tema} debe estudiarse de forma escrita identificando {categoria_nombre}. "
+            f"La lectura debe transformarse en un apunte organizado: primero se define el tema, luego se ubica, después se relaciona con {punto} y finalmente se explica su importancia para el examen. "
+            "Esta modalidad no busca copiar párrafos largos, sino producir una explicación clara que el estudiante pueda leer, memorizar y responder con sus propias palabras."
+        )
+        lectura_profunda = [
+            {"subtitulo": "1. Qué debo entender", "contenido": f"El tema {tema} debe comenzar con una definición clara. La definición no debe ser una lista de palabras, sino una frase que explique qué estructura, región o sistema se está estudiando y por qué forma parte de Anatomía I."},
+            {"subtitulo": "2. Dónde se ubica", "contenido": f"Después de definirlo, se debe ubicar {tema} dentro de la región anatómica correspondiente. Usa referencias espaciales como anterior, posterior, superior, inferior, medial o lateral cuando sean necesarias."},
+            {"subtitulo": "3. Con qué se relaciona", "contenido": f"Relaciona {tema} con {punto}. También agrega estructuras cercanas, límites, función o conexiones relevantes según el tipo de tema. Esta parte demuestra comprensión y no solo memoria."},
+            {"subtitulo": "4. Cómo escribirlo en examen", "contenido": "La respuesta debe seguir este orden: definición, ubicación, relaciones e importancia. Si puedes escribir esos cuatro elementos sin mirar, el tema ya está listo para practicar con preguntas."},
+        ]
+        conceptos = [
+            {"termino": tema, "explicacion": f"Tema principal que debe definirse, ubicarse y relacionarse con {punto}.", "como_usarlo": f"Inicia la respuesta con: '{tema} se entiende como...'"},
+            {"termino": punto, "explicacion": "Punto específico que debe reforzarse en la ruta personalizada.", "como_usarlo": "Inclúyelo después de la definición para demostrar estudio dirigido."},
+            {"termino": "Ubicación anatómica", "explicacion": "Región o posición donde se reconoce una estructura.", "como_usarlo": "Escribe: 'Se localiza en...' y agrega una referencia espacial."},
+            {"termino": "Relación anatómica", "explicacion": "Vínculo con estructuras cercanas, límites, función o continuidad.", "como_usarlo": "Escribe: 'Se relaciona con...' para completar la respuesta."},
+        ]
+        esquema = [
+            {"seccion": "Definición", "desarrollo": f"{tema} debe definirse con una frase clara que indique qué se estudia."},
+            {"seccion": "Ubicación", "desarrollo": "Debe indicarse la región anatómica y referencias espaciales principales."},
+            {"seccion": "Relaciones", "desarrollo": f"Debe conectarse con {punto} y con estructuras vecinas o funciones asociadas."},
+            {"seccion": "Importancia", "desarrollo": "Permite responder preguntas de identificación, relación y explicación anatómica."},
+        ]
+        cornell = [
+            {"pregunta_guia": f"¿Qué es {tema}?", "apuntes": f"Escribe una definición clara de {tema} con tus palabras.", "clave_memoria": "Definir"},
+            {"pregunta_guia": "¿Dónde se ubica?", "apuntes": "Anota región, límites o referencias espaciales.", "clave_memoria": "Ubicar"},
+            {"pregunta_guia": f"¿Cómo se relaciona con {punto}?", "apuntes": "Agrega conexiones anatómicas o funcionales relevantes.", "clave_memoria": "Relacionar"},
+            {"pregunta_guia": "¿Cómo lo respondería?", "apuntes": "Redacta definición + ubicación + relaciones + importancia.", "clave_memoria": "Responder"},
+        ]
+        glosario = [
+            {"termino": tema, "definicion": "Tema central que debe dominarse en la sesión.", "relacion": f"Se conecta con {punto} y con el objetivo del día."},
+            {"termino": punto, "definicion": "Subtema marcado como dificultad principal.", "relacion": "Debe aparecer en la respuesta escrita."},
+            {"termino": "Definición", "definicion": "Explicación precisa de qué es una estructura o región.", "relacion": "Es el inicio de una respuesta académica."},
+            {"termino": "Relaciones", "definicion": "Estructuras cercanas o conexiones anatómicas relevantes.", "relacion": "Demuestran comprensión y no solo memoria."},
+        ]
+        respuesta_modelo = (
+            f"{tema} es el contenido central de esta sesión y debe explicarse de manera ordenada. "
+            f"Primero se define qué se estudia y luego se ubica dentro de la región anatómica correspondiente. "
+            f"Después se relaciona con {punto} y con las estructuras vecinas o funciones que correspondan. "
+            "Una respuesta completa no debe limitarse a nombrar estructuras; debe explicar ubicación, relaciones e importancia. "
+            "Esta forma de redacción permite responder mejor preguntas abiertas, de identificación y de relación anatómica."
+        )
+        respuesta_corta = f"{tema} debe explicarse con definición, ubicación, relación con {punto} e importancia anatómica para responder correctamente en examen."
+        pregunta_examen = f"Explique {tema} considerando definición, ubicación, relaciones e importancia anatómica."
+        puntos = [f"Tema central: {tema}", f"Punto difícil: {punto}", "Responder con definición + ubicación + relaciones", "Evitar copiar; redactar con palabras propias"]
+        errores = [
+            {"error": "Hacer una lista sin explicación", "correccion": "Convierte cada punto en una oración completa."},
+            {"error": "No mencionar ubicación", "correccion": "Agrega una referencia anatómica clara."},
+            {"error": "No conectar con el punto difícil", "correccion": f"Incluye explícitamente {punto} en la respuesta."},
+        ]
+
+    actividad = {
+        "titulo": "Producción escrita guiada",
+        "consigna": pregunta_examen,
+        "instrucciones": "Escribe primero la respuesta corta y luego desarrolla la respuesta completa. Revisa si incluiste definición, ubicación, relaciones e importancia.",
+        "plantilla": ["Definición:", "Ubicación anatómica:", "Relaciones principales:", "Importancia:", "Respuesta final con mis palabras:"],
+        "ejemplo_respuesta": respuesta_corta,
+    }
+    fichas = [
+        {"anverso": "¿Qué debo decir primero?", "reverso": "La definición clara del tema, sin copiar literalmente."},
+        {"anverso": "¿Qué no puede faltar?", "reverso": "Ubicación anatómica y al menos una relación importante."},
+        {"anverso": "¿Cómo sé que está completo?", "reverso": "Si mi respuesta tiene definición, ubicación, relaciones e importancia."},
+    ]
+    preguntas = [
+        "¿Puedo explicar el tema en 4 líneas sin mirar?",
+        "¿Incluí ubicación anatómica precisa?",
+        "¿Mencioné relaciones anatómicas o funcionales?",
+        "¿Mi respuesta parece de examen o solo una lista?",
+    ]
+    lectura_guiada = [
+        "Lee la lectura desarrollada una vez completa sin copiar.",
+        "Subraya definición, ubicación, relaciones e importancia.",
+        "Copia el cuadro Cornell en tu cuaderno y completa una frase propia por fila.",
+        "Redacta la respuesta modelo con tus palabras y compárala con la propuesta del sistema.",
+    ]
+    return {
+        "titulo": f"Guía real de lectura y escritura: {tema}",
+        "resumen": resumen,
+        "lectura_guiada": lectura_guiada,
+        "lectura_profunda": lectura_profunda,
+        "conceptos_clave": conceptos,
+        "esquema_escrito": esquema,
+        "cuadro_cornell": cornell,
+        "glosario_detallado": glosario,
+        "fichas_memoria": fichas,
+        "respuesta_modelo": respuesta_modelo,
+        "respuesta_corta": respuesta_corta,
+        "pregunta_tipo_examen": pregunta_examen,
+        "puntos_memorizacion": puntos,
+        "actividad_escritura": actividad,
+        "errores_comunes": errores,
+        "preguntas_autoverificacion": preguntas,
+        "producto_esperado": "Apunte completo: lectura desarrollada, glosario, cuadro Cornell, respuesta corta y respuesta tipo examen.",
+    }
+
+def normalizar_lectura(valor, tema="", punto_dificil=""):
     """Normaliza el recurso Lectura/Escritura como una guía escrita REAL.
 
     La idea es que esta modalidad no muestre solo instrucciones genéricas, sino
@@ -1744,6 +1977,37 @@ def normalizar_lectura(valor):
     )
     actividad_escritura = _normalizar_actividad_escritura(valor.get("actividad_escritura", {}))
     respuesta_modelo = str(valor.get("respuesta_modelo", "")).strip()
+    respuesta_corta = str(valor.get("respuesta_corta", "")).strip()
+    pregunta_tipo_examen = str(valor.get("pregunta_tipo_examen", "")).strip()
+    puntos_memorizacion = normalizar_lista(valor.get("puntos_memorizacion", []))
+
+    contenido_revisar = " ".join([
+        titulo, resumen, respuesta_modelo,
+        " ".join(item.get("contenido", "") for item in lectura_profunda),
+        " ".join(item.get("explicacion", "") for item in conceptos_clave),
+        " ".join(item.get("desarrollo", "") for item in esquema_escrito),
+        " ".join(item.get("apuntes", "") for item in cuadro_cornell),
+        " ".join(item.get("definicion", "") for item in glosario_detallado),
+    ])
+    if tema and texto_es_generico_lectura(contenido_revisar):
+        real = construir_lectura_escritura_real(tema, punto_dificil)
+        titulo = real["titulo"]
+        resumen = real["resumen"]
+        lectura_guiada = real["lectura_guiada"]
+        lectura_profunda = real["lectura_profunda"]
+        conceptos_clave = real["conceptos_clave"]
+        esquema_escrito = real["esquema_escrito"]
+        cuadro_cornell = real["cuadro_cornell"]
+        glosario_detallado = real["glosario_detallado"]
+        fichas_memoria = real["fichas_memoria"]
+        respuesta_modelo = real["respuesta_modelo"]
+        respuesta_corta = real["respuesta_corta"]
+        pregunta_tipo_examen = real["pregunta_tipo_examen"]
+        puntos_memorizacion = real["puntos_memorizacion"]
+        actividad_escritura = real["actividad_escritura"]
+        errores_comunes = real["errores_comunes"]
+        preguntas_autoverificacion = real["preguntas_autoverificacion"]
+        valor["producto_esperado"] = real["producto_esperado"]
 
     # Compatibilidad: si el LLM antiguo solo mandó cuadro_estudio, lo usamos como esquema.
     if not esquema_escrito and cuadro_estudio:
@@ -1845,6 +2109,20 @@ def normalizar_lectura(valor):
             "Para terminar, conviene cerrar con una frase propia que conecte el contenido con el objetivo de estudio del día."
         )
 
+    if not respuesta_corta:
+        respuesta_corta = "Respuesta corta: define el tema, ubícalo anatómicamente y menciona una relación importante."
+
+    if not pregunta_tipo_examen:
+        pregunta_tipo_examen = "Explique el tema considerando definición, ubicación, relaciones e importancia."
+
+    if not puntos_memorizacion:
+        puntos_memorizacion = [
+            "Definición clara del tema",
+            "Ubicación anatómica principal",
+            "Relación con estructuras cercanas",
+            "Importancia para responder en examen",
+        ]
+
     if not errores_comunes:
         errores_comunes = [
             {"error": "Copiar sin comprender", "correccion": "Reescribe cada idea con tus propias palabras."},
@@ -1875,6 +2153,9 @@ def normalizar_lectura(valor):
         "fichas_memoria": fichas_memoria[:6],
         "actividad_escritura": actividad_escritura,
         "respuesta_modelo": respuesta_modelo,
+        "respuesta_corta": respuesta_corta,
+        "pregunta_tipo_examen": pregunta_tipo_examen,
+        "puntos_memorizacion": puntos_memorizacion[:6],
         "errores_comunes": errores_comunes[:5],
         "preguntas_autoverificacion": preguntas_autoverificacion[:6],
         "producto_esperado": str(

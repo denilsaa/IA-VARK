@@ -474,6 +474,20 @@
                                             </div>
                                         </div>
 
+                                        {% if lectura.puntos_memorizacion %}
+                                            <article class="memorize-strip mt-3">
+                                                <div class="reading-panel-title">
+                                                    <i data-lucide="brain"></i>
+                                                    <strong>Lo mínimo que debes memorizar hoy</strong>
+                                                </div>
+                                                <div class="memorize-grid">
+                                                    {% for punto in lectura.puntos_memorizacion %}
+                                                        <div class="memorize-item"><span>{{ forloop.counter }}</span>{{ punto }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            </article>
+                                        {% endif %}
+
                                         {% if lectura.lectura_profunda %}
                                             <article class="reading-deep-card mt-3">
                                                 <div class="reading-panel-title">
@@ -568,12 +582,27 @@
                                         </div>
 
                                         {% if lectura.respuesta_modelo %}
-                                            <article class="model-answer-card mt-3">
+                                            <article class="exam-writing-section mt-3">
                                                 <div class="reading-panel-title">
                                                     <i data-lucide="file-check-2"></i>
-                                                    <strong>6. Respuesta modelo tipo examen</strong>
+                                                    <strong>6. Respuesta tipo examen: cómo debería escribirlo</strong>
                                                 </div>
-                                                <p>{{ lectura.respuesta_modelo }}</p>
+                                                {% if lectura.pregunta_tipo_examen %}
+                                                    <div class="exam-question-box">
+                                                        <strong>Pregunta probable:</strong>
+                                                        <span>{{ lectura.pregunta_tipo_examen }}</span>
+                                                    </div>
+                                                {% endif %}
+                                                {% if lectura.respuesta_corta %}
+                                                    <div class="short-answer-box">
+                                                        <strong>Respuesta corta para memorizar:</strong>
+                                                        <p>{{ lectura.respuesta_corta }}</p>
+                                                    </div>
+                                                {% endif %}
+                                                <div class="model-answer-card mt-3">
+                                                    <strong class="model-answer-label">Respuesta desarrollada:</strong>
+                                                    <p>{{ lectura.respuesta_modelo }}</p>
+                                                </div>
                                             </article>
                                         {% endif %}
 
@@ -1274,6 +1303,7 @@
 }
 
 @media (max-width: 900px) {
+    .memorize-grid { grid-template-columns: 1fr; }
     .anatomy-grid { grid-template-columns: 1fr; }
 }
 
@@ -3414,7 +3444,7 @@
 }
 .cornell-table {
     display: grid;
-    grid-template-columns: minmax(120px, .8fr) minmax(220px, 1.55fr) minmax(90px, .55fr);
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1.55fr) minmax(0, .62fr);
     border: 1px solid rgba(15, 118, 110, .16);
     border-radius: .95rem;
     overflow: hidden;
@@ -3476,6 +3506,75 @@
     padding-left: .35rem;
     color: #263f3b;
     line-height: 1.7;
+}
+.memorize-strip {
+    padding: 1rem;
+    border-radius: 1.15rem;
+    background: linear-gradient(135deg, #ecfdf8 0%, #ffffff 100%);
+    border: 1px solid rgba(15, 118, 110, .16);
+}
+.memorize-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .75rem;
+    margin-top: .8rem;
+}
+.memorize-item {
+    display: flex;
+    gap: .55rem;
+    align-items: flex-start;
+    padding: .85rem;
+    border-radius: .95rem;
+    background: #ffffff;
+    border: 1px solid rgba(15, 118, 110, .12);
+    color: #173f39;
+    line-height: 1.45;
+    font-weight: 750;
+}
+.memorize-item span {
+    display: inline-flex;
+    width: 1.55rem;
+    height: 1.55rem;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: #0f766e;
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 900;
+}
+.exam-writing-section {
+    padding: 1rem;
+    border-radius: 1.15rem;
+    border: 1px solid rgba(15, 118, 110, .16);
+    background: #ffffff;
+}
+.exam-question-box,
+.short-answer-box {
+    margin-top: .75rem;
+    padding: .85rem 1rem;
+    border-radius: .95rem;
+    border: 1px solid rgba(15, 118, 110, .12);
+    background: #f4fbf9;
+}
+.exam-question-box strong,
+.short-answer-box strong,
+.model-answer-label {
+    display: block;
+    color: #0f766e;
+    font-weight: 900;
+    margin-bottom: .25rem;
+}
+.exam-question-box span,
+.short-answer-box p {
+    margin: 0;
+    color: #244640;
+    line-height: 1.6;
+}
+.cornell-head,
+.cornell-cell {
+    overflow-wrap: anywhere;
 }
 .writing-consigna {
     margin-bottom: .65rem;
