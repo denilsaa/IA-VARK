@@ -4,28 +4,579 @@
 {% block title %}Iniciar sesión | Tutor IA Anatomía VARK{% endblock %}
 
 {% block content %}
+<style>
+    body {
+        background:
+            radial-gradient(circle at 8% 12%, rgba(15, 118, 110, .12), transparent 26rem),
+            radial-gradient(circle at 92% 8%, rgba(59, 130, 246, .10), transparent 24rem),
+            linear-gradient(180deg, #f7fbfb 0%, #ffffff 54%, #f3faf8 100%) !important;
+    }
+
+    .auth-layout {
+        width: min(1180px, calc(100% - 28px));
+        margin: 34px auto 72px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(360px, .82fr);
+        gap: clamp(28px, 5vw, 58px);
+        align-items: center;
+    }
+
+    .auth-copy {
+        position: relative;
+        overflow: hidden;
+        min-height: 620px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: clamp(28px, 4vw, 48px);
+        border-radius: 34px;
+        border: 1px solid rgba(255, 255, 255, .82);
+        background:
+            radial-gradient(circle at 12% 10%, rgba(15, 118, 110, .18), transparent 18rem),
+            radial-gradient(circle at 88% 24%, rgba(240, 100, 69, .12), transparent 16rem),
+            linear-gradient(135deg, rgba(255,255,255,.92), rgba(246,251,250,.76));
+        box-shadow: 0 28px 90px rgba(18, 40, 39, .12);
+        backdrop-filter: blur(14px);
+    }
+
+    .auth-copy::before {
+        content: "";
+        position: absolute;
+        right: -180px;
+        bottom: -180px;
+        width: 430px;
+        height: 430px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(15, 118, 110, .14), transparent 68%);
+        pointer-events: none;
+    }
+
+    .hero-badge {
+        position: relative;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        width: max-content;
+        gap: 9px;
+        padding: 10px 15px;
+        border-radius: 999px;
+        color: #0f766e;
+        background: rgba(234, 248, 245, .95);
+        border: 1px solid rgba(15, 118, 110, .14);
+        font-weight: 900;
+        box-shadow: 0 12px 28px rgba(15, 118, 110, .08);
+    }
+
+    .hero-badge svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .auth-copy h1 {
+        position: relative;
+        z-index: 2;
+        max-width: 620px;
+        margin: 20px 0 0;
+        color: #102a28;
+        font-size: clamp(2.45rem, 5vw, 5rem);
+        line-height: .94;
+        letter-spacing: -.07em;
+        font-weight: 950;
+    }
+
+    .auth-copy p {
+        position: relative;
+        z-index: 2;
+        max-width: 600px;
+        margin: 20px 0 0;
+        color: #58706d;
+        font-size: 1.08rem;
+        line-height: 1.72;
+    }
+
+    .auth-benefits {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        gap: 12px;
+        margin-top: 26px;
+        max-width: 560px;
+    }
+
+    .auth-benefits div {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        color: #244241;
+        background: rgba(255, 255, 255, .82);
+        border: 1px solid rgba(219, 232, 230, .9);
+        box-shadow: 0 12px 28px rgba(18, 40, 39, .05);
+        font-weight: 850;
+    }
+
+    .auth-benefits svg {
+        width: 21px;
+        height: 21px;
+        color: #0f766e;
+        flex: 0 0 auto;
+    }
+
+    .auth-visual-flow {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 24px;
+        max-width: 620px;
+    }
+
+    .auth-flow-item {
+        padding: 16px;
+        border-radius: 20px;
+        background: rgba(255,255,255,.84);
+        border: 1px solid rgba(219, 232, 230, .95);
+        box-shadow: 0 12px 28px rgba(18, 40, 39, .05);
+    }
+
+    .auth-flow-item strong {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        margin-bottom: 10px;
+        border-radius: 13px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #0f766e, #0d9488);
+        font-weight: 950;
+    }
+
+    .auth-flow-item span {
+        display: block;
+        color: #102a28;
+        font-weight: 900;
+        font-size: .94rem;
+        line-height: 1.25;
+    }
+
+    .auth-card {
+        position: relative;
+        overflow: hidden;
+        padding: clamp(24px, 3vw, 34px);
+        border-radius: 32px;
+        border: 1px solid rgba(255, 255, 255, .82);
+        background:
+            radial-gradient(circle at top right, rgba(15, 118, 110, .10), transparent 14rem),
+            rgba(255, 255, 255, .94);
+        box-shadow: 0 28px 90px rgba(18, 40, 39, .14);
+        backdrop-filter: blur(16px);
+    }
+
+    .auth-card::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto auto 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, #0f766e, #0d9488, #f06445);
+    }
+
+    .form-card-heading {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+
+    .form-icon {
+        display: grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 19px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #0f766e, #0d9488);
+        box-shadow: 0 16px 32px rgba(15, 118, 110, .22);
+        flex: 0 0 auto;
+    }
+
+    .form-icon svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    .eyebrow {
+        display: inline-flex;
+        margin-bottom: 4px;
+        color: #0f766e;
+        font-size: .78rem;
+        font-weight: 950;
+        letter-spacing: .09em;
+        text-transform: uppercase;
+    }
+
+    .form-card-heading h2 {
+        margin: 0;
+        color: #102a28;
+        font-size: clamp(1.7rem, 3vw, 2.35rem);
+        font-weight: 950;
+        letter-spacing: -.04em;
+        line-height: 1;
+    }
+
+    .alert {
+        border-radius: 16px;
+        padding: 13px 15px;
+        margin-bottom: 16px;
+    }
+
+    .form-group {
+        display: grid;
+        gap: 8px;
+        margin-top: 15px;
+    }
+
+    .form-label {
+        color: #244241;
+        font-weight: 900;
+        font-size: .94rem;
+    }
+
+    .input-shell {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-shell .input-icon {
+        position: absolute;
+        left: 14px;
+        display: grid;
+        place-items: center;
+        color: #0f766e;
+        pointer-events: none;
+    }
+
+    .input-shell .input-icon svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    .form-control {
+        width: 100%;
+        min-height: 52px;
+        padding: 12px 44px 12px 44px;
+        border-radius: 16px;
+        border: 1px solid rgba(15, 118, 110, .18);
+        background: #f9fdfc;
+        color: #102a28;
+        font-weight: 700;
+        transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .form-control:focus {
+        border-color: #0f766e;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(15, 118, 110, .10);
+        outline: none;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 10px;
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        color: #607875;
+        cursor: pointer;
+    }
+
+    .password-toggle:hover {
+        background: #eaf8f5;
+        color: #0f766e;
+    }
+
+    .password-toggle svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .auth-submit {
+        min-height: 52px;
+        border-radius: 16px;
+        font-weight: 900;
+        box-shadow: 0 16px 32px rgba(15, 118, 110, .20);
+    }
+
+    .login-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 18px 0 12px;
+        color: #8a9a98;
+        font-size: .84rem;
+        font-weight: 850;
+    }
+
+    .login-divider::before,
+    .login-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: #e0ece9;
+    }
+
+    .btn-google-real {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 52px;
+        padding: 12px 18px;
+        border-radius: 16px;
+        border: 1px solid #dadce0;
+        background: #ffffff;
+        color: #3c4043;
+        text-decoration: none;
+        font-weight: 850;
+        font-size: 1rem;
+        box-shadow: 0 10px 22px rgba(60, 64, 67, .10);
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .btn-google-real:hover {
+        transform: translateY(-2px);
+        background: #f8fbff;
+        border-color: #c8d4e3;
+        box-shadow: 0 18px 34px rgba(60, 64, 67, .16);
+        color: #202124;
+    }
+
+    .btn-google-real.is-disabled {
+        opacity: .62;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .google-g {
+        flex: 0 0 auto;
+        width: 22px;
+        height: 22px;
+    }
+
+    .form-footer {
+        margin: 20px 0 0;
+        text-align: center;
+        color: #647777;
+        font-weight: 750;
+    }
+
+    .form-footer a {
+        color: #0f766e;
+        font-weight: 950;
+        text-decoration: none;
+    }
+
+    .form-footer a:hover {
+        text-decoration: underline;
+    }
+
+    .errorlist {
+        margin: 4px 0 0;
+        padding: 0;
+        list-style: none;
+        color: #c2412d;
+        font-size: .88rem;
+        font-weight: 750;
+    }
+
+    @media (max-width: 980px) {
+        .auth-layout {
+            grid-template-columns: 1fr;
+            margin-top: 20px;
+        }
+
+        .auth-copy {
+            min-height: auto;
+        }
+
+        .auth-visual-flow {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 620px) {
+        .auth-layout {
+            width: min(100% - 18px, 1180px);
+            gap: 18px;
+            margin-bottom: 42px;
+        }
+
+        .auth-copy,
+        .auth-card {
+            padding: 20px;
+            border-radius: 24px;
+        }
+
+        .auth-benefits div {
+            align-items: flex-start;
+        }
+
+        .form-card-heading {
+            align-items: flex-start;
+        }
+    }
+</style>
+
 <section class="auth-layout">
     <aside class="auth-copy">
-        <span class="hero-badge"><i data-lucide="shield-check"></i> Acceso seguro</span>
+        <span class="hero-badge">
+            <i data-lucide="shield-check"></i>
+            Acceso seguro
+        </span>
+
         <h1>Vuelve a tu ruta de Anatomía.</h1>
-        <p>Ingresa para revisar tus materiales, continuar tu plan diario y generar nuevos simulacros.</p>
+
+        <p>
+            Ingresa para continuar tu plan diario, revisar tus materiales, guardar tu avance y practicar con simulacros antes del examen.
+        </p>
+
         <div class="auth-benefits">
-            <div><i data-lucide="check-circle"></i><span>Ruta personalizada por VARK</span></div>
-            <div><i data-lucide="check-circle"></i><span>Progreso guardado</span></div>
-            <div><i data-lucide="check-circle"></i><span>Simulacros con retroalimentación</span></div>
+            <div>
+                <i data-lucide="check-circle"></i>
+                <span>Ruta personalizada por tu estilo VARK</span>
+            </div>
+            <div>
+                <i data-lucide="check-circle"></i>
+                <span>Progreso, notas y mini quizzes guardados</span>
+            </div>
+            <div>
+                <i data-lucide="check-circle"></i>
+                <span>Simulacros con retroalimentación para estudiar mejor</span>
+            </div>
+        </div>
+
+        <div class="auth-visual-flow">
+            <div class="auth-flow-item">
+                <strong>1</strong>
+                <span>Entra a tu cuenta</span>
+            </div>
+            <div class="auth-flow-item">
+                <strong>2</strong>
+                <span>Continúa tu ruta</span>
+            </div>
+            <div class="auth-flow-item">
+                <strong>3</strong>
+                <span>Practica para el examen</span>
+            </div>
         </div>
     </aside>
 
     <form class="form-panel auth-card" method="post" action="{% url 'account_login' %}">
         {% csrf_token %}
-        <div class="form-card-heading"><span class="form-icon"><i data-lucide="log-in"></i></span><div><span class="eyebrow">Cuenta del estudiante</span><h2>Iniciar sesión</h2></div></div>
-        {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
-        <div class="form-group"><label class="form-label" for="id_login">Usuario o correo</label><input class="form-control" id="id_login" type="text" name="login" autocomplete="username" value="{{ form.login.value|default:'' }}" required>{{ form.login.errors }}</div>
-        <div class="form-group"><label class="form-label" for="id_password">Contraseña</label><input class="form-control" id="id_password" type="password" name="password" autocomplete="current-password" required>{{ form.password.errors }}</div>
-        {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}
-        <button class="btn btn-primary w-100 mt-3 icon-btn justify-content-center" type="submit"><i data-lucide="log-in"></i><span>Iniciar sesión</span></button>
-        {% if GOOGLE_AUTH_ENABLED %}<a class="btn btn-google w-100 mt-2 icon-btn justify-content-center" href="{% provider_login_url 'google' process='login' %}"><i data-lucide="chrome"></i><span>Continuar con Google</span></a>{% else %}<button class="btn btn-google w-100 mt-2 icon-btn justify-content-center" type="button" disabled><i data-lucide="chrome"></i><span>Google pendiente de configurar</span></button>{% endif %}
-        <p class="form-footer">¿No tienes cuenta? <a href="{% url 'account_signup' %}">Regístrate</a></p>
+
+        <div class="form-card-heading">
+            <span class="form-icon">
+                <i data-lucide="log-in"></i>
+            </span>
+            <div>
+                <span class="eyebrow">Cuenta del estudiante</span>
+                <h2>Iniciar sesión</h2>
+            </div>
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="form-group">
+            <label class="form-label" for="id_login">Usuario o correo</label>
+            <div class="input-shell">
+                <span class="input-icon">
+                    <i data-lucide="mail"></i>
+                </span>
+                <input class="form-control" id="id_login" type="text" name="login" autocomplete="username" value="{{ form.login.value|default:'' }}" required>
+            </div>
+            {{ form.login.errors }}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="id_password">Contraseña</label>
+            <div class="input-shell">
+                <span class="input-icon">
+                    <i data-lucide="lock-keyhole"></i>
+                </span>
+                <input class="form-control" id="id_password" type="password" name="password" autocomplete="current-password" required>
+                <button class="password-toggle" type="button" data-password-toggle aria-label="Mostrar u ocultar contraseña">
+                    <i data-lucide="eye"></i>
+                </button>
+            </div>
+            {{ form.password.errors }}
+        </div>
+
+        {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+        {% endif %}
+
+        <button class="btn btn-primary w-100 mt-3 icon-btn justify-content-center auth-submit" type="submit">
+            <i data-lucide="log-in"></i>
+            <span>Iniciar sesión</span>
+        </button>
+
+        <div class="login-divider">o continúa con Google</div>
+
+        {% if GOOGLE_AUTH_ENABLED %}
+            <a class="btn-google-real" href="{% provider_login_url 'google' process='login' %}">
+                <svg class="google-g" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"></path>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"></path>
+                    <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z"></path>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06L5.84 9.9C6.71 7.3 9.14 5.38 12 5.38z"></path>
+                </svg>
+                <span>Continuar con Google</span>
+            </a>
+        {% else %}
+            <button class="btn-google-real is-disabled" type="button" disabled>
+                <svg class="google-g" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"></path>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"></path>
+                    <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z"></path>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06L5.84 9.9C6.71 7.3 9.14 5.38 12 5.38z"></path>
+                </svg>
+                <span>Google pendiente de configurar</span>
+            </button>
+        {% endif %}
+
+        <p class="form-footer">
+            ¿No tienes cuenta?
+            <a href="{% url 'account_signup' %}">Regístrate</a>
+        </p>
     </form>
 </section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggle = document.querySelector("[data-password-toggle]");
+        const input = document.getElementById("id_password");
+
+        if (toggle && input) {
+            toggle.addEventListener("click", function () {
+                const isPassword = input.getAttribute("type") === "password";
+                input.setAttribute("type", isPassword ? "text" : "password");
+                toggle.innerHTML = isPassword ? '<i data-lucide="eye-off"></i>' : '<i data-lucide="eye"></i>';
+
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}
