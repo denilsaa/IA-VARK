@@ -17,15 +17,17 @@
         --vark-dark: #0d2d2b;
         --vark-muted: #526d6a;
         --vark-glow: rgba(15, 143, 134, .24);
+        --vark-burst-1: rgba(15, 143, 134, .92);
+        --vark-burst-2: rgba(16, 188, 214, .72);
+        --vark-burst-3: rgba(255, 255, 255, .88);
         width: 100vw;
         margin-left: calc(50% - 50vw);
         min-height: calc(100vh - 80px);
         padding: 34px 0 68px;
         background:
-            radial-gradient(circle at 10% 10%, var(--vark-glow), transparent 24rem),
-            radial-gradient(circle at 92% 16%, rgba(255,255,255,.56), transparent 18rem),
-            radial-gradient(circle at 70% 92%, var(--vark-glow), transparent 22rem),
-            linear-gradient(135deg, var(--vark-soft) 0%, #ffffff 44%, var(--vark-soft-2) 100%);
+            radial-gradient(circle at 12% 14%, rgba(15, 143, 134, .08), transparent 22rem),
+            radial-gradient(circle at 88% 10%, rgba(255, 255, 255, .9), transparent 20rem),
+            linear-gradient(135deg, #f7fbfb 0%, #ffffff 48%, #f4faf9 100%);
         overflow: hidden;
     }
 
@@ -37,6 +39,9 @@
         --vark-dark: #0b3634;
         --vark-muted: #526d6a;
         --vark-glow: rgba(15, 143, 134, .24);
+        --vark-burst-1: rgba(15, 143, 134, .94);
+        --vark-burst-2: rgba(16, 188, 214, .72);
+        --vark-burst-3: rgba(160, 244, 232, .80);
     }
 
     .vark-theme-auditivo {
@@ -47,6 +52,9 @@
         --vark-dark: #2e1065;
         --vark-muted: #64566f;
         --vark-glow: rgba(109, 40, 217, .24);
+        --vark-burst-1: rgba(109, 40, 217, .92);
+        --vark-burst-2: rgba(168, 85, 247, .72);
+        --vark-burst-3: rgba(216, 180, 254, .80);
     }
 
     .vark-theme-lecto {
@@ -57,6 +65,9 @@
         --vark-dark: #4c0519;
         --vark-muted: #6b4f55;
         --vark-glow: rgba(159, 18, 57, .22);
+        --vark-burst-1: rgba(159, 18, 57, .90);
+        --vark-burst-2: rgba(217, 119, 6, .70);
+        --vark-burst-3: rgba(255, 228, 230, .84);
     }
 
     .vark-theme-kinestesico {
@@ -67,6 +78,9 @@
         --vark-dark: #431407;
         --vark-muted: #73523b;
         --vark-glow: rgba(249, 115, 22, .24);
+        --vark-burst-1: rgba(249, 115, 22, .92);
+        --vark-burst-2: rgba(245, 158, 11, .76);
+        --vark-burst-3: rgba(254, 215, 170, .86);
     }
 
     .vark-result-pro {
@@ -82,20 +96,22 @@
         position: relative;
         overflow: hidden;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(320px, .72fr);
+        grid-template-columns: minmax(0, 1fr) minmax(360px, .82fr);
         gap: 26px;
         align-items: stretch;
         padding: clamp(24px, 4vw, 44px);
-        border: 1px solid rgba(255,255,255,.72);
+        border: 1px solid rgba(255, 255, 255, .72);
         border-radius: 34px;
         background:
-            radial-gradient(circle at 82% 16%, rgba(255,255,255,.72), transparent 18rem),
-            linear-gradient(135deg, rgba(255,255,255,.94) 0%, rgba(255,255,255,.72) 100%);
+            radial-gradient(circle at 82% 16%, rgba(255, 255, 255, .78), transparent 18rem),
+            linear-gradient(135deg, rgba(255, 255, 255, .96) 0%, rgba(255, 255, 255, .74) 100%);
         box-shadow: 0 28px 80px rgba(15, 23, 42, .13);
         backdrop-filter: blur(16px);
     }
 
     .vark-hero-copy {
+        position: relative;
+        z-index: 3;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -132,46 +148,96 @@
 
     .vark-avatar-stage {
         position: relative;
-        min-height: 520px;
+        min-height: 560px;
         display: grid;
         place-items: center;
-        border-radius: 32px;
+        border-radius: 34px;
         overflow: hidden;
         background:
-            radial-gradient(circle at 50% 46%, var(--vark-glow), transparent 15rem),
-            linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.56));
-        border: 1px solid rgba(255,255,255,.86);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,.92), 0 22px 55px rgba(15,23,42,.10);
-    }
-
-    .vark-avatar-stage::before {
-        content: "";
-        position: absolute;
-        width: 390px;
-        height: 390px;
-        border-radius: 50%;
-        background: radial-gradient(circle, var(--vark-glow), transparent 68%);
-        animation: varkAura 3.6s ease-in-out infinite;
+            radial-gradient(circle at 50% 52%, rgba(255, 255, 255, .94), rgba(255, 255, 255, .50) 42%, rgba(255, 255, 255, .28) 100%),
+            linear-gradient(180deg, rgba(255, 255, 255, .86), rgba(255, 255, 255, .54));
+        border: 1px solid rgba(255, 255, 255, .88);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .94), 0 22px 55px rgba(15, 23, 42, .10);
+        isolation: isolate;
     }
 
     .vark-avatar-stage::after {
         content: "";
         position: absolute;
-        inset: auto 18px 18px 18px;
+        left: 50%;
+        bottom: 26px;
+        z-index: 1;
+        width: 72%;
         height: 86px;
+        transform: translateX(-50%);
         border-radius: 50%;
-        background: radial-gradient(ellipse, rgba(15,23,42,.18), transparent 70%);
+        background: radial-gradient(ellipse, rgba(15, 23, 42, .20), transparent 70%);
+        filter: blur(13px);
+        opacity: .42;
+    }
+
+    .vark-color-burst {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: 0;
+        width: 720px;
+        height: 720px;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+    }
+
+    .vark-color-burst::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background:
+            repeating-conic-gradient(
+                from -18deg,
+                transparent 0deg,
+                transparent 8deg,
+                var(--vark-burst-1) 9deg,
+                var(--vark-burst-1) 15deg,
+                transparent 16deg,
+                transparent 28deg
+            );
+        filter: blur(.2px);
+        opacity: .72;
+        animation: varkBurstSpin 18s linear infinite;
+        mask-image: radial-gradient(circle, transparent 0 17%, #000 18% 62%, transparent 74%);
+        -webkit-mask-image: radial-gradient(circle, transparent 0 17%, #000 18% 62%, transparent 74%);
+    }
+
+    .vark-color-burst::after {
+        content: "";
+        position: absolute;
+        inset: 12%;
+        border-radius: 50%;
+        background:
+            radial-gradient(circle, rgba(255, 255, 255, .94) 0 14%, var(--vark-burst-3) 15% 24%, transparent 25%),
+            radial-gradient(circle, var(--vark-burst-2), transparent 66%);
         filter: blur(10px);
-        opacity: .38;
+        opacity: .88;
+        animation: varkBurstPulse 3.8s ease-in-out infinite;
+    }
+
+    .vark-avatar-core {
+        position: relative;
+        z-index: 5;
+        width: min(100%, 470px);
+        height: 520px;
+        display: grid;
+        place-items: center;
     }
 
     .vark-avatar-video {
         position: relative;
-        z-index: 2;
-        width: min(100%, 430px);
-        height: 500px;
+        z-index: 6;
+        width: 100%;
+        height: 100%;
         object-fit: contain;
-        filter: drop-shadow(0 28px 42px rgba(15,23,42,.18));
+        filter: drop-shadow(0 34px 46px rgba(15, 23, 42, .22));
         animation: varkFloat 4.4s ease-in-out infinite;
     }
 
@@ -179,7 +245,7 @@
         position: absolute;
         left: 20px;
         top: 20px;
-        z-index: 4;
+        z-index: 7;
         display: inline-flex;
         align-items: center;
         gap: 9px;
@@ -201,13 +267,13 @@
         left: 18px;
         right: 18px;
         bottom: 18px;
-        z-index: 4;
+        z-index: 7;
         padding: 16px 18px;
         border-radius: 22px;
-        background: rgba(255,255,255,.86);
-        border: 1px solid rgba(255,255,255,.86);
+        background: rgba(255, 255, 255, .88);
+        border: 1px solid rgba(255, 255, 255, .88);
         backdrop-filter: blur(12px);
-        box-shadow: 0 14px 35px rgba(15,23,42,.10);
+        box-shadow: 0 14px 35px rgba(15, 23, 42, .10);
     }
 
     .vark-avatar-description strong {
@@ -223,55 +289,6 @@
         color: var(--vark-muted);
         line-height: 1.45;
         font-size: .92rem;
-    }
-
-    .vark-style-card {
-        display: grid;
-        align-content: center;
-        justify-items: center;
-        gap: 8px;
-        min-height: 230px;
-        padding: 24px;
-        border: 1px solid rgba(255,255,255,.72);
-        border-radius: 28px;
-        text-align: center;
-        background: rgba(255,255,255,.84);
-        box-shadow: 0 18px 50px rgba(15,23,42,.08);
-    }
-
-    .vark-style-icon {
-        display: grid;
-        place-items: center;
-        width: 76px;
-        height: 76px;
-        border-radius: 24px;
-        color: #fff;
-        background: linear-gradient(135deg, var(--vark-main), var(--vark-second));
-        box-shadow: 0 18px 36px var(--vark-glow);
-    }
-
-    .vark-style-icon svg {
-        width: 34px;
-        height: 34px;
-    }
-
-    .vark-style-card small {
-        color: var(--vark-muted);
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-    }
-
-    .vark-style-card strong {
-        color: var(--vark-dark);
-        font-size: clamp(1.6rem, 3vw, 2.2rem);
-        line-height: 1;
-        font-weight: 950;
-    }
-
-    .vark-style-card > span {
-        color: var(--vark-main);
-        font-weight: 850;
     }
 
     .secondary-style-pill,
@@ -294,10 +311,10 @@
         justify-content: space-between;
         gap: 18px;
         padding: 22px 24px;
-        border: 1px solid rgba(255,255,255,.72);
+        border: 1px solid rgba(255, 255, 255, .72);
         border-radius: 26px;
-        background: rgba(255,255,255,.84);
-        box-shadow: 0 16px 45px rgba(15,23,42,.08);
+        background: rgba(255, 255, 255, .84);
+        box-shadow: 0 16px 45px rgba(15, 23, 42, .08);
         backdrop-filter: blur(12px);
     }
 
@@ -328,10 +345,10 @@
 
     .vark-panel {
         padding: clamp(20px, 2.4vw, 28px);
-        border: 1px solid rgba(255,255,255,.72);
+        border: 1px solid rgba(255, 255, 255, .72);
         border-radius: 26px;
-        background: rgba(255,255,255,.90);
-        box-shadow: 0 14px 42px rgba(15,23,42,.07);
+        background: rgba(255, 255, 255, .90);
+        box-shadow: 0 14px 42px rgba(15, 23, 42, .07);
         backdrop-filter: blur(12px);
     }
 
@@ -378,7 +395,7 @@
         padding: 14px;
         border: 1px solid rgba(207, 227, 224, .82);
         border-radius: 18px;
-        background: rgba(255,255,255,.74);
+        background: rgba(255, 255, 255, .74);
     }
 
     .score-breakdown-item.active {
@@ -411,7 +428,7 @@
     .score-bar-track {
         height: 10px;
         border-radius: 999px;
-        background: rgba(15,23,42,.08);
+        background: rgba(15, 23, 42, .08);
         overflow: hidden;
     }
 
@@ -441,8 +458,8 @@
         overflow: hidden;
         padding: 26px;
         border-radius: 28px;
-        border: 1px solid rgba(255,255,255,.72);
-        background: rgba(255,255,255,.90);
+        border: 1px solid rgba(255, 255, 255, .72);
+        background: rgba(255, 255, 255, .90);
         box-shadow: 0 18px 45px rgba(15, 23, 42, .07);
         backdrop-filter: blur(12px);
     }
@@ -551,7 +568,7 @@
         gap: 8px;
         padding: 11px 14px;
         border-radius: 999px;
-        border: 1px solid color-mix(in srgb, var(--vark-main) 35%, white);
+        border: 1px solid rgba(207, 227, 224, .86);
         background: var(--vark-soft);
         color: var(--vark-main);
         text-decoration: none;
@@ -619,8 +636,8 @@
 
     .btn-outline-primary {
         color: var(--vark-main) !important;
-        border-color: color-mix(in srgb, var(--vark-main) 45%, white) !important;
-        background: rgba(255,255,255,.74) !important;
+        border-color: rgba(207, 227, 224, .98) !important;
+        background: rgba(255, 255, 255, .74) !important;
     }
 
     @keyframes varkFloat {
@@ -632,14 +649,23 @@
         }
     }
 
-    @keyframes varkAura {
+    @keyframes varkBurstPulse {
         0%, 100% {
             transform: scale(.92);
             opacity: .72;
         }
         50% {
-            transform: scale(1.08);
-            opacity: 1;
+            transform: scale(1.12);
+            opacity: .96;
+        }
+    }
+
+    @keyframes varkBurstSpin {
+        from {
+            transform: rotate(0deg) scale(1);
+        }
+        to {
+            transform: rotate(360deg) scale(1);
         }
     }
 
@@ -661,11 +687,11 @@
         }
 
         .vark-avatar-stage {
-            min-height: 460px;
+            min-height: 500px;
         }
 
-        .vark-avatar-video {
-            height: 440px;
+        .vark-avatar-core {
+            height: 460px;
         }
     }
 
@@ -688,6 +714,10 @@
             border-radius: 22px;
         }
 
+        .vark-result-hero {
+            gap: 18px;
+        }
+
         .vark-ai-summary {
             grid-template-columns: 1fr;
         }
@@ -704,11 +734,16 @@
         }
 
         .vark-avatar-stage {
-            min-height: 390px;
+            min-height: 440px;
         }
 
-        .vark-avatar-video {
+        .vark-avatar-core {
             height: 360px;
+        }
+
+        .vark-color-burst {
+            width: 520px;
+            height: 520px;
         }
 
         .vark-avatar-description {
@@ -718,10 +753,15 @@
             bottom: auto;
             margin: 0 14px 14px;
         }
+
+        .vark-avatar-badge {
+            left: 14px;
+            top: 14px;
+        }
     }
 </style>
 
-<section class="vark-screen {% if perfil.estilo_principal == 'visual' %}vark-theme-visual{% elif perfil.estilo_principal == 'auditivo' %}vark-theme-auditivo{% elif perfil.estilo_principal == 'lectura' or perfil.estilo_principal == 'lectura_escritura' or perfil.estilo_principal == 'lectoescritura' or perfil.estilo_principal == 'lecto_escritura' %}vark-theme-lecto{% elif perfil.estilo_principal == 'kinestesico' or perfil.estilo_principal == 'kinestésico' %}vark-theme-kinestesico{% else %}vark-theme-visual{% endif %}">
+<section class="vark-screen {% if perfil.estilo_principal == 'visual' %}vark-theme-visual{% elif perfil.estilo_principal == 'auditivo' %}vark-theme-auditivo{% elif perfil.estilo_principal == 'lectura' %}vark-theme-lecto{% elif perfil.estilo_principal == 'kinestesico' %}vark-theme-kinestesico{% else %}vark-theme-visual{% endif %}">
     <div class="vark-result-pro">
         <div class="vark-result-hero">
             <div class="vark-hero-copy">
@@ -739,47 +779,63 @@
             </div>
 
             <aside class="vark-avatar-stage">
+                <div class="vark-color-burst"></div>
+
                 <div class="vark-avatar-badge">
                     <i data-lucide="{{ recomendacion.icono }}"></i>
                     <span>{{ perfil.estilo_display }}</span>
                 </div>
 
+                <div class="vark-avatar-core">
+                    {% if perfil.estilo_principal == "visual" %}
+                        <video class="vark-avatar-video" autoplay muted loop playsinline poster="{% static 'img/vark/avatar_visual.png' %}">
+                            <source src="{% static 'img/vark/avatar_visual.mp4' %}" type="video/mp4">
+                            <img src="{% static 'img/vark/avatar_visual.png' %}" alt="Avatar visual">
+                        </video>
+                    {% elif perfil.estilo_principal == "auditivo" %}
+                        <video class="vark-avatar-video" autoplay muted loop playsinline poster="{% static 'img/vark/avatar_auditivo.png' %}">
+                            <source src="{% static 'img/vark/avatar_auditivo.mp4' %}" type="video/mp4">
+                            <img src="{% static 'img/vark/avatar_auditivo.png' %}" alt="Avatar auditivo">
+                        </video>
+                    {% elif perfil.estilo_principal == "lectura" %}
+                        <video class="vark-avatar-video" autoplay muted loop playsinline poster="{% static 'img/vark/avatar_lecto_escritura.png' %}">
+                            <source src="{% static 'img/vark/avatar_lecto_escritura.mp4' %}" type="video/mp4">
+                            <img src="{% static 'img/vark/avatar_lecto_escritura.png' %}" alt="Avatar lecto escritura">
+                        </video>
+                    {% elif perfil.estilo_principal == "kinestesico" %}
+                        <video class="vark-avatar-video" autoplay muted loop playsinline poster="{% static 'img/vark/avatar_kinestesico.png' %}">
+                            <source src="{% static 'img/vark/avatar_kinestesico.mp4' %}" type="video/mp4">
+                            <img src="{% static 'img/vark/avatar_kinestesico.png' %}" alt="Avatar kinestésico">
+                        </video>
+                    {% else %}
+                        <video class="vark-avatar-video" autoplay muted loop playsinline poster="{% static 'img/vark/avatar_visual.png' %}">
+                            <source src="{% static 'img/vark/avatar_visual.mp4' %}" type="video/mp4">
+                            <img src="{% static 'img/vark/avatar_visual.png' %}" alt="Avatar VARK">
+                        </video>
+                    {% endif %}
+                </div>
+
                 {% if perfil.estilo_principal == "visual" %}
-                    <video class="vark-avatar-video" autoplay muted loop playsinline poster="{% static 'img/vark/avatar_visual.png' %}">
-                        <source src="{% static 'img/vark/avatar_visual.mp4' %}" type="video/mp4">
-                    </video>
                     <div class="vark-avatar-description">
                         <strong>Aprendes observando</strong>
                         <p>Tu mente conecta mejor cuando ve estructuras, colores, esquemas, mapas y relaciones anatómicas.</p>
                     </div>
                 {% elif perfil.estilo_principal == "auditivo" %}
-                    <video class="vark-avatar-video" autoplay muted loop playsinline poster="{% static 'img/vark/avatar_auditivo.png' %}">
-                        <source src="{% static 'img/vark/avatar_auditivo.mp4' %}" type="video/mp4">
-                    </video>
                     <div class="vark-avatar-description">
                         <strong>Aprendes escuchando</strong>
                         <p>Comprendes mejor cuando oyes explicaciones, audios educativos, repeticiones y conversaciones guiadas.</p>
                     </div>
-                {% elif perfil.estilo_principal == "lectura" or perfil.estilo_principal == "lectura_escritura" or perfil.estilo_principal == "lectoescritura" or perfil.estilo_principal == "lecto_escritura" %}
-                    <video class="vark-avatar-video" autoplay muted loop playsinline poster="{% static 'img/vark/avatar_lecto_escritura.png' %}">
-                        <source src="{% static 'img/vark/avatar_lecto_escritura.mp4' %}" type="video/mp4">
-                    </video>
+                {% elif perfil.estilo_principal == "lectura" %}
                     <div class="vark-avatar-description">
                         <strong>Aprendes leyendo y escribiendo</strong>
                         <p>Organizas mejor la información cuando lees, resumes, subrayas, haces listas y transformas ideas en apuntes.</p>
                     </div>
-                {% elif perfil.estilo_principal == "kinestesico" or perfil.estilo_principal == "kinestésico" %}
-                    <video class="vark-avatar-video" autoplay muted loop playsinline poster="{% static 'img/vark/avatar_kinestesico.png' %}">
-                        <source src="{% static 'img/vark/avatar_kinestesico.mp4' %}" type="video/mp4">
-                    </video>
+                {% elif perfil.estilo_principal == "kinestesico" %}
                     <div class="vark-avatar-description">
                         <strong>Aprendes haciendo</strong>
                         <p>Tu aprendizaje mejora cuando manipulas modelos, practicas, resuelves ejercicios y conviertes la teoría en acción.</p>
                     </div>
                 {% else %}
-                    <video class="vark-avatar-video" autoplay muted loop playsinline poster="{% static 'img/vark/avatar_visual.png' %}">
-                        <source src="{% static 'img/vark/avatar_visual.mp4' %}" type="video/mp4">
-                    </video>
                     <div class="vark-avatar-description">
                         <strong>Aprendes con recursos personalizados</strong>
                         <p>El sistema adaptará tu ruta según tu combinación de estilos VARK y tus necesidades de estudio.</p>
