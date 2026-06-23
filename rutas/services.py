@@ -2951,3 +2951,675 @@ def generar_y_guardar_imagen_gemini_api(prompt, carpeta, nombre_archivo, aspect_
 
     return "", last_error or "No fue posible generar la imagen con Gemini."
 
+# =========================================================
+# HOTFIX FINAL: contenido diario distinto por subtema
+# Colocar al final de rutas/services.py.
+# No toca otros servicios. Sobrescribe solo la generación/normalización
+# de contenido de la ruta para que cada día tenga contenido propio.
+# =========================================================
+
+import unicodedata
+
+
+def _normalizar_clave_subtema(texto):
+    texto = str(texto or "").strip().lower()
+    texto = "".join(
+        c for c in unicodedata.normalize("NFD", texto)
+        if unicodedata.category(c) != "Mn"
+    )
+    texto = re.sub(r"[^a-z0-9]+", " ", texto)
+    return re.sub(r"\s+", " ", texto).strip()
+
+
+def _perfil_anatomico_por_subtema(tema, tema_padre="", punto_dificil=""):
+    """Devuelve contenido anatómico base diferente para cada subtema.
+
+    La clave de esta función es que NO usa la misma explicación para todos
+    los días. Si el tema del día es "Aurículas", el contenido se centra en
+    aurículas; si es "Aorta", se centra en aorta, etc.
+    """
+    tema = str(tema or "Tema anatómico").strip()
+    tema_padre = str(tema_padre or "Anatomía I").strip()
+    punto = str(punto_dificil or tema).strip()
+    k = _normalizar_clave_subtema(f"{tema} {punto}")
+
+    base = {
+        "tema": tema,
+        "tema_padre": tema_padre,
+        "definicion": (
+            f"{tema} es un subtema de {tema_padre} que debe estudiarse identificando "
+            "su definición, ubicación anatómica, relaciones principales e importancia para el examen."
+        ),
+        "ubicacion": (
+            f"Se estudia dentro de la región anatómica correspondiente a {tema_padre}. "
+            "Debe ubicarse usando referencias como anterior, posterior, superior, inferior, medial o lateral según corresponda."
+        ),
+        "relaciones": (
+            f"Debe relacionarse con {punto} y con las estructuras vecinas que permitan explicar continuidad, límites o función."
+        ),
+        "importancia": (
+            "Es importante porque permite responder preguntas de identificación, relación anatómica y explicación funcional."
+        ),
+        "terminos": [
+            (tema, f"Concepto central del día dentro de {tema_padre}.", "Úsalo como inicio de tu respuesta escrita."),
+            ("Ubicación anatómica", "Lugar o región donde se reconoce la estructura.", "Incluye una frase que empiece con: se localiza en..."),
+            ("Relación anatómica", "Conexión con estructuras vecinas, límites o funciones.", "Agrega al menos una relación para demostrar comprensión."),
+            ("Importancia", "Razón por la que el contenido sirve para comprender el tema.", "Cierra la respuesta explicando su utilidad."),
+        ],
+        "vista": "vista anatómica didáctica",
+    }
+
+    perfiles = {
+        "desarrollo del corazon": {
+            "definicion": "El desarrollo del corazón estudia cómo se forma el corazón durante la etapa embrionaria a partir de estructuras primitivas que se remodelan hasta originar cavidades, tabiques y grandes vasos.",
+            "ubicacion": "Se analiza como un proceso embrionario relacionado con la región cardiogénica y el futuro mediastino. No se estudia solo como órgano adulto, sino como una secuencia de formación y organización.",
+            "relaciones": "Se relaciona con la formación de aurículas, ventrículos, tabiques y grandes vasos. Comprenderlo ayuda a explicar por qué la anatomía adulta del corazón tiene cavidades separadas y circulación ordenada.",
+            "importancia": "Es importante porque conecta la anatomía descriptiva con el origen de las cavidades cardíacas y permite comprender malformaciones o alteraciones de la organización cardíaca.",
+            "terminos": [
+                ("Desarrollo cardíaco", "Proceso de formación embrionaria del corazón.", "Úsalo para explicar el origen del órgano, no solo su forma adulta."),
+                ("Tabicación", "Proceso de separación progresiva de cavidades.", "Sirve para explicar la organización de aurículas y ventrículos."),
+                ("Tubo cardíaco", "Estructura inicial que se transforma durante el desarrollo.", "Menciónalo como punto de partida embriológico."),
+                ("Grandes vasos", "Vasos conectados al corazón durante su organización.", "Relaciona desarrollo con aorta, tronco pulmonar y venas."),
+            ],
+            "vista": "esquema embrionario didáctico",
+        },
+        "anatomia del corazon": {
+            "definicion": "La anatomía del corazón estudia la forma, posición, cavidades, caras, bordes y relaciones del órgano cardíaco como bomba central del sistema circulatorio.",
+            "ubicacion": "El corazón se localiza en el mediastino medio, entre ambos pulmones, detrás del esternón y por encima del diafragma.",
+            "relaciones": "Se relaciona con el pericardio, los pulmones, las pleuras, el diafragma, el esternón y los grandes vasos que entran y salen de sus cavidades.",
+            "importancia": "Es importante porque permite integrar cavidades, vasos y circulación en una explicación anatómica completa, útil para preguntas abiertas y de identificación.",
+            "terminos": [
+                ("Corazón", "Órgano muscular hueco que impulsa la sangre.", "Inicia la respuesta con una definición clara."),
+                ("Mediastino medio", "Región central del tórax donde se ubica el corazón.", "Úsalo para responder ubicación."),
+                ("Pericardio", "Envoltura que rodea y fija el corazón.", "Inclúyelo al explicar relaciones."),
+                ("Grandes vasos", "Vasos principales conectados al corazón.", "Relaciona corazón con circulación."),
+            ],
+            "vista": "vista anterior del corazón en el mediastino",
+        },
+        "cavidades cardiacas": {
+            "definicion": "Las cavidades cardíacas son los espacios internos del corazón encargados de recibir y expulsar sangre de forma ordenada.",
+            "ubicacion": "Se encuentran dentro del corazón y se organizan en dos cavidades superiores, llamadas aurículas, y dos cavidades inferiores, llamadas ventrículos.",
+            "relaciones": "Las aurículas reciben sangre venosa o pulmonar, mientras que los ventrículos la impulsan hacia el tronco pulmonar o la aorta. Las válvulas regulan el paso entre cavidades.",
+            "importancia": "Son importantes porque explican el recorrido interno de la sangre y permiten diferenciar entrada, paso y salida dentro del corazón.",
+            "terminos": [
+                ("Aurícula", "Cavidad superior que recibe sangre.", "Úsala para explicar la entrada de sangre."),
+                ("Ventrículo", "Cavidad inferior que impulsa sangre.", "Úsalo para explicar la salida de sangre."),
+                ("Válvula", "Estructura que dirige el flujo en un solo sentido.", "Relaciona cavidades con circulación."),
+                ("Flujo sanguíneo", "Recorrido de la sangre por cavidades y vasos.", "Sirve para ordenar la respuesta."),
+            ],
+            "vista": "corte del corazón mostrando cuatro cavidades",
+        },
+        "auriculas": {
+            "definicion": "Las aurículas son las cavidades superiores del corazón encargadas principalmente de recibir la sangre que llega al órgano.",
+            "ubicacion": "Se ubican en la parte superior del corazón. La aurícula derecha recibe sangre de las venas cavas, y la aurícula izquierda recibe sangre de las venas pulmonares.",
+            "relaciones": "Se relacionan inferiormente con los ventrículos a través de las válvulas auriculoventriculares. También se conectan con los vasos venosos que llegan al corazón.",
+            "importancia": "Son importantes porque representan la zona de entrada de sangre al corazón y permiten entender el inicio del recorrido intracardíaco.",
+            "terminos": [
+                ("Aurícula derecha", "Cavidad que recibe sangre venosa sistémica.", "Relaciona con vena cava superior e inferior."),
+                ("Aurícula izquierda", "Cavidad que recibe sangre oxigenada pulmonar.", "Relaciona con venas pulmonares."),
+                ("Válvula auriculoventricular", "Comunica aurícula con ventrículo.", "Explica el paso controlado de sangre."),
+                ("Entrada venosa", "Llegada de sangre al corazón.", "Úsalo para diferenciar aurículas de ventrículos."),
+            ],
+            "vista": "vista superior de aurículas y entrada venosa",
+        },
+        "ventriculos": {
+            "definicion": "Los ventrículos son las cavidades inferiores del corazón encargadas de impulsar la sangre hacia los grandes vasos.",
+            "ubicacion": "Se ubican debajo de las aurículas. El ventrículo derecho se relaciona con el tronco pulmonar y el ventrículo izquierdo con la aorta.",
+            "relaciones": "Se relacionan superiormente con las aurículas mediante válvulas auriculoventriculares y con los vasos de salida mediante válvulas semilunares.",
+            "importancia": "Son importantes porque generan la fuerza principal de expulsión de la sangre hacia la circulación pulmonar y sistémica.",
+            "terminos": [
+                ("Ventrículo derecho", "Cavidad que impulsa sangre al tronco pulmonar.", "Úsalo para explicar circulación pulmonar."),
+                ("Ventrículo izquierdo", "Cavidad que impulsa sangre hacia la aorta.", "Úsalo para explicar circulación mayor."),
+                ("Sístole", "Fase de contracción cardíaca.", "Relaciona ventrículos con expulsión."),
+                ("Tabique interventricular", "Separación entre ambos ventrículos.", "Menciónalo para ubicar cavidades."),
+            ],
+            "vista": "corte ventricular del corazón",
+        },
+        "valvulas cardiacas": {
+            "definicion": "Las válvulas cardíacas son estructuras que regulan el paso de la sangre dentro del corazón y evitan el retroceso del flujo.",
+            "ubicacion": "Se encuentran entre aurículas y ventrículos, y también en la salida de los ventrículos hacia el tronco pulmonar y la aorta.",
+            "relaciones": "Las válvulas auriculoventriculares controlan el paso hacia los ventrículos; las válvulas semilunares controlan la salida hacia los grandes vasos.",
+            "importancia": "Son importantes porque mantienen un flujo unidireccional y permiten explicar la secuencia normal de circulación intracardíaca.",
+            "terminos": [
+                ("Tricúspide", "Válvula entre aurícula derecha y ventrículo derecho.", "Relaciona lado derecho con circulación pulmonar."),
+                ("Mitral", "Válvula entre aurícula izquierda y ventrículo izquierdo.", "Relaciona lado izquierdo con circulación sistémica."),
+                ("Semilunar pulmonar", "Válvula de salida hacia el tronco pulmonar.", "Úsala para explicar salida derecha."),
+                ("Semilunar aórtica", "Válvula de salida hacia la aorta.", "Úsala para explicar salida izquierda."),
+            ],
+            "vista": "vista superior del plano valvular cardíaco",
+        },
+        "pericardio": {
+            "definicion": "El pericardio es la envoltura fibroserosa que rodea al corazón y contribuye a protegerlo, fijarlo y permitir su movimiento controlado.",
+            "ubicacion": "Se ubica alrededor del corazón dentro del mediastino medio, formando una especie de saco que lo separa de estructuras vecinas.",
+            "relaciones": "Se relaciona con el diafragma inferiormente, con el esternón anteriormente, con pulmones y pleuras lateralmente, y con grandes vasos superiormente.",
+            "importancia": "Es importante porque ayuda a explicar la posición del corazón, sus medios de fijación y sus relaciones dentro del tórax.",
+            "terminos": [
+                ("Pericardio fibroso", "Capa externa resistente del saco pericárdico.", "Úsalo para explicar fijación."),
+                ("Pericardio seroso", "Capa relacionada con la superficie cardíaca.", "Sirve para explicar deslizamiento."),
+                ("Mediastino medio", "Lugar donde se encuentra el corazón y su pericardio.", "Inclúyelo en ubicación."),
+                ("Diafragma", "Relación inferior del pericardio.", "Sirve como referencia anatómica."),
+            ],
+            "vista": "corazón cubierto por pericardio en el mediastino",
+        },
+        "tronco pulmonar": {
+            "definicion": "El tronco pulmonar es el gran vaso arterial que sale del ventrículo derecho y conduce sangre hacia los pulmones.",
+            "ubicacion": "Nace en la salida del ventrículo derecho y asciende antes de dividirse en arterias pulmonares derecha e izquierda.",
+            "relaciones": "Se relaciona con la válvula pulmonar, el ventrículo derecho, la aorta ascendente y los vasos pulmonares que llevan sangre a los pulmones.",
+            "importancia": "Es importante porque inicia la circulación pulmonar, donde la sangre se dirige a los pulmones para oxigenarse.",
+            "terminos": [
+                ("Tronco pulmonar", "Vaso que sale del ventrículo derecho.", "Úsalo para explicar salida hacia pulmones."),
+                ("Arterias pulmonares", "Ramas que llevan sangre a cada pulmón.", "Relaciona bifurcación con pulmones."),
+                ("Válvula pulmonar", "Regula la salida del ventrículo derecho.", "Menciónala en flujo unidireccional."),
+                ("Circulación menor", "Recorrido corazón-pulmón-corazón.", "Conecta el vaso con su función."),
+            ],
+            "vista": "salida del ventrículo derecho hacia tronco pulmonar",
+        },
+        "aorta": {
+            "definicion": "La aorta es la arteria principal de la circulación sistémica y nace del ventrículo izquierdo.",
+            "ubicacion": "Se origina en la salida del ventrículo izquierdo, asciende, forma el arco aórtico y continúa como aorta descendente hacia el tórax y abdomen.",
+            "relaciones": "Se relaciona con la válvula aórtica, el ventrículo izquierdo, el arco aórtico, ramas principales y estructuras del mediastino.",
+            "importancia": "Es importante porque distribuye sangre oxigenada desde el corazón hacia todo el cuerpo, iniciando la circulación mayor.",
+            "terminos": [
+                ("Aorta ascendente", "Primer segmento que nace del ventrículo izquierdo.", "Úsalo para iniciar el recorrido."),
+                ("Arco aórtico", "Curvatura superior de la aorta.", "Relaciona con ramas principales."),
+                ("Aorta descendente", "Continuación hacia tórax y abdomen.", "Explica distribución corporal."),
+                ("Circulación mayor", "Recorrido sistémico de sangre oxigenada.", "Conecta aorta con función."),
+            ],
+            "vista": "aorta saliendo del ventrículo izquierdo y arco aórtico",
+        },
+        "venas pulmonares": {
+            "definicion": "Las venas pulmonares son vasos que llevan sangre oxigenada desde los pulmones hacia la aurícula izquierda.",
+            "ubicacion": "Llegan a la aurícula izquierda desde ambos pulmones, generalmente como venas pulmonares derechas e izquierdas.",
+            "relaciones": "Se relacionan con los hilios pulmonares, la aurícula izquierda y el retorno de sangre oxigenada después del intercambio gaseoso.",
+            "importancia": "Son importantes porque completan la circulación pulmonar y llevan la sangre ya oxigenada al corazón izquierdo.",
+            "terminos": [
+                ("Vena pulmonar derecha", "Retorna sangre oxigenada desde el pulmón derecho.", "Úsala para explicar llegada a aurícula izquierda."),
+                ("Vena pulmonar izquierda", "Retorna sangre oxigenada desde el pulmón izquierdo.", "Relaciona pulmones con corazón izquierdo."),
+                ("Aurícula izquierda", "Cavidad que recibe las venas pulmonares.", "Clave para ubicar su desembocadura."),
+                ("Retorno pulmonar", "Vuelta de sangre oxigenada al corazón.", "Úsalo para explicar función."),
+            ],
+            "vista": "venas pulmonares entrando a aurícula izquierda",
+        },
+        "vena cava superior": {
+            "definicion": "La vena cava superior es un gran vaso venoso que lleva sangre desoxigenada desde la cabeza, cuello, miembros superiores y parte superior del tórax hacia la aurícula derecha.",
+            "ubicacion": "Se ubica en el mediastino superior y desemboca en la aurícula derecha.",
+            "relaciones": "Se relaciona con el retorno venoso sistémico superior, la aurícula derecha y vasos venosos que confluyen hacia ella.",
+            "importancia": "Es importante porque permite comprender cómo la sangre venosa de la mitad superior del cuerpo regresa al corazón.",
+            "terminos": [
+                ("Vena cava superior", "Retorna sangre de la región superior del cuerpo.", "Inclúyela al hablar de aurícula derecha."),
+                ("Aurícula derecha", "Cavidad donde desemboca.", "Clave para ubicación final."),
+                ("Retorno venoso", "Regreso de sangre al corazón.", "Conecta vaso con función."),
+                ("Mediastino superior", "Región por donde se ubica su trayecto.", "Sirve para localizarla."),
+            ],
+            "vista": "vena cava superior desembocando en aurícula derecha",
+        },
+        "vena cava inferior": {
+            "definicion": "La vena cava inferior es el gran vaso venoso que lleva sangre desoxigenada desde abdomen, pelvis y miembros inferiores hacia la aurícula derecha.",
+            "ubicacion": "Asciende por el abdomen, atraviesa el diafragma y llega a la aurícula derecha.",
+            "relaciones": "Se relaciona con el diafragma, el retorno venoso abdominal y pélvico, y la aurícula derecha.",
+            "importancia": "Es importante porque explica el retorno venoso de la mitad inferior del cuerpo hacia el corazón.",
+            "terminos": [
+                ("Vena cava inferior", "Retorna sangre desde la mitad inferior del cuerpo.", "Úsala para explicar retorno sistémico inferior."),
+                ("Diafragma", "Estructura que atraviesa antes de llegar al tórax.", "Sirve como referencia anatómica."),
+                ("Aurícula derecha", "Lugar de desembocadura.", "Clave para cerrar el recorrido."),
+                ("Retorno venoso inferior", "Vuelta de sangre desde abdomen, pelvis y piernas.", "Explica función."),
+            ],
+            "vista": "vena cava inferior atravesando diafragma hacia aurícula derecha",
+        },
+        "sistema acigos": {
+            "definicion": "El sistema ácigos es una red venosa del tronco que drena principalmente la pared torácica y conecta territorios venosos con la vena cava superior.",
+            "ubicacion": "Se ubica en la región posterior del tórax, cerca de la columna vertebral y del mediastino posterior.",
+            "relaciones": "Se relaciona con venas intercostales, columna vertebral, mediastino posterior y vena cava superior.",
+            "importancia": "Es importante porque funciona como vía de drenaje y comunicación venosa dentro del tronco.",
+            "terminos": [
+                ("Vena ácigos", "Vena principal del sistema ácigos.", "Úsala como estructura central."),
+                ("Venas intercostales", "Drenan la pared torácica.", "Relaciona con pared del tórax."),
+                ("Mediastino posterior", "Región donde se ubica el sistema.", "Sirve para ubicarlo."),
+                ("Vena cava superior", "Recibe drenaje del sistema ácigos.", "Conecta el sistema con retorno venoso."),
+            ],
+            "vista": "sistema venoso ácigos en mediastino posterior",
+        },
+        "circulacion menor": {
+            "definicion": "La circulación menor o pulmonar es el recorrido de la sangre desde el corazón derecho hacia los pulmones y de regreso al corazón izquierdo.",
+            "ubicacion": "Inicia en el ventrículo derecho, continúa por el tronco pulmonar y arterias pulmonares, pasa por los pulmones y retorna por venas pulmonares a la aurícula izquierda.",
+            "relaciones": "Relaciona ventrículo derecho, tronco pulmonar, pulmones, venas pulmonares y aurícula izquierda.",
+            "importancia": "Es importante porque permite oxigenar la sangre antes de que pase a la circulación sistémica.",
+            "terminos": [
+                ("Ventrículo derecho", "Punto de salida hacia pulmones.", "Úsalo como inicio del circuito."),
+                ("Tronco pulmonar", "Conduce sangre hacia pulmones.", "Relaciona salida con arterias pulmonares."),
+                ("Venas pulmonares", "Retornan sangre oxigenada.", "Cierran el circuito en aurícula izquierda."),
+                ("Oxigenación", "Proceso funcional de la circulación pulmonar.", "Explica importancia."),
+            ],
+            "vista": "esquema corazón pulmón de circulación pulmonar",
+        },
+        "circulacion mayor": {
+            "definicion": "La circulación mayor o sistémica es el recorrido de la sangre desde el corazón izquierdo hacia el cuerpo y su retorno al corazón derecho.",
+            "ubicacion": "Inicia en el ventrículo izquierdo, continúa por la aorta y sus ramas, llega a los tejidos y retorna por venas sistémicas hacia las venas cavas y la aurícula derecha.",
+            "relaciones": "Relaciona ventrículo izquierdo, aorta, ramas sistémicas, venas cavas y aurícula derecha.",
+            "importancia": "Es importante porque distribuye oxígeno y nutrientes a los tejidos y permite el retorno venoso al corazón.",
+            "terminos": [
+                ("Ventrículo izquierdo", "Punto de salida de sangre sistémica.", "Úsalo para iniciar el recorrido."),
+                ("Aorta", "Arteria principal de distribución.", "Relaciona corazón con cuerpo."),
+                ("Venas cavas", "Retornan sangre a aurícula derecha.", "Cierran el circuito sistémico."),
+                ("Tejidos", "Destino de la sangre oxigenada.", "Explica la función final."),
+            ],
+            "vista": "esquema corazón cuerpo de circulación sistémica",
+        },
+    }
+
+    for clave, perfil in perfiles.items():
+        if clave in k:
+            base.update(perfil)
+            break
+
+    return base
+
+
+def _crear_lectura_desarrollada_desde_perfil(perfil, punto_dificil=""):
+    tema = perfil["tema"]
+    punto = str(punto_dificil or tema).strip()
+    definicion = perfil["definicion"]
+    ubicacion = perfil["ubicacion"]
+    relaciones = perfil["relaciones"]
+    importancia = perfil["importancia"]
+    terminos = perfil.get("terminos", [])[:6]
+
+    resumen = (
+        f"{definicion} {ubicacion} {relaciones} {importancia} "
+        f"Para estudiar {tema}, el estudiante debe convertir estas ideas en un apunte ordenado: "
+        "primero una definición clara, luego una ubicación anatómica, después relaciones y por último la importancia funcional."
+    )
+
+    lectura_profunda = [
+        {
+            "subtitulo": "1. Concepto central",
+            "contenido": (
+                f"{definicion} Este punto no debe memorizarse como una palabra aislada. "
+                f"Debe entenderse como una parte específica del tema del día: {tema}. "
+                "Al escribirlo, comienza con una frase directa que explique qué es y qué papel cumple dentro de la anatomía del tronco."
+            ),
+        },
+        {
+            "subtitulo": "2. Ubicación anatómica",
+            "contenido": (
+                f"{ubicacion} Esta ubicación debe expresarse con referencias anatómicas claras. "
+                "Evita decir solamente 'está en el tórax' o 'está en el corazón'; agrega una referencia espacial o una cavidad relacionada."
+            ),
+        },
+        {
+            "subtitulo": "3. Relaciones principales",
+            "contenido": (
+                f"{relaciones} Las relaciones son la parte que demuestra comprensión. "
+                "En examen, menciona al menos una estructura vecina, un vaso, una cavidad, una válvula o una función conectada con el subtema."
+            ),
+        },
+        {
+            "subtitulo": "4. Importancia para el examen",
+            "contenido": (
+                f"{importancia} Para responder mejor, cierra tu explicación conectando el subtema con el recorrido de la sangre, "
+                "la organización del corazón o la relación anatómica principal que corresponda."
+            ),
+        },
+    ]
+
+    conceptos_clave = [
+        {"termino": t, "explicacion": e, "como_usarlo": u}
+        for t, e, u in terminos
+    ]
+
+    esquema_escrito = [
+        {"seccion": "Definición", "desarrollo": definicion},
+        {"seccion": "Ubicación", "desarrollo": ubicacion},
+        {"seccion": "Relaciones", "desarrollo": relaciones},
+        {"seccion": "Importancia", "desarrollo": importancia},
+    ]
+
+    cuadro_cornell = [
+        {"pregunta_guia": f"¿Qué es {tema}?", "apuntes": definicion, "clave_memoria": "Definir"},
+        {"pregunta_guia": f"¿Dónde se ubica {tema}?", "apuntes": ubicacion, "clave_memoria": "Ubicar"},
+        {"pregunta_guia": f"¿Con qué se relaciona {tema}?", "apuntes": relaciones, "clave_memoria": "Relacionar"},
+        {"pregunta_guia": "¿Por qué importa?", "apuntes": importancia, "clave_memoria": "Explicar"},
+    ]
+
+    glosario = [
+        {"termino": t, "definicion": e, "relacion": u}
+        for t, e, u in terminos
+    ]
+
+    respuesta_corta = f"{definicion} {ubicacion} {importancia}"
+    respuesta_modelo = (
+        f"{tema} debe explicarse como un contenido anatómico específico. {definicion} "
+        f"Respecto a su localización, {ubicacion.lower()} "
+        f"Además, {relaciones.lower()} "
+        f"Su importancia se comprende porque {importancia.lower()} "
+        f"Por eso, una respuesta correcta sobre {tema} no debe limitarse a nombrarlo, "
+        "sino integrar definición, ubicación, relaciones y función."
+    )
+
+    return {
+        "habilitado": True,
+        "titulo": f"Guía desarrollada de lectura y escritura: {tema}",
+        "resumen": resumen,
+        "lectura_guiada": [
+            f"Lee la explicación de {tema} y subraya definición, ubicación, relaciones e importancia.",
+            "Copia el esquema escrito en tu cuaderno usando tus propias palabras.",
+            "Convierte el cuadro Cornell en preguntas de repaso oral o escrito.",
+            "Redacta la respuesta modelo sin mirar y luego compara.",
+        ],
+        "lectura_profunda": lectura_profunda,
+        "conceptos_clave": conceptos_clave,
+        "esquema_escrito": esquema_escrito,
+        "cuadro_estudio": [],
+        "cuadro_cornell": cuadro_cornell,
+        "glosario": [],
+        "glosario_detallado": glosario,
+        "fichas_memoria": [
+            {"anverso": f"¿Qué es {tema}?", "reverso": definicion},
+            {"anverso": f"¿Dónde se ubica {tema}?", "reverso": ubicacion},
+            {"anverso": f"¿Qué relación no debo olvidar?", "reverso": relaciones},
+        ],
+        "actividad_escritura": {
+            "titulo": f"Producción escrita sobre {tema}",
+            "consigna": f"Explique {tema} considerando definición, ubicación, relaciones e importancia anatómica.",
+            "instrucciones": "Completa la plantilla y luego escribe una respuesta corrida de 8 a 12 líneas.",
+            "plantilla": ["Definición:", "Ubicación anatómica:", "Relaciones principales:", "Importancia:", "Cierre con mis palabras:"],
+            "ejemplo_respuesta": respuesta_corta,
+        },
+        "respuesta_modelo": respuesta_modelo,
+        "respuesta_corta": respuesta_corta,
+        "pregunta_tipo_examen": f"Explique {tema} considerando definición, ubicación, relaciones e importancia anatómica.",
+        "puntos_memorizacion": [
+            definicion[:140],
+            ubicacion[:140],
+            relaciones[:140],
+            importancia[:140],
+        ],
+        "errores_comunes": [
+            {"error": f"Responder {tema} solo con una palabra o lista.", "correccion": "Transforma la lista en una explicación con definición y ubicación."},
+            {"error": "Olvidar la relación anatómica principal.", "correccion": "Agrega una estructura, cavidad, vaso o función relacionada."},
+            {"error": "Confundir el tema padre con el subtema del día.", "correccion": f"El foco de hoy es {tema}, no todo el bloque completo."},
+        ],
+        "preguntas_autoverificacion": [
+            f"¿Puedo definir {tema} sin mirar mis apuntes?",
+            f"¿Puedo ubicar {tema} anatómicamente?",
+            "¿Mencioné una relación anatómica concreta?",
+            "¿Mi respuesta parece explicación de examen y no solo lista?",
+        ],
+        "producto_esperado": f"Apunte completo sobre {tema}: resumen, esquema, cuadro Cornell, glosario y respuesta tipo examen.",
+    }
+
+
+def construir_lectura_escritura_real(tema, punto_dificil=""):
+    """Versión final: siempre construye lectura diferente según el subtema del día."""
+    tema = str(tema or "Tema anatómico").strip()
+    perfil = _perfil_anatomico_por_subtema(tema, tema_padre="", punto_dificil=punto_dificil)
+    return _crear_lectura_desarrollada_desde_perfil(perfil, punto_dificil=punto_dificil)
+
+
+def normalizar_lectura(valor, tema="", punto_dificil=""):
+    """Fuerza Lectura/Escritura a usar contenido del subtema del día.
+
+    Esto evita que todos los días hereden el mismo resumen del tema padre
+    o el mismo texto genérico producido por el LLM.
+    """
+    habilitado = False
+    if isinstance(valor, dict):
+        habilitado = bool(valor.get("habilitado"))
+    real = construir_lectura_escritura_real(tema or "Tema anatómico", punto_dificil)
+    real["habilitado"] = habilitado
+    return real
+
+
+def _mini_quiz_desde_perfil(perfil):
+    tema = perfil["tema"]
+    definicion = perfil["definicion"]
+    ubicacion = perfil["ubicacion"]
+    relaciones = perfil["relaciones"]
+    importancia = perfil["importancia"]
+
+    return [
+        {
+            "pregunta": f"¿Cuál es la idea central de {tema}?",
+            "opciones": [
+                definicion[:120],
+                "Es un repaso general sin estructura anatómica.",
+                "Es solo una actividad de lectura sin contenido.",
+                "Es un tema que no requiere ubicación anatómica.",
+            ],
+            "respuesta_correcta": definicion[:120],
+            "explicacion": f"El día se centra en comprender específicamente {tema}, no en repetir el tema padre.",
+        },
+        {
+            "pregunta": f"¿Qué debe mencionarse al ubicar {tema}?",
+            "opciones": [
+                ubicacion[:120],
+                "Solo el nombre del tema.",
+                "Únicamente una imagen sin explicación.",
+                "Una definición copiada sin relaciones.",
+            ],
+            "respuesta_correcta": ubicacion[:120],
+            "explicacion": "La ubicación anatómica permite diferenciar el subtema y responder con precisión.",
+        },
+        {
+            "pregunta": f"¿Por qué es importante estudiar {tema}?",
+            "opciones": [
+                importancia[:120],
+                "Porque todos los días deben tener el mismo contenido.",
+                "Porque reemplaza la necesidad de practicar.",
+                "Porque evita mencionar relaciones anatómicas.",
+            ],
+            "respuesta_correcta": importancia[:120],
+            "explicacion": "La importancia conecta el subtema con función, recorrido, relación anatómica o examen.",
+        },
+    ]
+
+
+def _aplicar_contenido_diferente_a_dia(dia, datos_academicos=None):
+    if not isinstance(dia, dict):
+        return dia
+
+    tema = str(dia.get("tema_principal") or dia.get("subtema_dia") or "").strip()
+    if not tema and datos_academicos is not None:
+        tema = str(getattr(datos_academicos, "tema_actual", "") or "Anatomía I").strip()
+
+    tema_padre = str(
+        dia.get("tema_padre")
+        or (getattr(datos_academicos, "tema_actual", "") if datos_academicos is not None else "")
+        or "Anatomía I"
+    ).strip()
+
+    punto = str(dia.get("punto_refuerzo") or dia.get("subtema_dia") or tema).strip()
+    numero = int(dia.get("dia") or 1)
+    perfil = _perfil_anatomico_por_subtema(tema, tema_padre=tema_padre, punto_dificil=punto)
+    lectura = _crear_lectura_desarrollada_desde_perfil(perfil, punto_dificil=punto)
+
+    recursos = dia.get("recursos") if isinstance(dia.get("recursos"), dict) else {}
+    audio = recursos.get("audio") if isinstance(recursos.get("audio"), dict) else {}
+    visual = recursos.get("visual") if isinstance(recursos.get("visual"), dict) else {}
+    kin = recursos.get("kinestesico") if isinstance(recursos.get("kinestesico"), dict) else {}
+    imagen = recursos.get("imagen_anatomica") if isinstance(recursos.get("imagen_anatomica"), dict) else {}
+
+    dia["titulo"] = f"Día {numero}: {tema}"
+    dia["tema_principal"] = tema
+    dia["tema_padre"] = tema_padre
+    dia["subtema_dia"] = tema
+    dia["objetivo"] = (
+        f"Comprender {tema} dentro de {tema_padre}, explicando definición, ubicación, "
+        "relaciones anatómicas e importancia para el examen."
+    )
+    dia["actividades"] = [
+        f"Leer la explicación específica de {tema} y subrayar definición, ubicación y relaciones.",
+        f"Completar un cuadro Cornell solo sobre {tema}, sin repetir todo {tema_padre}.",
+        f"Dibujar o revisar una lámina de {tema} y marcar la estructura o relación principal.",
+        f"Responder una pregunta tipo examen sobre {tema} con tus propias palabras.",
+    ]
+    dia["autoevaluacion"] = [
+        f"¿Puedo definir {tema} sin mirar?",
+        f"¿Puedo ubicar {tema} dentro de {tema_padre}?",
+        "¿Incluí una relación anatómica concreta?",
+        "¿Mi respuesta del día es diferente a la de los otros días?",
+    ]
+    dia["producto_esperado"] = f"Apunte desarrollado y respuesta tipo examen sobre {tema}."
+    dia["mini_quiz"] = _mini_quiz_desde_perfil(perfil)
+
+    recursos["audio"] = {
+        "habilitado": bool(audio.get("habilitado")),
+        "titulo": f"Audio del día {numero}: {tema}",
+        "guion": (
+            f"Hoy el foco es {tema}, no todo el bloque de {tema_padre}. "
+            f"Primero recuerda esta idea: {perfil['definicion']} "
+            f"Luego ubícalo: {perfil['ubicacion']} "
+            f"Finalmente conéctalo: {perfil['relaciones']} "
+            "Si puedes explicarlo en ese orden, ya tienes una respuesta de examen clara."
+        ),
+        "pasos_clave": [
+            f"Definir {tema}.",
+            f"Ubicar {tema} anatómicamente.",
+            "Mencionar una relación o función importante.",
+        ],
+    }
+
+    recursos["visual"] = mejorar_visual_para_mapa_html({
+        "habilitado": bool(visual.get("habilitado")),
+        "titulo": f"Mapa mental de {tema}",
+        "tipo": "mapa_mental_html_premium",
+        "descripcion": f"Mapa del día centrado únicamente en {tema}.",
+        "nodo_central": tema,
+        "ramas": [
+            {"titulo": "Definición", "detalle": perfil["definicion"], "subpuntos": ["Qué es", "Papel principal"]},
+            {"titulo": "Ubicación", "detalle": perfil["ubicacion"], "subpuntos": ["Región", "Referencia anatómica"]},
+            {"titulo": "Relaciones", "detalle": perfil["relaciones"], "subpuntos": ["Estructuras vecinas", "Conexiones"]},
+            {"titulo": "Importancia", "detalle": perfil["importancia"], "subpuntos": ["Función", "Examen"]},
+        ],
+        "apoyo_visual": [tema, "Ubicación", "Relaciones", "Importancia"],
+    }, tema)
+
+    recursos["kinestesico"] = {
+        "habilitado": bool(kin.get("habilitado")),
+        "titulo": f"Práctica activa: {tema}",
+        "instrucciones": (
+            f"En una hoja, escribe {tema} al centro. Alrededor coloca cuatro recuadros: definición, ubicación, relaciones e importancia. "
+            "Después intenta explicar el esquema sin leer la respuesta modelo."
+        ),
+        "preguntas": [
+            f"¿Qué estructura o idea representa mejor {tema}?",
+            f"¿Dónde ubicarías {tema} en una lámina anatómica?",
+            f"¿Qué relación anatómica usarías para defender tu respuesta?",
+        ],
+    }
+
+    lectura["habilitado"] = bool((recursos.get("lectura") or {}).get("habilitado", True))
+    recursos["lectura"] = lectura
+
+    recursos["imagen_anatomica"] = {
+        "habilitado": bool(imagen.get("habilitado")),
+        "titulo": f"Lámina anatómica guiada de {tema}",
+        "tipo_vista": perfil.get("vista", "vista anatómica didáctica"),
+        "descripcion": (
+            f"Lámina centrada en {tema}. Debe ayudar a reconocer ubicación, relaciones e importancia dentro de {tema_padre}."
+        ),
+        "marcadores": imagen.get("marcadores", []),
+        "preguntas": [
+            f"¿Dónde se identifica {tema}?",
+            f"¿Qué relación anatómica se observa o se debe recordar?",
+            "¿Cómo lo escribirías en una respuesta de examen?",
+        ],
+        "preguntas_guiadas": [],
+        "modo_practica": "Observa la lámina, responde primero sin ayuda y luego compara con la lectura desarrollada.",
+        "prompt_imagen": imagen.get("prompt_imagen", ""),
+        "negative_prompt": imagen.get("negative_prompt", ""),
+        "categoria_visual": imagen.get("categoria_visual", ""),
+        "image_url": imagen.get("image_url", ""),
+        "image_error": imagen.get("image_error", ""),
+    }
+
+    dia["recursos"] = recursos
+    return dia
+
+
+def aplicar_variacion_contenido_diario(respuesta, datos_academicos=None):
+    """Aplica contenido distinto a cada día ya validado por la ruta."""
+    if not isinstance(respuesta, dict):
+        return respuesta
+
+    plan = respuesta.get("plan_diario", [])
+    if not isinstance(plan, list):
+        return respuesta
+
+    respuesta["plan_diario"] = [
+        _aplicar_contenido_diferente_a_dia(dia, datos_academicos=datos_academicos)
+        for dia in plan
+        if isinstance(dia, dict)
+    ]
+
+    temas = [
+        str(d.get("tema_principal", "")).strip()
+        for d in respuesta["plan_diario"]
+        if str(d.get("tema_principal", "")).strip()
+    ]
+    if temas:
+        respuesta["temas_priorizados"] = temas[:8]
+
+    return respuesta
+
+
+def generar_ruta_aprendizaje(user, perfil_vark, datos_academicos, materiales):
+    """Versión final de la ruta.
+
+    Mantiene tu flujo actual, pero antes de guardar fuerza contenido distinto
+    para cada día usando el subtema de agenda.
+    """
+    dias_hasta_examen = datos_academicos.dias_restantes
+    dias_planificados = calcular_dias_planificados(dias_hasta_examen)
+
+    contexto_materiales = construir_contexto_materiales(materiales)
+    perfil_vark_detalle = construir_detalle_vark(perfil_vark)
+
+    respuesta = generar_ruta_con_gemini(
+        perfil_vark=perfil_vark,
+        perfil_vark_detalle=perfil_vark_detalle,
+        datos_academicos=datos_academicos,
+        materiales=materiales,
+        contexto_materiales=contexto_materiales,
+        dias_hasta_examen=dias_hasta_examen,
+        dias_planificados=dias_planificados,
+    )
+
+    if not respuesta:
+        respuesta = generar_ruta_respaldo(
+            perfil_vark=perfil_vark,
+            perfil_vark_detalle=perfil_vark_detalle,
+            datos_academicos=datos_academicos,
+            dias_hasta_examen=dias_hasta_examen,
+            dias_planificados=dias_planificados,
+        )
+
+    # Esta es la parte importante: aunque el LLM devuelva contenido repetido,
+    # se reemplaza el contenido interno por material propio del subtema del día.
+    respuesta = aplicar_variacion_contenido_diario(respuesta, datos_academicos=datos_academicos)
+
+    respuesta = enriquecer_plan_con_imagenes_ia(
+        respuesta=respuesta,
+        user=user,
+        datos_academicos=datos_academicos,
+    )
+
+    ruta, _ = RutaAprendizaje.objects.update_or_create(
+        user=user,
+        defaults={
+            "titulo": respuesta.get("titulo", "Ruta de aprendizaje personalizada"),
+            "resumen_general": respuesta.get("resumen_general", ""),
+            "estilo_vark_usado": perfil_vark.estilo_display,
+            "dias_hasta_examen": dias_hasta_examen,
+            "dias_planificados": dias_planificados,
+            "minutos_por_dia": datos_academicos.minutos_por_dia,
+            "temas_priorizados": "\n".join(respuesta.get("temas_priorizados", [])),
+            "plan_json": respuesta.get("plan_diario", []),
+            "recomendaciones_finales": "\n".join(
+                respuesta.get("recomendaciones_finales", [])
+            ),
+        },
+    )
+
+    ruta.materiales.set(materiales)
+    return ruta
