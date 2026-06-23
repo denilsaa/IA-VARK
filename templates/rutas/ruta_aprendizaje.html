@@ -457,20 +457,117 @@
                             {% endif %}
 
                             {% if dia.recursos.lectura.habilitado %}
-                                <section class="resource-card">
-                                    <div class="resource-card-header">
-                                        <i data-lucide="book-text"></i>
-                                        <strong>{{ dia.recursos.lectura.titulo }}</strong>
-                                    </div>
-                                    <p>{{ dia.recursos.lectura.resumen }}</p>
-                                    {% if dia.recursos.lectura.glosario %}
-                                        <ul class="clean-list mt-3">
-                                            {% for item in dia.recursos.lectura.glosario %}
-                                                <li><i data-lucide="bookmark"></i><span>{{ item }}</span></li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </section>
+                                {% with lectura=dia.recursos.lectura %}
+                                    <section class="resource-card reading-writing-lab resource-span-2">
+                                        <div class="reading-lab-hero">
+                                            <div>
+                                                <span class="reading-lab-kicker">
+                                                    <i data-lucide="pen-line"></i>
+                                                    Lectura / Escritura activa
+                                                </span>
+                                                <h3>{{ lectura.titulo }}</h3>
+                                                <p>{{ lectura.resumen }}</p>
+                                            </div>
+                                            <div class="reading-lab-badge">
+                                                <strong>Producto</strong>
+                                                <span>{{ lectura.producto_esperado }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="reading-lab-grid mt-3">
+                                            <article class="reading-panel">
+                                                <div class="reading-panel-title">
+                                                    <i data-lucide="list-checks"></i>
+                                                    <strong>1. Lectura guiada</strong>
+                                                </div>
+                                                <ol class="reading-steps">
+                                                    {% for paso in lectura.lectura_guiada %}
+                                                        <li>{{ paso }}</li>
+                                                    {% endfor %}
+                                                </ol>
+                                            </article>
+
+                                            <article class="reading-panel">
+                                                <div class="reading-panel-title">
+                                                    <i data-lucide="table-2"></i>
+                                                    <strong>2. Cuadro de estudio</strong>
+                                                </div>
+                                                <div class="study-table-lite">
+                                                    {% for fila in lectura.cuadro_estudio %}
+                                                        <div class="study-row-lite">
+                                                            <strong>{{ fila.concepto }}</strong>
+                                                            <span>{{ fila.explicacion }}</span>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </article>
+                                        </div>
+
+                                        <div class="reading-lab-grid mt-3">
+                                            <article class="reading-panel">
+                                                <div class="reading-panel-title">
+                                                    <i data-lucide="book-marked"></i>
+                                                    <strong>3. Glosario para memorizar</strong>
+                                                </div>
+                                                <div class="glossary-chip-grid">
+                                                    {% for item in lectura.glosario %}
+                                                        <span>{{ item }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            </article>
+
+                                            <article class="reading-panel">
+                                                <div class="reading-panel-title">
+                                                    <i data-lucide="copy-check"></i>
+                                                    <strong>4. Fichas de memoria</strong>
+                                                </div>
+                                                <div class="flashcard-grid">
+                                                    {% for ficha in lectura.fichas_memoria %}
+                                                        <details class="study-flashcard">
+                                                            <summary>{{ ficha.anverso }}</summary>
+                                                            <p>{{ ficha.reverso }}</p>
+                                                        </details>
+                                                    {% endfor %}
+                                                </div>
+                                            </article>
+                                        </div>
+
+                                        <div class="writing-active-box mt-3">
+                                            <div class="reading-panel-title">
+                                                <i data-lucide="edit-3"></i>
+                                                <strong>5. {{ lectura.actividad_escritura.titulo }}</strong>
+                                            </div>
+                                            <p>{{ lectura.actividad_escritura.instrucciones }}</p>
+
+                                            <div class="writing-template-grid">
+                                                {% for item in lectura.actividad_escritura.plantilla %}
+                                                    <div>{{ item }}</div>
+                                                {% endfor %}
+                                            </div>
+
+                                            {% if lectura.actividad_escritura.ejemplo_respuesta %}
+                                                <div class="writing-example mt-3">
+                                                    <strong>Ejemplo de inicio:</strong>
+                                                    <span>{{ lectura.actividad_escritura.ejemplo_respuesta }}</span>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+
+                                        {% if lectura.preguntas_autoverificacion %}
+                                            <div class="self-check-box mt-3">
+                                                <div class="reading-panel-title">
+                                                    <i data-lucide="circle-help"></i>
+                                                    <strong>6. Autoverificación escrita</strong>
+                                                </div>
+                                                <ul class="clean-list mt-2">
+                                                    {% for pregunta in lectura.preguntas_autoverificacion %}
+                                                        <li><i data-lucide="check-circle-2"></i><span>{{ pregunta }}</span></li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    </section>
+                                {% endwith %}
                             {% endif %}
                         </div>
                         {% if dia.recursos.imagen_anatomica.habilitado %}
@@ -2957,6 +3054,200 @@
     .study-day-modal-close {
         width: 40px !important;
         height: 40px !important;
+    }
+}
+
+
+/* ===== Lectura / Escritura activa 10/10 ===== */
+.reading-writing-lab {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at top left, rgba(20, 184, 166, .12), transparent 30%),
+        linear-gradient(135deg, #ffffff 0%, #f4fffc 100%) !important;
+    border: 1px solid rgba(15, 118, 110, .16) !important;
+    border-radius: 1.35rem !important;
+    box-shadow: 0 18px 42px rgba(15, 118, 110, .08);
+}
+.reading-lab-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, .38fr);
+    gap: 1rem;
+    align-items: stretch;
+    padding: 1rem;
+    border-radius: 1.15rem;
+    background: rgba(255, 255, 255, .82);
+    border: 1px solid rgba(15, 118, 110, .10);
+}
+.reading-lab-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .28rem .65rem;
+    border-radius: 999px;
+    background: #e7f8f5;
+    color: #0f766e;
+    font-size: .74rem;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+.reading-lab-hero h3 {
+    margin: .6rem 0 .45rem;
+    color: #063c37;
+    font-size: clamp(1.35rem, 2vw, 1.85rem);
+    line-height: 1.12;
+}
+.reading-lab-hero p {
+    margin: 0;
+    color: #45635e;
+}
+.reading-lab-badge {
+    display: grid;
+    align-content: center;
+    gap: .35rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #0f766e 0%, #0f8b7d 100%);
+    color: #fff;
+    box-shadow: 0 12px 26px rgba(15, 118, 110, .20);
+}
+.reading-lab-badge strong {
+    font-size: .78rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    opacity: .9;
+}
+.reading-lab-badge span {
+    font-weight: 800;
+    line-height: 1.3;
+}
+.reading-lab-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+.reading-panel,
+.writing-active-box,
+.self-check-box {
+    border: 1px solid rgba(15, 118, 110, .12);
+    border-radius: 1.05rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, .92);
+}
+.reading-panel-title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .75rem;
+    color: #073f39;
+}
+.reading-panel-title i {
+    color: #0f766e;
+}
+.reading-steps {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: .55rem;
+}
+.reading-steps li {
+    padding-left: .25rem;
+    color: #243f3a;
+}
+.study-table-lite {
+    display: grid;
+    gap: .55rem;
+}
+.study-row-lite {
+    display: grid;
+    grid-template-columns: minmax(110px, .35fr) minmax(0, 1fr);
+    gap: .75rem;
+    padding: .72rem .78rem;
+    border-radius: .85rem;
+    background: #f6fbfa;
+    border: 1px solid rgba(15, 118, 110, .08);
+}
+.study-row-lite strong {
+    color: #0f766e;
+}
+.study-row-lite span {
+    color: #2f4e49;
+}
+.glossary-chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+}
+.glossary-chip-grid span {
+    display: inline-flex;
+    padding: .5rem .7rem;
+    border-radius: 999px;
+    background: #e9f8f5;
+    color: #103f39;
+    border: 1px solid rgba(15, 118, 110, .10);
+    font-weight: 700;
+}
+.flashcard-grid {
+    display: grid;
+    gap: .55rem;
+}
+.study-flashcard {
+    border: 1px solid rgba(15, 118, 110, .12);
+    border-radius: .9rem;
+    padding: .75rem;
+    background: #f8fffd;
+}
+.study-flashcard summary {
+    cursor: pointer;
+    font-weight: 850;
+    color: #0b3f39;
+}
+.study-flashcard p {
+    margin: .65rem 0 0;
+    padding-top: .65rem;
+    border-top: 1px dashed rgba(15, 118, 110, .18);
+    color: #42625c;
+}
+.writing-template-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .65rem;
+    margin-top: .85rem;
+}
+.writing-template-grid div {
+    min-height: 52px;
+    padding: .75rem;
+    border-radius: .85rem;
+    background:
+        linear-gradient(#ffffff, #ffffff) padding-box,
+        repeating-linear-gradient(180deg, transparent 0 27px, rgba(15, 118, 110, .12) 28px) border-box;
+    border: 1px solid rgba(15, 118, 110, .13);
+    color: #0d3d37;
+    font-weight: 800;
+}
+.writing-example {
+    display: grid;
+    gap: .25rem;
+    padding: .85rem;
+    border-left: .35rem solid #0f766e;
+    border-radius: .85rem;
+    background: #f1fbf8;
+}
+.writing-example strong {
+    color: #0f766e;
+}
+.writing-example span {
+    color: #304d48;
+}
+.self-check-box {
+    background: linear-gradient(135deg, #f8fffd 0%, #ffffff 100%);
+}
+@media (max-width: 900px) {
+    .reading-lab-hero,
+    .reading-lab-grid,
+    .writing-template-grid {
+        grid-template-columns: 1fr;
     }
 }
 

@@ -260,7 +260,8 @@ INTERPRETACIÓN OBLIGATORIA DEL PERFIL:
 - Si Auditivo tiene el mayor puntaje, cada día debe incluir un guion de audio breve, natural, conversacional y escuchable; no debe parecer un texto académico largo. Debe sonar como una explicación docente clara y motivadora.
 - Si Visual tiene puntaje positivo, cada día debe incluir un recurso visual y una imagen anatómica guiada o señalada.
 - Si Kinestésico tiene puntaje positivo, cada día debe incluir un ejercicio práctico de identificación o aplicación.
-- Si Lectura/Escritura tiene puntaje positivo, incluye un resumen o glosario.
+- Si Lectura/Escritura tiene puntaje positivo, no hagas solo un resumen. Debe convertirse en un recurso útil de estudio escrito: lectura guiada, cuadro de estudio, glosario, fichas de memoria y actividad de escritura activa.
+- El bloque Lectura/Escritura debe ayudar al estudiante a leer, subrayar, ordenar, escribir y autoevaluarse; debe parecer una guía de cuaderno de estudio, no un párrafo decorativo.
 - Si una modalidad tiene 0 puntos, no la priorices.
 - Ejemplo: Auditivo 50%, Visual 30%, Kinestésico 20%, Lectura 0% debe producir una ruta principalmente auditiva, con apoyo visual, imagen anatómica guiada y práctica kinestésica.
 
@@ -340,9 +341,30 @@ Devuelve únicamente JSON válido con esta estructura exacta:
         }},
         "lectura": {{
           "habilitado": false,
-          "titulo": "Resumen de lectura",
-          "resumen": "Resumen corto si esta modalidad tiene puntaje positivo",
-          "glosario": ["Término: definición breve"]
+          "titulo": "Guía de lectura y escritura activa",
+          "resumen": "Síntesis inicial en 3 o 4 líneas, concreta y útil",
+          "lectura_guiada": [
+            "Paso 1: qué leer o reconocer primero",
+            "Paso 2: qué subrayar o copiar al cuaderno",
+            "Paso 3: qué relación anatómica explicar con tus palabras"
+          ],
+          "cuadro_estudio": [
+            {{"concepto": "Concepto clave", "explicacion": "Explicación breve, clara y anatómica"}},
+            {{"concepto": "Ubicación", "explicacion": "Dónde se localiza o con qué se relaciona"}},
+            {{"concepto": "Importancia", "explicacion": "Por qué sirve para el examen"}}
+          ],
+          "glosario": ["Término: definición breve y útil"],
+          "fichas_memoria": [
+            {{"anverso": "Pregunta corta para recordar", "reverso": "Respuesta breve que el estudiante puede memorizar"}}
+          ],
+          "actividad_escritura": {{
+            "titulo": "Escritura activa",
+            "instrucciones": "Qué debe escribir el estudiante en su cuaderno",
+            "plantilla": ["Definición:", "Ubicación:", "Relaciones:", "Importancia clínica o funcional:"],
+            "ejemplo_respuesta": "Ejemplo corto de cómo debería empezar la respuesta"
+          }},
+          "preguntas_autoverificacion": ["Pregunta escrita 1", "Pregunta escrita 2"],
+          "producto_esperado": "Producto concreto: resumen, cuadro comparativo, glosario o respuesta escrita"
         }},
         "imagen_anatomica": {{
           "habilitado": true,
@@ -371,6 +393,8 @@ REGLAS OBLIGATORIAS:
 - No uses texto dentro de imágenes generadas. El sistema añadirá textos, preguntas y marcadores fuera o encima de la imagen.
 - Si Kinestésico > 0, genera kinestesico.habilitado=true.
 - Si Lectura/Escritura > 0, genera lectura.habilitado=true; si es 0, puede quedar false.
+- Cuando lectura.habilitado=true, el bloque lectura debe incluir obligatoriamente: resumen, lectura_guiada, cuadro_estudio, glosario, fichas_memoria, actividad_escritura, preguntas_autoverificacion y producto_esperado.
+- Evita frases vacías como "resume el tema"; entrega contenido ya preparado para copiar al cuaderno, memorizar y responder en examen.
 - No inventes detalles anatómicos ultraespecíficos fuera del contexto; si falta precisión, enfoca la lámina en relaciones generales del tema y subtema, priorizando una vista anatómica realista y coherente.
 - Cada día debe incluir mini_quiz con 3 preguntas evaluables.
 - Cada pregunta del mini_quiz debe tener exactamente 4 opciones y una respuesta_correcta que coincida exactamente con una opción.
@@ -625,14 +649,63 @@ def generar_ruta_respaldo(
                     },
                     "lectura": {
                         "habilitado": lectura_habilitada,
-                        "titulo": f"Resumen escrito de {tema}",
+                        "titulo": f"Guía escrita activa de {tema}",
                         "resumen": (
-                            f"Resume {tema} en 4 o 5 líneas, enfocándote en definición, ubicación, relaciones y el punto difícil elegido."
+                            f"{tema} debe estudiarse identificando su definición, ubicación, relaciones anatómicas "
+                            f"y vínculo con {datos_academicos.temas_dificiles or 'el punto difícil seleccionado'}. "
+                            "El objetivo no es solo leer, sino transformar el contenido en apuntes útiles para repasar antes del examen."
                         ),
+                        "lectura_guiada": [
+                            f"Lee el tema {tema} y subraya la definición o idea principal.",
+                            "Copia en tu cuaderno la ubicación anatómica y las relaciones más importantes.",
+                            f"Explica con tus palabras cómo se conecta con {datos_academicos.temas_dificiles or 'el punto difícil seleccionado'}.",
+                        ],
+                        "cuadro_estudio": [
+                            {
+                                "concepto": "Tema central",
+                                "explicacion": f"{tema}: contenido principal que debe quedar claro al finalizar el día.",
+                            },
+                            {
+                                "concepto": "Punto difícil",
+                                "explicacion": datos_academicos.temas_dificiles or "Subtema que requiere mayor repaso y explicación escrita.",
+                            },
+                            {
+                                "concepto": "Relación anatómica",
+                                "explicacion": "Conecta ubicación, función y estructuras vecinas para responder mejor en el examen.",
+                            },
+                        ],
                         "glosario": [
                             f"{tema}: concepto principal del día.",
                             f"{datos_academicos.temas_dificiles or 'Punto difícil'}: subtema a reforzar.",
+                            "Relación anatómica: conexión de una estructura con sus límites, órganos, vasos, nervios o función.",
                         ],
+                        "fichas_memoria": [
+                            {
+                                "anverso": f"¿Qué debo recordar primero de {tema}?",
+                                "reverso": "La definición, ubicación y relación anatómica principal.",
+                            },
+                            {
+                                "anverso": "¿Cómo compruebo que entendí?",
+                                "reverso": "Escribiendo una explicación breve sin mirar los apuntes.",
+                            },
+                        ],
+                        "actividad_escritura": {
+                            "titulo": "Respuesta escrita tipo examen",
+                            "instrucciones": "Escribe una respuesta breve usando la plantilla. Luego compárala con el resumen y corrige lo que falte.",
+                            "plantilla": [
+                                "Definición:",
+                                "Ubicación:",
+                                "Relaciones anatómicas:",
+                                "Importancia funcional o clínica:",
+                            ],
+                            "ejemplo_respuesta": f"{tema} se comprende ubicándolo dentro del tronco y relacionándolo con {datos_academicos.temas_dificiles or 'el subtema difícil'}."
+                        },
+                        "preguntas_autoverificacion": [
+                            f"¿Puedes definir {tema} sin mirar tus apuntes?",
+                            "¿Puedes explicar su ubicación y una relación anatómica importante?",
+                            "¿Qué parte debes volver a escribir porque todavía no está clara?",
+                        ],
+                        "producto_esperado": "Una ficha escrita con definición, ubicación, relaciones, glosario y una respuesta tipo examen.",
                     },
                     "imagen_anatomica": {
                         "habilitado": imagen_habilitada,
@@ -1475,14 +1548,132 @@ def normalizar_kinestesico(valor):
     }
 
 
+def _normalizar_lista_dict(valor, claves, max_items=6):
+    """Normaliza listas de diccionarios sin romper si el LLM manda strings."""
+    resultado = []
+
+    if isinstance(valor, list):
+        for item in valor[:max_items]:
+            if isinstance(item, dict):
+                limpio = {}
+                for clave in claves:
+                    limpio[clave] = str(item.get(clave, "")).strip()
+                if any(limpio.values()):
+                    resultado.append(limpio)
+            else:
+                texto = str(item).strip()
+                if texto:
+                    limpio = {clave: "" for clave in claves}
+                    limpio[claves[0]] = texto
+                    resultado.append(limpio)
+
+    return resultado
+
+
+def _normalizar_actividad_escritura(valor):
+    if not isinstance(valor, dict):
+        valor = {}
+
+    plantilla = normalizar_lista(valor.get("plantilla", []))
+    if not plantilla:
+        plantilla = [
+            "Definición:",
+            "Ubicación anatómica:",
+            "Relaciones:",
+            "Importancia funcional o clínica:",
+        ]
+
+    return {
+        "titulo": str(valor.get("titulo", "Escritura activa")).strip(),
+        "instrucciones": str(
+            valor.get(
+                "instrucciones",
+                "Escribe una respuesta breve en tu cuaderno usando la plantilla y luego verifica si incluiste definición, ubicación y relaciones.",
+            )
+        ).strip(),
+        "plantilla": plantilla[:6],
+        "ejemplo_respuesta": str(valor.get("ejemplo_respuesta", "")).strip(),
+    }
+
+
 def normalizar_lectura(valor):
     if not isinstance(valor, dict):
         valor = {}
+
+    titulo = str(valor.get("titulo", "Guía de lectura y escritura activa")).strip()
+    resumen = str(valor.get("resumen", "")).strip()
+
+    lectura_guiada = normalizar_lista(valor.get("lectura_guiada", []))
+    glosario = normalizar_lista(valor.get("glosario", []))
+    preguntas_autoverificacion = normalizar_lista(valor.get("preguntas_autoverificacion", []))
+
+    cuadro_estudio = _normalizar_lista_dict(
+        valor.get("cuadro_estudio", []),
+        ["concepto", "explicacion"],
+        max_items=6,
+    )
+    fichas_memoria = _normalizar_lista_dict(
+        valor.get("fichas_memoria", []),
+        ["anverso", "reverso"],
+        max_items=6,
+    )
+    actividad_escritura = _normalizar_actividad_escritura(valor.get("actividad_escritura", {}))
+
+    # Fallback inteligente para que Lectura/Escritura nunca quede como un bloque vacío.
+    if not lectura_guiada:
+        lectura_guiada = [
+            "Lee primero la idea general del tema y subraya palabras anatómicas clave.",
+            "Copia en tu cuaderno ubicación, límites, relaciones y función si corresponde.",
+            "Cierra los apuntes y escribe una explicación breve con tus propias palabras.",
+        ]
+
+    if not cuadro_estudio:
+        cuadro_estudio = [
+            {"concepto": "Idea principal", "explicacion": resumen or "Concepto central que debes poder explicar sin mirar."},
+            {"concepto": "Ubicación", "explicacion": "Región anatómica donde se reconoce el tema o estructura estudiada."},
+            {"concepto": "Relaciones", "explicacion": "Estructuras vecinas, límites o conexiones que ayudan a comprender el tema."},
+        ]
+
+    if not glosario:
+        glosario = [
+            "Concepto clave: idea que debes memorizar y explicar.",
+            "Ubicación: lugar anatómico donde se encuentra la estructura.",
+            "Relación anatómica: conexión con estructuras vecinas o función.",
+        ]
+
+    if not fichas_memoria:
+        fichas_memoria = [
+            {"anverso": "¿Qué debo definir?", "reverso": "El concepto principal del tema del día."},
+            {"anverso": "¿Qué debo ubicar?", "reverso": "La región anatómica y sus relaciones más importantes."},
+            {"anverso": "¿Cómo sé que entendí?", "reverso": "Si puedo escribir una respuesta breve sin mirar apuntes."},
+        ]
+
+    if not preguntas_autoverificacion:
+        preguntas_autoverificacion = [
+            "¿Puedo explicar el tema en 4 líneas sin copiar?",
+            "¿Incluí ubicación, relaciones e importancia?",
+            "¿Qué término del glosario todavía debo repasar?",
+        ]
+
+    if not resumen:
+        resumen = "Lee el tema, transforma las ideas en apuntes breves y verifica tu comprensión escribiendo una respuesta tipo examen."
+
     return {
         "habilitado": bool(valor.get("habilitado")),
-        "titulo": str(valor.get("titulo", "Apoyo de lectura")).strip(),
-        "resumen": str(valor.get("resumen", "")).strip(),
-        "glosario": normalizar_lista(valor.get("glosario", [])),
+        "titulo": titulo,
+        "resumen": resumen,
+        "lectura_guiada": lectura_guiada[:6],
+        "cuadro_estudio": cuadro_estudio[:6],
+        "glosario": glosario[:8],
+        "fichas_memoria": fichas_memoria[:6],
+        "actividad_escritura": actividad_escritura,
+        "preguntas_autoverificacion": preguntas_autoverificacion[:6],
+        "producto_esperado": str(
+            valor.get(
+                "producto_esperado",
+                "Apunte escrito con definición, ubicación, relaciones, glosario y respuesta breve tipo examen.",
+            )
+        ).strip(),
     }
 
 
